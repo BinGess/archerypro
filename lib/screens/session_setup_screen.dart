@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../models/equipment.dart';
+import '../models/training_session.dart';
 import 'scoring_screen.dart';
 import '../providers/scoring_provider.dart';
 
@@ -28,7 +29,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     // Create equipment
     final equipment = Equipment(
       bowType: _selectedBowType,
-      model: _getBowModelName(_selectedBowType),
+      bowName: _getBowModelName(_selectedBowType),
     );
 
     // Start new session with configuration
@@ -348,7 +349,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: AppColors.textSlate600),
+              Icon(icon, size: 20, color: AppColors.textSlate500),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -453,14 +454,14 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.textSlate600,
+              color: isSelected ? Colors.white : AppColors.textSlate500,
               size: 32,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSlate600,
+                color: isSelected ? Colors.white : AppColors.textSlate500,
                 fontWeight: FontWeight.w600,
               ),
             ),
