@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
 import 'screens/scoring_screen.dart';
 import 'screens/details_screen.dart';
+import 'services/storage_service.dart';
+import 'services/scoring_service.dart';
+import 'providers/scoring_provider.dart';
+import 'providers/session_provider.dart';
+import 'utils/sample_data.dart';
 
-void main() {
-  runApp(const ArcheryApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize storage service
+  final storageService = StorageService();
+  await storageService.initialize();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        storageServiceProvider.overrideWithValue(storageService),
+      ],
+      child: const ArcheryApp(),
+    ),
+  );
 }
 
 class ArcheryApp extends StatelessWidget {
@@ -36,15 +55,16 @@ class ArcheryApp extends StatelessWidget {
   }
 }
 
-class MainContainer extends StatefulWidget {
+class MainContainer extends ConsumerStatefulWidget {
   const MainContainer({super.key});
 
   @override
-  State<MainContainer> createState() => _MainContainerState();
+  ConsumerState<MainContainer> createState() => _MainContainerState();
 }
 
-class _MainContainerState extends State<MainContainer> {
+class _MainContainerState extends ConsumerState<MainContainer> {
   int _currentIndex = 0;
+  bool _isInitialized = false;
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -54,7 +74,37 @@ class _MainContainerState extends State<MainContainer> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Generate sample data on first launch
+    final sessionService = ref.read(sessionServiceProvider);
+    final scoringService = ref.read(scoringServiceProvider);
+    final generator = SampleDataGenerator(sessionService, scoringService);
+
+    await generator.generateSampleSessions();
+
+    // Refresh session list
+    await ref.read(sessionProvider.notifier).loadSessions();
+
+    setState(() {
+      _isInitialized = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,

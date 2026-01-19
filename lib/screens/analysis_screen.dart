@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
+import '../providers/analytics_provider.dart';
+import '../utils/constants.dart';
 
-class AnalysisScreen extends StatelessWidget {
+class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final analyticsState = ref.watch(analyticsProvider);
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+    final stats = analyticsState.statistics;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('PERFORMANCE ANALYSIS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: () {}),
+        leading: IconButton(
+          icon: const Icon(Icons.refresh, size: 20),
+          onPressed: () {
+            ref.read(analyticsProvider.notifier).refreshAnalytics();
+          },
+        ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(Icons.share, size: 18, color: AppColors.primary),
+            child: const Icon(Icons.share, size: 18, color: AppColors.primary),
           )
         ],
         bottom: PreferredSize(
@@ -26,45 +38,53 @@ class AnalysisScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTab('7D', false),
-              _buildTab('1M', true),
-              _buildTab('3M', false),
-              _buildTab('ALL', false),
+              _buildTab(context, ref, kPeriod7Days, selectedPeriod),
+              _buildTab(context, ref, kPeriod1Month, selectedPeriod),
+              _buildTab(context, ref, kPeriod3Months, selectedPeriod),
+              _buildTab(context, ref, kPeriodAll, selectedPeriod),
             ],
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildScoreTrendCard(),
-          const SizedBox(height: 20),
-          _buildHeatmapCard(),
-          const SizedBox(height: 20),
-          _buildInsightSection(),
-        ],
-      ),
+      body: analyticsState.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildScoreTrendCard(stats),
+                const SizedBox(height: 20),
+                _buildHeatmapCard(stats),
+                const SizedBox(height: 20),
+                _buildInsightSection(analyticsState.insights),
+              ],
+            ),
     );
   }
 
-  Widget _buildTab(String text, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: isSelected ? AppColors.primary : AppColors.textSlate400,
+  Widget _buildTab(BuildContext context, WidgetRef ref, String period, String selectedPeriod) {
+    final isSelected = period == selectedPeriod;
+    return GestureDetector(
+      onTap: () async {
+        await ref.read(analyticsProvider.notifier).changePeriod(period);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
+        ),
+        child: Text(
+          period,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? AppColors.primary : AppColors.textSlate400,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildScoreTrendCard() {
+  Widget _buildScoreTrendCard(dynamic stats) {
     return ArcheryCard(
       child: Column(
         children: [
@@ -78,10 +98,21 @@ class AnalysisScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Text('8.4', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
+                      Text(stats.avgEndScore.toStringAsFixed(1), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
                       const SizedBox(width: 8),
-                      Text('5.2%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
-                      Icon(Icons.trending_up, size: 16, color: Colors.green.shade600),
+                      Text(
+                        stats.trendDisplay,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: stats.trend >= 0 ? Colors.green.shade600 : Colors.red.shade600,
+                        ),
+                      ),
+                      Icon(
+                        stats.trend >= 0 ? Icons.trending_up : Icons.trending_down,
+                        size: 16,
+                        color: stats.trend >= 0 ? Colors.green.shade600 : Colors.red.shade600,
+                      ),
                     ],
                   ),
                 ],
@@ -89,7 +120,7 @@ class AnalysisScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: Icon(Icons.insights, color: AppColors.primary),
+                child: const Icon(Icons.insights, color: AppColors.primary),
               ),
             ],
           ),
@@ -100,20 +131,46 @@ class AnalysisScreen extends StatelessWidget {
             child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
           ),
           const SizedBox(height: 12),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('OCT 01', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 15', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 30', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-            ],
-          )
+          if (stats.totalSessions > 0)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${stats.totalSessions} sessions', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                Text('${stats.totalArrows} arrows', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                Text('${stats.scorePercentage.toStringAsFixed(1)}% avg', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+              ],
+            )
+          else
+            const Text('No data for selected period', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
         ],
       ),
     );
   }
 
-  Widget _buildHeatmapCard() {
+  Widget _buildHeatmapCard(dynamic stats) {
+    final hasData = stats.heatmapData.isNotEmpty;
+    String tendency = 'CENTERED';
+
+    if (hasData) {
+      // Calculate center of mass for grouping tendency
+      final centerX = stats.heatmapData.fold(0.0, (sum, p) => sum + p.dx) / stats.heatmapData.length;
+      final centerY = stats.heatmapData.fold(0.0, (sum, p) => sum + p.dy) / stats.heatmapData.length;
+
+      if (centerX < -0.15 && centerY < -0.15) {
+        tendency = 'LOW LEFT';
+      } else if (centerX > 0.15 && centerY < -0.15) {
+        tendency = 'LOW RIGHT';
+      } else if (centerY < -0.15) {
+        tendency = 'LOW';
+      } else if (centerY > 0.15) {
+        tendency = 'HIGH';
+      } else if (centerX < -0.15) {
+        tendency = 'LEFT';
+      } else if (centerX > 0.15) {
+        tendency = 'RIGHT';
+      }
+    }
+
     return ArcheryCard(
       child: Column(
         children: [
@@ -121,7 +178,11 @@ class AnalysisScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('IMPACT ACCURACY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              StatusBadge(text: 'TREND: LOW LEFT', color: AppColors.accentRust, backgroundColor: AppColors.accentRust.withOpacity(0.1)),
+              StatusBadge(
+                text: 'TREND: $tendency',
+                color: tendency == 'CENTERED' ? AppColors.primary : AppColors.accentRust,
+                backgroundColor: tendency == 'CENTERED' ? AppColors.primary.withOpacity(0.1) : AppColors.accentRust.withOpacity(0.1),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -130,34 +191,29 @@ class AnalysisScreen extends StatelessWidget {
             children: [
               // Target Faces
               _buildRing(180, Colors.grey.shade100),
-              _buildRing(150, Colors.white), // Simplified for aesthetics
+              _buildRing(150, Colors.white),
               _buildRing(120, Colors.white),
               _buildRing(90, Colors.white),
               _buildRing(60, Colors.white),
               _buildRing(30, AppColors.accentGold.withOpacity(0.2)),
               Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accentGold, shape: BoxShape.circle)),
 
-              // Heat blobs
-              Positioned(
-                bottom: 40, left: 60,
-                child: Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
-              ),
-              Positioned(
-                bottom: 50, left: 80,
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
-              ),
+              // Plot actual arrow positions if available
+              if (hasData)
+                ...stats.heatmapData.take(30).map((position) {
+                  return Positioned(
+                    left: 90 + (position.dx * 80),
+                    top: 90 + (position.dy * 80),
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }).toList(),
             ],
           ),
           const SizedBox(height: 24),
@@ -168,7 +224,11 @@ class AnalysisScreen extends StatelessWidget {
               const SizedBox(width: 24),
               _buildLegend(AppColors.accentGold, 'BULLSEYE'),
             ],
-          )
+          ),
+          if (!hasData) ...[
+            const SizedBox(height: 16),
+            const Text('Shoot more arrows to see grouping pattern', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+          ],
         ],
       ),
     );
@@ -176,7 +236,8 @@ class AnalysisScreen extends StatelessWidget {
 
   Widget _buildRing(double size, Color color) {
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
@@ -195,37 +256,65 @@ class AnalysisScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInsightSection() {
+  Widget _buildInsightSection(List<dynamic> insights) {
+    if (insights.isEmpty) {
+      return ArcheryCard(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Colors.grey.shade400, size: 20),
+                const SizedBox(width: 8),
+                Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Complete more training sessions to receive personalized AI insights',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
-            const SizedBox(width: 8),
-            const Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+            Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
+            SizedBox(width: 8),
+            Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
           ],
         ),
         const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.track_changes,
-          color: AppColors.primary,
-          title: 'Stability Focus',
-          desc: 'Back tension decreased slightly in last 3 ends. Maintain expansion through clicker.',
-        ),
-        const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.fitness_center,
-          color: AppColors.accentRust,
-          title: 'Suggestion: 30m Drills',
-          desc: 'To correct the low-left tendency, perform 30 arrows on blank bale focusing on bow arm.',
-          hasAction: true,
-        ),
+        ...insights.map((insight) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildInsightItem(
+              icon: insight.icon,
+              color: insight.color,
+              title: insight.title,
+              desc: insight.description,
+              hasAction: insight.hasAction,
+              actionLabel: insight.actionLabel,
+            ),
+          );
+        }).toList(),
       ],
     );
   }
 
-  Widget _buildInsightItem({required IconData icon, required Color color, required String title, required String desc, bool hasAction = false}) {
+  Widget _buildInsightItem({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String desc,
+    bool hasAction = false,
+    String? actionLabel,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -249,9 +338,9 @@ class AnalysisScreen extends StatelessWidget {
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 4),
                 Text(desc, style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textSlate500)),
-                if (hasAction) ...[
+                if (hasAction && actionLabel != null) ...[
                   const SizedBox(height: 8),
-                  Text('START DRILL →', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
+                  Text('${actionLabel.toUpperCase()} →', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
                 ]
               ],
             ),
@@ -260,8 +349,4 @@ class AnalysisScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-extension BlurExt on Widget {
-  Widget blur() => this; // Placeholder for ImageFilter.blur if needed, or just standard opacity overlay
 }
