@@ -116,13 +116,13 @@ class SessionService {
   /// Get total arrow count across all sessions
   Future<int> getTotalArrowCount() async {
     final sessions = await getAllSessions();
-    return sessions.fold(0, (sum, session) => sum + session.arrowCount);
+    return sessions.fold<int>(0, (sum, session) => sum + session.arrowCount);
   }
 
   /// Get total arrow count for current month
   Future<int> getCurrentMonthArrowCount() async {
     final sessions = await getCurrentMonthSessions();
-    return sessions.fold(0, (sum, session) => sum + session.arrowCount);
+    return sessions.fold<int>(0, (sum, session) => sum + session.arrowCount);
   }
 
   /// Clear all sessions (use with caution!)

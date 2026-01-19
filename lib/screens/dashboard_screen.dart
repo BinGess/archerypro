@@ -187,7 +187,7 @@ class DashboardScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                const SizedBox(
+                SizedBox(
                   height: 80,
                   width: double.infinity,
                   child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),

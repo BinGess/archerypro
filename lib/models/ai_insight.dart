@@ -59,7 +59,7 @@ class AIInsight {
     this.actionLabel,
     this.priority = 3,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? const Duration();
+  }) : createdAt = createdAt ?? DateTime.now();
 
   /// Create a stability-focused insight
   factory AIInsight.stability({

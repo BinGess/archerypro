@@ -235,7 +235,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ...currentEnd.arrows.map((arrow) => _scoreBox(arrow.pointValue, _getScoreColor(arrow.pointValue), _getScoreTextColor(arrow.pointValue))),
-                    ...List.generate(6 - currentEnd.arrowCount, (_) => _emptyScoreBox()),
+                    ...List.generate(6 - currentEnd.arrowCount.toInt(), (_) => _emptyScoreBox()),
                   ],
                 ),
               ],
@@ -272,7 +272,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
               children: [
                 if (currentEnd != null) ...[
                   ...currentEnd.arrows.map((arrow) => _scoreBoxSmall(arrow.pointValue, _getScoreColor(arrow.pointValue))),
-                  ...List.generate(6 - currentEnd.arrowCount, (_) => _scoreBoxSmallEmpty()),
+                  ...List.generate(6 - currentEnd.arrowCount.toInt(), (_) => _scoreBoxSmallEmpty()),
                 ],
               ],
             ),
@@ -289,7 +289,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                   if (currentEnd != null)
                     ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
                       final position = arrow.position!;
-                      return _arrowMarker(160 + (position.dy * 140), 160 + (position.dx * 140));
+                      return _arrowMarker(160 + (position.dy * 140).toDouble(), 160 + (position.dx * 140).toDouble());
                     }).toList(),
                 ],
               ),
