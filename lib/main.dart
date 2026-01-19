@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
 import 'screens/scoring_screen.dart';
 import 'screens/details_screen.dart';
+import 'services/storage_service.dart';
+import 'providers/scoring_provider.dart';
 
-void main() {
-  runApp(const ArcheryApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize storage service
+  final storageService = StorageService();
+  await storageService.initialize();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        storageServiceProvider.overrideWithValue(storageService),
+      ],
+      child: const ArcheryApp(),
+    ),
+  );
 }
 
 class ArcheryApp extends StatelessWidget {
