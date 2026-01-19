@@ -40,12 +40,12 @@ class Statistics {
   final double avgConsistency;
 
   /// Heatmap data - all arrow positions
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(includeFromJson: false, includeToJson: false, defaultValue: [])
   final List<Offset> heatmapData;
 
   /// Score trend data points for chart
   /// Map of date to average score on that date
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(includeFromJson: false, includeToJson: false, defaultValue: {})
   final Map<DateTime, double> scoreTrendData;
 
   /// Monthly goal (number of arrows)
@@ -66,8 +66,8 @@ class Statistics {
     required this.bestMaxScore,
     required this.trend,
     required this.avgConsistency,
-    required this.heatmapData,
-    required this.scoreTrendData,
+    this.heatmapData = const [],
+    this.scoreTrendData = const {},
     this.monthlyGoal,
     required this.currentMonthArrows,
   });
