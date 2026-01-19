@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/session_provider.dart';
 import '../providers/analytics_provider.dart';
+import 'details_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -72,6 +73,11 @@ class DashboardScreen extends ConsumerWidget {
                               arrowCount: session.arrowCount,
                               onTap: () {
                                 ref.read(selectedSessionProvider.notifier).state = session;
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const DetailsScreen(),
+                                  ),
+                                );
                               },
                             ),
                           );

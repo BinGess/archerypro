@@ -248,7 +248,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           ),
           ...completedEnds.reversed.map((end) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildHistoryRow('END ${end.endNumber}', '${end.totalScore}', end.arrows.map((a) => a.pointValue).toList()),
+                child: _buildHistoryRow('END ${end.endNumber}', '${end.totalScore}', end.arrows.map<int>((a) => a.pointValue).toList()),
               )),
         ],
       ],

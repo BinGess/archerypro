@@ -4,8 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
-import 'screens/scoring_screen.dart';
-import 'screens/details_screen.dart';
+import 'screens/session_setup_screen.dart';
 import 'services/storage_service.dart';
 import 'services/scoring_service.dart';
 import 'providers/scoring_provider.dart';
@@ -69,8 +68,6 @@ class _MainContainerState extends ConsumerState<MainContainer> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const AnalysisScreen(),
-    const ScoringScreen(),
-    const DetailsScreen(),
   ];
 
   @override
@@ -107,7 +104,7 @@ class _MainContainerState extends ConsumerState<MainContainer> {
 
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: _currentIndex == 2 ? 1 : _currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: Container(
@@ -117,7 +114,18 @@ class _MainContainerState extends ConsumerState<MainContainer> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            if (index == 1) {
+              // Middle button - open session setup
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SessionSetupScreen(),
+                ),
+              );
+            } else {
+              setState(() => _currentIndex = index);
+            }
+          },
           backgroundColor: Colors.white,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.textSlate400,
@@ -127,10 +135,9 @@ class _MainContainerState extends ConsumerState<MainContainer> {
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'Stats'),
-            BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 32), label: 'Score'),
-            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Details'),
+            BottomNavigationBarItem(icon: Icon(Icons.history), label: '历史'),
+            BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 32), label: '添加'),
+            BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: '统计'),
           ],
         ),
       ),

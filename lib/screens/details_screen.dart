@@ -179,7 +179,7 @@ class DetailsScreen extends ConsumerWidget {
                           child: _endItem(
                             end.endNumber.toString().padLeft(2, '0'),
                             end.totalScore.toString(),
-                            end.arrows.map((a) => a.pointValue).toList(),
+                            end.arrows.map<int>((a) => a.pointValue).toList(),
                           ),
                         )),
                   ],
