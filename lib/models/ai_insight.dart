@@ -48,7 +48,7 @@ class AIInsight {
   /// Creation timestamp
   final DateTime createdAt;
 
-  const AIInsight({
+  AIInsight({
     required this.id,
     required this.type,
     required this.title,

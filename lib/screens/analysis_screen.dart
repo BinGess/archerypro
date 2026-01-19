@@ -202,8 +202,8 @@ class AnalysisScreen extends ConsumerWidget {
               if (hasData)
                 ...stats.heatmapData.take(30).map((position) {
                   return Positioned(
-                    left: 90 + (position.dx * 80).toDouble(),
-                    top: 90 + (position.dy * 80).toDouble(),
+                    left: 90.0 + position.dx * 80,
+                    top: 90.0 + position.dy * 80,
                     child: Container(
                       width: 8,
                       height: 8,
