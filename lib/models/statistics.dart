@@ -40,10 +40,12 @@ class Statistics {
   final double avgConsistency;
 
   /// Heatmap data - all arrow positions
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final List<Offset> heatmapData;
 
   /// Score trend data points for chart
   /// Map of date to average score on that date
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final Map<DateTime, double> scoreTrendData;
 
   /// Monthly goal (number of arrows)

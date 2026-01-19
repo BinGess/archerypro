@@ -9,7 +9,7 @@ class SessionService {
   final StorageService _storageService;
   final _uuid = const Uuid();
 
-  SessionService(this _storageService);
+  SessionService(this._storageService);
 
   /// Create a new training session
   TrainingSession createSession({
