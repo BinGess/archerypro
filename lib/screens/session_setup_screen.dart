@@ -93,13 +93,13 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   String _getBowModelName(BowType type) {
     switch (type) {
       case BowType.recurve:
-        return 'My Hoyt Formula Xi';
+        return '我的反曲弓';
       case BowType.compound:
-        return 'My Compound Bow';
+        return '我的复合弓';
       case BowType.barebow:
-        return 'My Barebow';
+        return '我的光弓';
       case BowType.longbow:
-        return 'My Longbow';
+        return '我的长弓';
     }
   }
 

@@ -279,7 +279,7 @@ class AnalysisScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Complete more training sessions to receive personalized AI insights',
+              '完成更多训练以获取个性化AI分析',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               textAlign: TextAlign.center,
             ),

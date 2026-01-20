@@ -266,13 +266,13 @@ class DetailsScreen extends ConsumerWidget {
     final consistency = session.consistency;
 
     if (consistency > 90 && avgScore > 9) {
-      return 'Outstanding performance! Your consistency (${consistency.toStringAsFixed(1)}%) and accuracy are excellent. Consider increasing distance or trying outdoor conditions to challenge yourself further.';
+      return '表现出色！你的稳定性 (${consistency.toStringAsFixed(1)}%) 和精准度都非常棒。可以考虑增加距离或尝试室外环境来进一步挑战自己。';
     } else if (consistency > 85) {
-      return 'Excellent consistency at ${consistency.toStringAsFixed(1)}%. Your technique is solid. Focus on fine-tuning your aim to improve average score from ${avgScore.toStringAsFixed(1)} to 9.5+.';
+      return '稳定性极佳，达到了 ${consistency.toStringAsFixed(1)}%。你的技术很扎实。专注于微调瞄准，争取将平均分从 ${avgScore.toStringAsFixed(1)} 提升到 9.5 以上。';
     } else if (consistency < 70) {
-      return 'Your consistency (${consistency.toStringAsFixed(1)}%) shows room for improvement. Focus on maintaining consistent anchor point, release, and follow-through. Consider blank bale practice to refine form.';
+      return '稳定性 (${consistency.toStringAsFixed(1)}%) 还有提升空间。请专注于保持一致的靠位、撒放和后续动作。建议进行近距离光靶练习以优化动作。';
     } else {
-      return 'Good session with ${consistency.toStringAsFixed(1)}% consistency and ${avgScore.toStringAsFixed(1)} average score. Continue practicing form fundamentals and breathing control for better results.';
+      return '不错的训练，稳定性为 ${consistency.toStringAsFixed(1)}%，平均分为 ${avgScore.toStringAsFixed(1)}。继续练习基本动作和呼吸控制以取得更好成绩。';
     }
   }
 

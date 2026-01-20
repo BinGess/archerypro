@@ -23,10 +23,10 @@ const int kDefaultMonthlyGoal = 3000; // arrows per month
 const int kDefaultWeeklyGoal = 750; // arrows per week
 
 // Time Periods for Analysis
-const String kPeriod7Days = '7D';
-const String kPeriod1Month = '1M';
-const String kPeriod3Months = '3M';
-const String kPeriodAll = 'ALL';
+const String kPeriod7Days = '7天';
+const String kPeriod1Month = '1个月';
+const String kPeriod3Months = '3个月';
+const String kPeriodAll = '全部';
 
 const List<String> kAnalysisPeriods = [
   kPeriod7Days,
@@ -68,8 +68,8 @@ const Map<int, String> kScoreColorMap = {
 };
 
 // Date Format Patterns
-const String kDateFormatShort = 'MMM dd'; // Oct 24
-const String kDateFormatLong = 'yyyy MMM dd'; // 2023 Oct 24
+const String kDateFormatShort = 'MM月dd日'; // 10月24日
+const String kDateFormatLong = 'yyyy年MM月dd日'; // 2023年10月24日
 const String kDateFormatFull = 'yyyy-MM-dd HH:mm'; // 2023-10-24 14:30
 
 // Session Defaults

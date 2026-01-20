@@ -255,28 +255,28 @@ class AnalyticsService {
     String tendency = '';
     if (centerX.abs() > 0.15 || centerY.abs() > 0.15) {
       if (centerX < -0.15 && centerY < -0.15) {
-        tendency = 'low-left';
+        tendency = '左下';
       } else if (centerX > 0.15 && centerY < -0.15) {
-        tendency = 'low-right';
+        tendency = '右下';
       } else if (centerX < -0.15 && centerY > 0.15) {
-        tendency = 'high-left';
+        tendency = '左上';
       } else if (centerX > 0.15 && centerY > 0.15) {
-        tendency = 'high-right';
+        tendency = '右上';
       } else if (centerY < -0.15) {
-        tendency = 'low';
+        tendency = '偏下';
       } else if (centerY > 0.15) {
-        tendency = 'high';
+        tendency = '偏上';
       } else if (centerX < -0.15) {
-        tendency = 'left';
+        tendency = '偏左';
       } else if (centerX > 0.15) {
-        tendency = 'right';
+        tendency = '偏右';
       }
 
       if (tendency.isNotEmpty) {
         return AIInsight.drill(
           id: _uuid.v4(),
-          title: 'Grouping Tendency: $tendency',
-          description: 'Your shots are grouping $tendency of center. Practice blank bale drills focusing on alignment and release.',
+          title: '分组倾向：$tendency',
+          description: '你的箭组倾向于靶心$tendency方。请练习光靶，专注于对齐和撒放。',
           priority: 4,
         );
       }

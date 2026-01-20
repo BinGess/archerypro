@@ -136,7 +136,25 @@ class _MainContainerState extends ConsumerState<MainContainer> {
           elevation: 0,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.history), label: '历史'),
-            BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 32), label: '添加'),
+            BottomNavigationBarItem(
+              icon: SizedBox(
+                width: 44,
+                height: 44,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  child: Icon(Icons.add, color: Colors.white),
+                ),
+              ),
+              activeIcon: SizedBox(
+                width: 44,
+                height: 44,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  child: Icon(Icons.add, color: Colors.white),
+                ),
+              ),
+              label: '添加',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: '统计'),
           ],
         ),

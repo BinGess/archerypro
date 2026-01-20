@@ -241,6 +241,30 @@ class DashboardScreen extends ConsumerWidget {
     required int arrowCount,
     required VoidCallback onTap,
   }) {
+    // 处理日期显示，适应中文格式
+    String monthPart = '';
+    String dayPart = '';
+    
+    if (date.contains('月')) {
+       final parts = date.split('月');
+       if (parts.length >= 2) {
+         monthPart = '${parts[0]}月';
+         dayPart = parts[1];
+       } else {
+         monthPart = date;
+       }
+    } else if (date.contains(' ')) {
+      final parts = date.split(' ');
+      if (parts.length >= 2) {
+        monthPart = parts[0];
+        dayPart = parts[1];
+      } else {
+        monthPart = date;
+      }
+    } else {
+      monthPart = date;
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: ArcheryCard(
@@ -257,11 +281,11 @@ class DashboardScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    date.split(' ')[0], // MMM
+                    monthPart, 
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isHighRecord ? AppColors.accentGold : Colors.grey.shade600),
                   ),
                   Text(
-                    date.split(' ')[1], // dd
+                    dayPart,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isHighRecord ? AppColors.accentGold : AppColors.textSlate900),
                   ),
                 ],
@@ -329,6 +353,6 @@ class DashboardScreen extends ConsumerWidget {
 
 
   String _formatDate(DateTime date) {
-    return DateFormat('MMM dd').format(date).toUpperCase();
+    return DateFormat('MM月dd日').format(date);
   }
 }
