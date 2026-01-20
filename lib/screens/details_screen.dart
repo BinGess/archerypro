@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/heatmap_with_center.dart';
+import '../widgets/end_trend_chart.dart';
+import '../widgets/score_distribution_chart.dart';
 import '../providers/session_provider.dart';
 import '../models/training_session.dart';
+import '../services/session_analysis_service.dart';
 
 class DetailsScreen extends ConsumerWidget {
   const DetailsScreen({super.key});
@@ -110,42 +114,13 @@ class DetailsScreen extends ConsumerWidget {
 
             const SizedBox(height: 32),
 
-            // AI Advice Card
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('AI 训练建议', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _generateAdvice(session),
-                    style: const TextStyle(fontSize: 13, height: 1.5, color: AppColors.textSlate500),
-                  ),
-                ],
-              ),
-            ),
+            // Visualization Section
+            _buildVisualizationSection(session),
 
             const SizedBox(height: 32),
+
+            // AI Advice Card
+            _buildEnhancedAIAdvice(session, ref),
 
             // Ends List
             if (session.ends.isNotEmpty)
@@ -177,48 +152,265 @@ class DetailsScreen extends ConsumerWidget {
                 ),
               ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
-            // Action Buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _deleteSession(context, ref, session),
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      label: const Text('删除记录', style: TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // Bottom Action Buttons
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                border: Border(
+                  top: BorderSide(color: AppColors.borderLight),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _deleteSession(context, ref, session),
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                        label: const Text('删除', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.red.shade300),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement Edit
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('编辑功能开发中')));
-                      },
-                      icon: const Icon(Icons.edit, color: Colors.white),
-                      label: const Text('编辑记录', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement Edit
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('编辑功能开发中')),
+                          );
+                        },
+                        icon: const Icon(Icons.edit, size: 18, color: Colors.white),
+                        label: const Text('编辑', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Build visualization section with three charts
+  Widget _buildVisualizationSection(TrainingSession session) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '数据可视化',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 1. Heatmap with Center
+          _buildChartCard(
+            title: '本次落点热力图',
+            subtitle: '所有箭支位置分布 + 几何中心',
+            child: HeatmapWithCenter(
+              arrowPositions: session.heatmapPositions,
+              geometricCenter: session.geometricCenter,
+              targetFaceSize: session.targetFaceSize,
+              size: 280,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. End-by-End Trend
+          _buildChartCard(
+            title: '组间走势图',
+            subtitle: '各组平均分趋势',
+            child: EndTrendChart(
+              endAverageScores: session.endAverageScores,
+              sessionAverage: session.averageArrowScore,
+              height: 220,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Score Distribution
+          _buildChartCard(
+            title: '分数分布',
+            subtitle: '各环数箭支统计',
+            child: ScoreDistributionChart(
+              scoreDistribution: session.scoreDistribution,
+              xRingCount: session.xRingCount,
+              height: 220,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build chart card wrapper
+  Widget _buildChartCard({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  /// Build enhanced AI advice using SessionAnalysisService
+  Widget _buildEnhancedAIAdvice(TrainingSession session, WidgetRef ref) {
+    final sessionState = ref.watch(sessionProvider);
+    final analysisService = SessionAnalysisService();
+
+    // Generate insight using AI service
+    final insight = analysisService.generateSessionInsight(
+      session,
+      sessionState.sessions.where((s) => s.id != session.id).toList(),
+    );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            insight.color.withOpacity(0.1),
+            insight.color.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: insight.color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: insight.color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(insight.icon, size: 20, color: insight.color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'AI 教练建议',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSlate400,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      insight.title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: insight.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            insight.message,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.6,
+              color: AppColors.textSlate700,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -259,21 +451,6 @@ class DetailsScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _generateAdvice(dynamic session) {
-    final avgScore = session.averageArrowScore;
-    final consistency = session.consistency;
-
-    if (consistency > 90 && avgScore > 9) {
-      return '表现出色！你的稳定性 (${consistency.toStringAsFixed(1)}%) 和精准度都非常棒。可以考虑增加距离或尝试室外环境来进一步挑战自己。';
-    } else if (consistency > 85) {
-      return '稳定性极佳，达到了 ${consistency.toStringAsFixed(1)}%。你的技术很扎实。专注于微调瞄准，争取将平均分从 ${avgScore.toStringAsFixed(1)} 提升到 9.5 以上。';
-    } else if (consistency < 70) {
-      return '稳定性 (${consistency.toStringAsFixed(1)}%) 还有提升空间。请专注于保持一致的靠位、撒放和后续动作。建议进行近距离光靶练习以优化动作。';
-    } else {
-      return '不错的训练，稳定性为 ${consistency.toStringAsFixed(1)}%，平均分为 ${avgScore.toStringAsFixed(1)}。继续练习基本动作和呼吸控制以取得更好成绩。';
-    }
   }
 
   Widget _endItem(String endNum, String total, List<int> scores) {
