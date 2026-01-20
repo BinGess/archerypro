@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
@@ -496,7 +498,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final double dy = localPosition.dy - center;
 
     // Calculate distance from center as fraction of radius
-    final double distance = (dx * dx + dy * dy).sqrt() / center;
+    final double distance = sqrt(dx * dx + dy * dy) / center;
 
     // Determine score based on distance and target face size
     int score;
