@@ -156,7 +156,8 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
         // Check if all ends are complete
         if (state.completedEndsCount >= state.maxEnds) {
           // Auto save and return true to indicate session complete
-          await saveSession();
+          // NOTE: We do NOT call saveSession here automatically to avoid early state cleanup issues.
+          // The UI will handle the final save call.
           return true;
         } else {
           // Start next end
@@ -191,10 +192,26 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
   /// Start next end
   void _startNextEnd() {
     final nextEndNumber = state.completedEndsCount + 1;
-    if (nextEndNumber <= state.maxEnds) {
-      final nextEnd = _scoringService.createEnd(nextEndNumber, maxArrows: state.arrowsPerEnd);
-      state = state.copyWith(currentEnd: nextEnd);
-    }
+    // Removed strict check against maxEnds to allow "one more end" functionality
+    final nextEnd = _scoringService.createEnd(nextEndNumber, maxArrows: state.arrowsPerEnd);
+    state = state.copyWith(currentEnd: nextEnd);
+  }
+
+  /// Manually add an extra end
+  void addOneMoreEnd() {
+    if (state.currentSession == null) return;
+    
+    // Increase max ends by 1
+    final newMaxEnds = state.maxEnds + 1;
+    state = state.copyWith(maxEnds: newMaxEnds);
+    
+    // Start the new end
+    _startNextEnd();
+  }
+
+  /// Edit a specific end
+  void editEnd(End end) {
+    state = state.copyWith(currentEnd: end);
   }
 
   /// Remove last arrow

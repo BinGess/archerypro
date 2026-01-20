@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/session_provider.dart';
+import '../models/training_session.dart';
 
 class DetailsScreen extends ConsumerWidget {
   const DetailsScreen({super.key});
@@ -46,50 +47,39 @@ class DetailsScreen extends ConsumerWidget {
             Navigator.of(context).pop();
           },
         ),
-        actions: [
-          TextButton(onPressed: () {}, child: const Text('编辑', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600))),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.share, size: 20, color: AppColors.primary)),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Top Info Section
             Padding(
-              padding: const EdgeInsets.only(top: 16, bottom: 4),
-              child: Text(
-                DateFormat('yyyy MMM dd').format(session.date).toUpperCase(),
-                style: const TextStyle(color: AppColors.textSlate400, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
-            Text(
-              session.sessionTypeDisplay,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.textSlate900),
-            ),
-            const SizedBox(height: 32),
-
-            // Stats Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _detailItem(Icons.architecture, session.equipment.bowTypeDisplay, 'Equipment'),
-                  _detailItem(Icons.adjust, '${session.targetFaceSize}cm', 'Face'),
-                  _detailItem(Icons.straighten, '${session.distance.toInt()}m', 'Distance'),
-                  _detailItem(Icons.format_list_numbered, '${session.arrowCount} Arr', 'Volume'),
-                  _detailItem(Icons.apartment, session.environmentDisplay, 'Environment'),
-                  _detailItem(Icons.schedule, session.durationDisplay, 'Duration'),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('yyyy MMM dd').format(session.date).toUpperCase(),
+                        style: const TextStyle(color: AppColors.textSlate400, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('HH:mm').format(session.date),
+                        style: const TextStyle(color: AppColors.textSlate900, fontSize: 20, fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                  _buildSimpleInfo(Icons.architecture, session.equipment.bowTypeDisplay),
+                  _buildSimpleInfo(Icons.straighten, '${session.distance.toInt()}m'),
+                  _buildSimpleInfo(Icons.adjust, '${session.targetFaceSize}cm'),
                 ],
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 40),
-              child: Divider(color: Colors.grey.shade100, height: 1),
-            ),
+            const Divider(height: 1, color: AppColors.borderLight),
+            const SizedBox(height: 32),
 
             // Big Score Display
             Row(
@@ -188,8 +178,85 @@ class DetailsScreen extends ConsumerWidget {
               ),
 
             const SizedBox(height: 40),
+
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _deleteSession(context, ref, session),
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      label: const Text('删除记录', style: TextStyle(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement Edit
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('编辑功能开发中')));
+                      },
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      label: const Text('编辑记录', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleInfo(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSlate400),
+        const SizedBox(width: 4),
+        Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate900)),
+      ],
+    );
+  }
+
+  void _deleteSession(BuildContext context, WidgetRef ref, TrainingSession session) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除记录'),
+        content: const Text('确定要删除这条训练记录吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              ref.read(sessionProvider.notifier).deleteSession(session.id);
+              ref.read(selectedSessionProvider.notifier).state = null; // Clear selection
+              Navigator.pop(context); // Go back to list
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('记录已删除')),
+              );
+            },
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -207,22 +274,6 @@ class DetailsScreen extends ConsumerWidget {
     } else {
       return 'Good session with ${consistency.toStringAsFixed(1)}% consistency and ${avgScore.toStringAsFixed(1)} average score. Continue practicing form fundamentals and breathing control for better results.';
     }
-  }
-
-  Widget _detailItem(IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(color: AppColors.backgroundLight, borderRadius: BorderRadius.circular(24)),
-          child: Icon(icon, color: AppColors.textSlate400, size: 22),
-        ),
-        const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSlate900)),
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSlate400)),
-      ],
-    );
   }
 
   Widget _endItem(String endNum, String total, List<int> scores) {
@@ -272,3 +323,4 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 }
+

@@ -254,7 +254,15 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('第 ${currentEnd.endNumber} 组记录', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
-                    Text('${currentEnd.totalScore} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
+                    Row(
+                      children: [
+                        Text('${currentEnd.totalScore} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
+                        if (scoringState.isSessionComplete) ...[
+                          const SizedBox(width: 8),
+                          _oneMoreEndButton(),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -262,7 +270,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ...currentEnd.arrows.map((arrow) => _scoreBox(arrow.pointValue, _getScoreColor(arrow.pointValue), _getScoreTextColor(arrow.pointValue))),
-                    ...List.generate((6 - currentEnd.arrows.length).toInt(), (_) => _emptyScoreBox()),
+                    ...List.generate((scoringState.arrowsPerEnd - currentEnd.arrows.length).toInt(), (_) => _emptyScoreBox()),
                   ],
                 ),
               ],
@@ -275,7 +283,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           ),
           ...completedEnds.reversed.map((end) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildHistoryRow('第 ${end.endNumber} 组', '${end.totalScore}', List<int>.from(end.arrows.map((a) => a.pointValue))),
+                child: GestureDetector(
+                  onTap: () => ref.read(scoringProvider.notifier).editEnd(end),
+                  child: _buildHistoryRow('第 ${end.endNumber} 组', '${end.totalScore}', List<int>.from(end.arrows.map((a) => a.pointValue))),
+                ),
               )),
         ],
       ],
@@ -293,14 +304,34 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.green.withOpacity(0.3), width: 2)),
+            child: Column(
               children: [
-                if (currentEnd != null) ...[
-                  ...currentEnd.arrows.map((arrow) => _scoreBoxSmall(arrow.pointValue, _getScoreColor(arrow.pointValue))),
-                  ...List.generate((6 - currentEnd.arrows.length).toInt(), (_) => _scoreBoxSmallEmpty()),
-                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('第 ${currentEnd?.endNumber ?? 1} 组记录', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Row(
+                      children: [
+                        Text('${currentEnd?.totalScore ?? 0} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
+                        if (scoringState.isSessionComplete) ...[
+                          const SizedBox(width: 8),
+                          _oneMoreEndButton(),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (currentEnd != null) ...[
+                      ...currentEnd.arrows.map((arrow) => _scoreBox(arrow.pointValue, _getScoreColor(arrow.pointValue), _getScoreTextColor(arrow.pointValue))),
+                      ...List.generate((scoringState.arrowsPerEnd - currentEnd.arrows.length).toInt(), (_) => _emptyScoreBox()),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -352,6 +383,25 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+        ),
+      ),
+    );
+  }
+
+  Widget _oneMoreEndButton() {
+    return GestureDetector(
+      onTap: () {
+        ref.read(scoringProvider.notifier).addOneMoreEnd();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Text(
+          '再来一组',
+          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ),
     );

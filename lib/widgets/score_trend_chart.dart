@@ -27,12 +27,32 @@ class ScoreTrendChart extends StatelessWidget {
 
     final lineColor = color ?? AppColors.primary;
 
+    // Calculate dynamic Y-axis range
+    final double maxScore = scores.reduce((curr, next) => curr > next ? curr : next);
+    final double minScore = scores.reduce((curr, next) => curr < next ? curr : next);
+    
+    // Add padding to range
+    final double maxY = maxScore > 10 ? maxScore * 1.1 : 10.5; // If total score, add 10% padding. If average (<=10), use 10.5
+    final double minY = minScore > 10 ? minScore * 0.9 : 0; // If total score, sub 10% padding. If average, use 0
+
     return LineChart(
       LineChartData(
         gridData: FlGridData(show: false),
         titlesData: FlTitlesData(
           show: !isCompact,
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: !isCompact,
+              reservedSize: 30,
+              getTitlesWidget: (value, meta) {
+                if (value == minY || value == maxY) return const SizedBox.shrink();
+                return Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                );
+              },
+            ),
+          ),
           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
@@ -56,8 +76,8 @@ class ScoreTrendChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         minX: 0,
         maxX: (scores.length - 1).toDouble(),
-        minY: 0,
-        maxY: 10.5, // slightly above 10 for padding
+        minY: minY,
+        maxY: maxY,
         lineBarsData: [
           LineChartBarData(
             spots: scores.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
@@ -65,7 +85,7 @@ class ScoreTrendChart extends StatelessWidget {
             color: lineColor,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: false),
+            dotData: FlDotData(show: !isCompact),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
