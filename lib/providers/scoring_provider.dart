@@ -31,6 +31,8 @@ class ScoringState {
   final String? error;
   final int maxEnds; // 最大组数
   final int arrowsPerEnd; // 每组箭数
+  final int focusedEndIndex;
+  final int focusedArrowIndex;
 
   const ScoringState({
     this.currentSession,
@@ -40,10 +42,12 @@ class ScoringState {
     this.error,
     this.maxEnds = 10,
     this.arrowsPerEnd = 6,
+    this.focusedEndIndex = 0,
+    this.focusedArrowIndex = 0,
   });
 
   /// Get current end number
-  int get currentEndNumber => currentEnd?.endNumber ?? 1;
+  int get currentEndNumber => focusedEndIndex + 1;
 
   /// Get total score
   int get totalScore => currentSession?.totalScore ?? 0;
@@ -71,6 +75,8 @@ class ScoringState {
     String? error,
     int? maxEnds,
     int? arrowsPerEnd,
+    int? focusedEndIndex,
+    int? focusedArrowIndex,
   }) {
     return ScoringState(
       currentSession: currentSession ?? this.currentSession,
@@ -80,6 +86,8 @@ class ScoringState {
       error: error,
       maxEnds: maxEnds ?? this.maxEnds,
       arrowsPerEnd: arrowsPerEnd ?? this.arrowsPerEnd,
+      focusedEndIndex: focusedEndIndex ?? this.focusedEndIndex,
+      focusedArrowIndex: focusedArrowIndex ?? this.focusedArrowIndex,
     );
   }
 }
@@ -120,52 +128,106 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     );
   }
 
-  /// Add an arrow score
+  /// Set focus to a specific arrow
+  void setFocus(int endIdx, int arrowIdx) {
+    // Ensure indices are within bounds
+    if (endIdx < 0 || arrowIdx < 0 || arrowIdx >= state.arrowsPerEnd) return;
+    
+    // Auto-create ends if focusing on a future end (e.g. via auto-advance)
+    // But typically setFocus is user-initiated.
+    // If user clicks a future end placeholder, we should probably allow it only if previous ends are done?
+    // For now, let's just update the state.
+    state = state.copyWith(
+      focusedEndIndex: endIdx,
+      focusedArrowIndex: arrowIdx,
+    );
+  }
+
+  /// Add an arrow score with focus-based logic
   Future<bool> addArrow(int score, {Offset? position}) async {
-    if (state.currentEnd == null) {
-      state = state.copyWith(error: 'No active end');
+    if (state.currentSession == null) {
+      state = state.copyWith(error: 'No active session');
       return false;
     }
 
     try {
-      // Create arrow
-      final arrow = _scoringService.createArrow(score, position: position);
-
-      // Add to current end
-      final updatedEnd = _scoringService.addArrowToEnd(state.currentEnd!, arrow);
-
-      // Update session if exists
-      TrainingSession? updatedSession = state.currentSession;
-      if (updatedSession != null) {
-        // Remove old version of end if it exists
-        final filteredEnds = updatedSession.ends.where((e) => e.id != updatedEnd.id).toList();
-        updatedSession = updatedSession.copyWith(ends: [...filteredEnds, updatedEnd]);
+      // 1. Determine target End
+      // If focusedEndIndex exceeds current ends length, we need to create a new end
+      List<End> currentEnds = [...state.currentSession!.ends];
+      End? targetEnd;
+      
+      if (state.focusedEndIndex < currentEnds.length) {
+        targetEnd = currentEnds[state.focusedEndIndex];
+      } else if (state.focusedEndIndex == currentEnds.length) {
+        // Create new end
+        targetEnd = _scoringService.createEnd(state.focusedEndIndex + 1, maxArrows: state.arrowsPerEnd);
+        currentEnds.add(targetEnd);
+      } else {
+        // Gap in ends (shouldn't happen with sequential logic), but handle gracefully
+        return false;
       }
 
+      // 2. Create or Update Arrow
+      List<Arrow> arrows = [...targetEnd.arrows];
+      final newArrow = _scoringService.createArrow(score, position: position);
+
+      if (state.focusedArrowIndex < arrows.length) {
+        // Update existing arrow
+        arrows[state.focusedArrowIndex] = newArrow;
+      } else if (state.focusedArrowIndex == arrows.length) {
+        // Add new arrow
+        arrows.add(newArrow);
+      } else {
+        // Gap in arrows, fill with 0s? Or prevent input.
+        // For simplicity, we only allow input if previous arrows exist or we are at the next slot.
+        // But the user might want to edit "Arrow 3" before "Arrow 2". 
+        // Let's assume we fill gaps with Miss (0) if needed, OR just append.
+        // Given the requirement "insert into green box", the UI will guide sequential input usually.
+        // Let's just append if index is too high to be safe.
+        arrows.add(newArrow);
+      }
+
+      // 3. Update End
+      final updatedEnd = targetEnd.copyWith(arrows: arrows);
+      if (state.focusedEndIndex < currentEnds.length) {
+        currentEnds[state.focusedEndIndex] = updatedEnd; // Replace if existed before this function call (logic above modified currentEnds list)
+        // Actually, logic above added to list if new.
+        // Let's rely on index.
+        currentEnds[state.focusedEndIndex] = updatedEnd;
+      }
+
+      // 4. Update Session
+      final updatedSession = state.currentSession!.copyWith(ends: currentEnds);
+      
+      // 5. Calculate Next Focus
+      int nextEndIdx = state.focusedEndIndex;
+      int nextArrowIdx = state.focusedArrowIndex + 1;
+
+      if (nextArrowIdx >= state.arrowsPerEnd) {
+        // End completed, move to next end
+        nextEndIdx++;
+        nextArrowIdx = 0;
+      }
+
+      // 6. Update State
       state = state.copyWith(
-        currentEnd: updatedEnd,
         currentSession: updatedSession,
+        currentEnd: updatedEnd, // Keep currentEnd pointing to the one just modified
+        focusedEndIndex: nextEndIdx,
+        focusedArrowIndex: nextArrowIdx,
         error: null,
       );
 
-      // Check if end is complete
-      if (updatedEnd.arrows.length >= state.arrowsPerEnd) {
-        // Complete current end and move to next
-        await _completeCurrentEnd();
-
-        // Check if all ends are complete
-        if (state.completedEndsCount >= state.maxEnds) {
-          // Auto save and return true to indicate session complete
-          // NOTE: We do NOT call saveSession here automatically to avoid early state cleanup issues.
-          // The UI will handle the final save call.
-          return true;
-        } else {
-          // Start next end
-          _startNextEnd();
-        }
-      }
-
-      return false;
+      // 7. Auto-create next end if needed (for UI display)
+      // If we moved focus to a new end index that doesn't exist, we can optionally create it now
+      // or let the UI render a placeholder.
+      // The requirement says "insert second group input box below".
+      // If we are at the last arrow of last end, and not yet at maxEnds, we should probably prepare next.
+      // But let's leave it to lazy creation in the next addArrow call or manual tap.
+      // Actually, for better UX, if we auto-advanced focus, the green box should appear on the next empty slot.
+      // If that slot is in a non-existent end, we might want to make sure UI handles it.
+      
+      return false; // Never auto-complete/save
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return false;

@@ -62,39 +62,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Widget build(BuildContext context) {
     final scoringState = ref.watch(scoringProvider);
 
-    // If no active session, but we just finished one (checking isSaving or similar logic could help, but simply relying on hasActiveSession is tricky).
-    // However, since we now modified saveSession to NOT clear the session, hasActiveSession should remain true until we manually reset it.
-    // So the previous issue of flashing empty state is resolved by the provider change.
-    
-    // But if we entered this screen without a session (e.g. direct navigation, though usually via setup), we show empty state.
     if (!scoringState.hasActiveSession) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.add_circle_outline, size: 64, color: AppColors.primary),
-              const SizedBox(height: 24),
-              const Text('暂无训练', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text('点击下方开始计分', style: TextStyle(color: AppColors.textSlate500)),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _startNewSession,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('开始训练'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyState();
     }
 
     return Scaffold(
@@ -115,262 +84,354 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       ),
       body: Column(
         children: [
-          // Header Stats
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildHeaderStat(
-                    '当前组',
-                    '${scoringState.currentEndNumber}',
-                    '/${scoringState.maxEnds}',
-                    Colors.white,
-                    AppColors.textSlate900,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildHeaderStat(
-                    '总分',
-                    '${scoringState.totalScore}',
-                    '',
-                    AppColors.primary,
-                    Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Toggle
+          // Header Stats & Toggle
           Container(
-            height: 44,
-            width: 260,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: AppColors.backgroundLight,
+            child: Column(
               children: [
-                _buildToggleBtn(
-                  '靶面视图',
-                  Icons.track_changes,
-                  scoringState.isTargetView,
-                  () => ref.read(scoringProvider.notifier).toggleView(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildHeaderStat(
+                        '当前组',
+                        '${scoringState.currentEndNumber}',
+                        '/${scoringState.maxEnds}',
+                        Colors.white,
+                        AppColors.textSlate900,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildHeaderStat(
+                        '总分',
+                        '${scoringState.totalScore}',
+                        '',
+                        AppColors.primary,
+                        Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                _buildToggleBtn(
-                  '列表视图',
-                  Icons.grid_view,
-                  !scoringState.isTargetView,
-                  () => ref.read(scoringProvider.notifier).toggleView(),
+                const SizedBox(height: 12),
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildToggleBtn(
+                        '列表视图',
+                        Icons.grid_view,
+                        !scoringState.isTargetView,
+                        () => ref.read(scoringProvider.notifier).toggleView(),
+                      ),
+                      _buildToggleBtn(
+                        '靶面视图',
+                        Icons.track_changes,
+                        scoringState.isTargetView,
+                        () => ref.read(scoringProvider.notifier).toggleView(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
 
+          // Scrollable List Area
           Expanded(
-            child: scoringState.isTargetView ? _buildTargetView(scoringState) : _buildGridView(scoringState),
+            child: _buildSessionList(scoringState),
           ),
 
-          if (!scoringState.isTargetView) _buildKeypad(),
-          if (scoringState.isTargetView) _buildTargetFooter(),
+          // Fixed Bottom Panel
+          if (!scoringState.isTargetView) _buildKeypad() else _buildTargetPanel(scoringState),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderStat(String label, String value, String sub, Color bg, Color text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Column(
-        children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: text.withOpacity(0.6))),
-          const SizedBox(height: 4),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(text: value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: text)),
-                TextSpan(text: " $sub", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text.withOpacity(0.5))),
-              ],
+  Widget _buildEmptyState() {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_circle_outline, size: 64, color: AppColors.primary),
+            const SizedBox(height: 24),
+            const Text('暂无训练', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('点击下方开始计分', style: TextStyle(color: AppColors.textSlate500)),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _startNewSession,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('开始训练'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleBtn(String label, IconData icon, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : [],
-          ),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isActive ? AppColors.primary : AppColors.textSlate500),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isActive ? AppColors.primary : AppColors.textSlate500)),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildGridView(dynamic scoringState) {
-    final currentEnd = scoringState.currentEnd;
-    final session = scoringState.currentSession;
-    final completedEnds = session?.ends.where((e) => e.id != currentEnd?.id).toList() ?? [];
+  Widget _buildSessionList(dynamic scoringState) {
+    final ends = scoringState.currentSession?.ends ?? [];
+    final maxEnds = scoringState.maxEnds;
+    final currentEndNum = scoringState.currentEndNumber;
+    
+    // We want to render a list of cards, one for each end.
+    // We should render up to maxEnds (or more if they added extra).
+    // The number of items = max(maxEnds, ends.length) + (has extra button ? 1 : 0)
+    // Actually, we just iterate up to maxEnds, filling with placeholder if end doesn't exist.
+    // If ends.length > maxEnds, we show all of them.
+    final displayCount = max(maxEnds, ends.length);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Current End
-        if (currentEnd != null)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.green.withOpacity(0.3), width: 2),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('第 ${currentEnd.endNumber} 组记录', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
-                    Row(
-                      children: [
-                        Text('${currentEnd.totalScore} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
-                        if (scoringState.isSessionComplete) ...[
-                          const SizedBox(width: 8),
-                          _oneMoreEndButton(),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ...currentEnd.arrows.map((arrow) => _scoreBox(arrow.pointValue, _getScoreColor(arrow.pointValue), _getScoreTextColor(arrow.pointValue))),
-                    ...List.generate((scoringState.arrowsPerEnd - currentEnd.arrows.length).toInt(), (_) => _emptyScoreBox()),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        if (completedEnds.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: Text('历史记录', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400, letterSpacing: 1.5))),
-          ),
-          ...completedEnds.reversed.map((end) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: GestureDetector(
-                  onTap: () => ref.read(scoringProvider.notifier).editEnd(end),
-                  child: _buildHistoryRow('第 ${end.endNumber} 组', '${end.totalScore}', List<int>.from(end.arrows.map((a) => a.pointValue))),
-                ),
-              )),
-        ],
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: displayCount + 1, // +1 for "One More End" button
+      itemBuilder: (context, index) {
+        if (index == displayCount) {
+          // Footer Button
+          if (ends.length >= maxEnds) {
+             return Padding(
+               padding: const EdgeInsets.only(top: 16),
+               child: _oneMoreEndButton(),
+             );
+          }
+          return const SizedBox.shrink();
+        }
+
+        final endNumber = index + 1;
+        // Find existing end data if available
+        final End? endData = index < ends.length ? ends[index] : null;
+        
+        // Determine status
+        final isCurrent = index == scoringState.focusedEndIndex;
+        final isPast = index < scoringState.focusedEndIndex;
+        final isFuture = index > scoringState.focusedEndIndex && endData == null;
+
+        return _buildEndCard(
+          endNumber: endNumber,
+          endData: endData,
+          isCurrent: isCurrent,
+          isPast: isPast,
+          isFuture: isFuture,
+          scoringState: scoringState,
+          endIndex: index,
+        );
+      },
     );
   }
 
-  Widget _buildTargetView(dynamic scoringState) {
-    final currentEnd = scoringState.currentEnd;
-
-    return Center(
+  Widget _buildEndCard({
+    required int endNumber,
+    required End? endData,
+    required bool isCurrent,
+    required bool isPast,
+    required bool isFuture,
+    required dynamic scoringState,
+    required int endIndex,
+  }) {
+    // Calculate total score for this end
+    final endScore = endData?.totalScore ?? 0;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isCurrent 
+            ? Border.all(color: AppColors.primary.withOpacity(0.5), width: 1.5)
+            : Border.all(color: Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isFuture ? 0.02 : 0.05), 
+            blurRadius: 8,
+            offset: const Offset(0, 2)
+          )
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          // Mini score strip
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.green.withOpacity(0.3), width: 2)),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('第 ${currentEnd?.endNumber ?? 1} 组记录', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
-                    Row(
-                      children: [
-                        Text('${currentEnd?.totalScore ?? 0} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
-                        if (scoringState.isSessionComplete) ...[
-                          const SizedBox(width: 8),
-                          _oneMoreEndButton(),
-                        ],
-                      ],
-                    ),
-                  ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '第 $endNumber 组', 
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.bold, 
+                  color: isFuture ? AppColors.textSlate300 : AppColors.textSlate900
+                )
+              ),
+              if (!isFuture)
+                Text(
+                  '得分: $endScore', 
+                  style: const TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w900, 
+                    color: AppColors.primary
+                  )
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (currentEnd != null) ...[
-                      ...currentEnd.arrows.map((arrow) => _scoreBox(arrow.pointValue, _getScoreColor(arrow.pointValue), _getScoreTextColor(arrow.pointValue))),
-                      ...List.generate((scoringState.arrowsPerEnd - currentEnd.arrows.length).toInt(), (_) => _emptyScoreBox()),
-                    ],
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(height: 20),
-          // Target Face
-          GestureDetector(
-            onTapDown: (details) => _handleTargetTap(details.localPosition),
-            child: SizedBox(
-              width: 320,
-              height: 320,
-              child: Stack(
-                children: [
-                  CustomPaint(
-                    painter: TargetFacePainter(
-                      targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(scoringState.arrowsPerEnd, (arrowIndex) {
+              // Get arrow data if available
+              Arrow? arrow;
+              if (endData != null && arrowIndex < endData.arrows.length) {
+                arrow = endData.arrows[arrowIndex];
+              }
+
+              final isFocused = (endIndex == scoringState.focusedEndIndex) && (arrowIndex == scoringState.focusedArrowIndex);
+              
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (endIndex <= (scoringState.currentSession?.ends.length ?? 0)) {
+                       ref.read(scoringProvider.notifier).setFocus(endIndex, arrowIndex);
+                    }
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isFocused ? AppColors.primary.withOpacity(0.05) : AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isFocused 
+                          ? Border.all(color: AppColors.primary, width: 2)
+                          : Border.all(color: Colors.transparent),
                     ),
-                    child: Stack(
-                      children: [
-                        if (currentEnd != null)
-                          ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
-                            final position = arrow.position!;
-                            return _arrowMarker(160.0 + position.dy * 140, 160.0 + position.dx * 140);
-                          }).toList(),
-                      ],
+                    child: Text(
+                      arrow != null ? '${arrow.pointValue == 11 ? 'X' : (arrow.pointValue == 0 ? 'M' : arrow.pointValue)}' : (isFuture ? '' : '${arrowIndex + 1}.'),
+                      style: TextStyle(
+                        fontSize: arrow != null ? 18 : 12,
+                        fontWeight: arrow != null ? FontWeight.w900 : FontWeight.normal,
+                        color: arrow != null 
+                            ? AppColors.textSlate900 
+                            : AppColors.textSlate300,
+                      ),
                     ),
                   ),
-                  ..._ripples.map((ripple) => RippleWidget(
-                    key: ValueKey(ripple.id),
-                    position: ripple.position,
-                  )).toList(),
-                ],
-              ),
-            ),
+                ),
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildTargetPanel(dynamic scoringState) {
+    return Container(
+      height: 380, // Fixed height for target panel
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          // Target Face
+          Expanded(
+            child: Center(
+              child: GestureDetector(
+                onTapDown: (details) => _handleTargetTap(details.localPosition),
+                child: SizedBox(
+                  width: 300,
+                  height: 300,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CustomPaint(
+                        size: const Size(300, 300),
+                        painter: TargetFacePainter(
+                          targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
+                        ),
+                      ),
+                      // Show marker for current focused arrow if it has a position
+                      // Or show all markers for current end?
+                      // The requirement says "Target View". Usually you want to see where you hit.
+                      // Let's show markers for the *currently focused end*
+                      if (scoringState.focusedEndIndex < (scoringState.currentSession?.ends.length ?? 0))
+                         ...scoringState.currentSession!.ends[scoringState.focusedEndIndex].arrows
+                             .where((a) => a.position != null)
+                             .map((arrow) {
+                               final position = arrow.position!;
+                               // normalized position (-1 to 1) -> scaled to 300x300
+                               // center 150, radius 140 (drawable)
+                               return _arrowMarker(150.0 + position.dy * 140 - 6, 150.0 + position.dx * 140 - 6);
+                             }).toList(),
+                             
+                      ..._ripples.map((ripple) => RippleWidget(
+                        key: ValueKey(ripple.id),
+                        position: ripple.position,
+                      )).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Footer Buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => ref.read(scoringProvider.notifier).removeLastArrow(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: AppColors.borderLight),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('移除成绩', style: TextStyle(color: AppColors.textSlate500)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _saveSession,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('完成成绩', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   Widget _arrowMarker(double top, double left) {
     return Positioned(
       top: top,
@@ -384,33 +445,50 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
         ),
+        child: const Center(
+          child: Text(
+            '', // Could put arrow number here
+            style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
     );
   }
 
+  // Override oneMoreEndButton to be a full width button
   Widget _oneMoreEndButton() {
-    return GestureDetector(
-      onTap: () {
-        ref.read(scoringProvider.notifier).addOneMoreEnd();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Text(
-          '再来一组',
-          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          ref.read(scoringProvider.notifier).addOneMoreEnd();
+        },
+        icon: const Icon(Icons.add, color: AppColors.primary),
+        label: const Text('再来一组', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: const BorderSide(color: AppColors.primary),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );
   }
 
+  // Update keypad to be fixed bottom panel
   Widget _buildKeypad() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
