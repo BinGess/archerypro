@@ -278,11 +278,16 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       // Save to storage
       await _sessionService.saveSession(completedSession);
 
-      // Reset state
-      state = const ScoringState();
+      // Do NOT reset state here to prevent UI from flashing to empty state before navigation
+      state = state.copyWith(isSaving: false, currentSession: completedSession);
     } catch (e) {
       state = state.copyWith(isSaving: false, error: e.toString());
     }
+  }
+
+  /// Reset session state
+  void resetSession() {
+    state = const ScoringState();
   }
 
   /// Cancel current session

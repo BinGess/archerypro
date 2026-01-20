@@ -62,6 +62,11 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Widget build(BuildContext context) {
     final scoringState = ref.watch(scoringProvider);
 
+    // If no active session, but we just finished one (checking isSaving or similar logic could help, but simply relying on hasActiveSession is tricky).
+    // However, since we now modified saveSession to NOT clear the session, hasActiveSession should remain true until we manually reset it.
+    // So the previous issue of flashing empty state is resolved by the provider change.
+    
+    // But if we entered this screen without a session (e.g. direct navigation, though usually via setup), we show empty state.
     if (!scoringState.hasActiveSession) {
       return Scaffold(
         backgroundColor: AppColors.backgroundLight,
@@ -528,12 +533,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         ),
       );
 
-      // Navigate back to home
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      });
+      // Navigate back to home immediately
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      
+      // Reset state after navigation
+      ref.read(scoringProvider.notifier).resetSession();
     }
   }
 
@@ -627,7 +633,9 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      _startNewSession();
+      // Exit after manual save
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      ref.read(scoringProvider.notifier).resetSession();
     }
   }
 
