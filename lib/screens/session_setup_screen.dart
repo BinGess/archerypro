@@ -108,16 +108,18 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     final totalArrows = _endCount * _arrowsPerEnd;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight, // Use light background for card contrast
       appBar: AppBar(
-        title: const Text('训练设置'),
+        title: const Text('训练设置', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          TextButton(
             onPressed: () {
               setState(() {
                 _selectedBowType = BowType.recurve;
@@ -127,421 +129,304 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 _arrowsPerEnd = 6;
                 _environment = EnvironmentType.indoor;
                 _isCompetitionMode = false;
+                _isTargetMode = false;
               });
             },
+            child: const Text('重置', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
-
-            // Equipment Selection
-            _buildSection(
+            // 1. 器材设置 (Equipment)
+            _buildCardGroup(
+              title: '器材设置',
               icon: Icons.sports_tennis,
-              title: '器材',
-              child: Column(
-                children: [
-                  _buildDropdown(
-                    label: '弓型',
+              children: [
+                _buildRowItem(
+                  label: '弓种',
+                  child: DropdownButton<String>(
                     value: _selectedBowType.displayName,
-                    items: BowType.values.map((type) => type.displayName).toList(),
+                    underline: const SizedBox(),
+                    items: BowType.values.map((type) => DropdownMenuItem(
+                      value: type.displayName,
+                      child: Text(type.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    )).toList(),
                     onChanged: (value) {
                       setState(() {
-                        _selectedBowType = BowType.values.firstWhere(
-                          (type) => type.displayName == value,
-                        );
+                        _selectedBowType = BowType.values.firstWhere((type) => type.displayName == value);
                       });
                     },
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: TextField(
                     decoration: InputDecoration(
-                      labelText: '型号',
                       hintText: _getBowModelName(_selectedBowType),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
+                    style: const TextStyle(fontSize: 14, color: AppColors.textSlate500),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
 
-            // Distance
-            _buildSection(
-              icon: Icons.straighten,
-              title: '距离',
-              child: _buildDropdown(
-                label: '射击距离',
-                value: '${_distance.toInt()}m',
-                items: _distanceOptions.map((d) => '${d.toInt()}m').toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _distance = double.parse(value!.replaceAll('m', ''));
-                  });
-                },
-              ),
-            ),
-
-            // Target Face Size
-            _buildSection(
-              icon: Icons.radio_button_checked,
-              title: '靶面',
-              child: _buildDropdown(
-                label: '靶面大小',
-                value: '${_targetFaceSize}cm',
-                items: _targetSizeOptions.map((s) => '${s}cm').toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _targetFaceSize = int.parse(value!.replaceAll('cm', ''));
-                  });
-                },
-              ),
-            ),
-
-            // Training Volume
-            _buildSection(
-              icon: Icons.format_list_numbered,
-              title: '训练量',
-              child: Column(
-                children: [
-                  _buildCounter(
-                    label: '组数',
-                    value: _endCount,
-                    onIncrement: () => setState(() => _endCount++),
-                    onDecrement: () => setState(() {
-                      if (_endCount > 1) _endCount--;
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildCounter(
-                    label: '每组箭数',
-                    value: _arrowsPerEnd,
-                    onIncrement: () => setState(() {
-                      if (_arrowsPerEnd < 12) _arrowsPerEnd++;
-                    }),
-                    onDecrement: () => setState(() {
-                      if (_arrowsPerEnd > 1) _arrowsPerEnd--;
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
+            // 2. 场地与环境 (Venue & Environment)
+            _buildCardGroup(
+              title: '场地环境',
+              icon: Icons.place,
+              children: [
+                _buildRowItem(
+                  label: '环境',
+                  child: Container(
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
+                      color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('总箭数', style: TextStyle(fontSize: 14)),
-                        Text(
-                          '$totalArrows 支箭',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        _buildToggleOption('室内', _environment == EnvironmentType.indoor, () => setState(() => _environment = EnvironmentType.indoor)),
+                        _buildToggleOption('室外', _environment == EnvironmentType.outdoor, () => setState(() => _environment = EnvironmentType.outdoor)),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // Environment
-            _buildSection(
-              icon: Icons.location_on_outlined,
-              title: '训练场地',
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildEnvironmentButton(
-                      label: '室内',
-                      icon: Icons.home,
-                      isSelected: _environment == EnvironmentType.indoor,
-                      onTap: () => setState(() => _environment = EnvironmentType.indoor),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildEnvironmentButton(
-                      label: '室外',
-                      icon: Icons.wb_sunny,
-                      isSelected: _environment == EnvironmentType.outdoor,
-                      onTap: () => setState(() => _environment = EnvironmentType.outdoor),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Competition Mode
-            _buildSection(
-              icon: Icons.emoji_events,
-              title: '比赛模式',
-              child: SwitchListTile(
-                title: const Text('启用比赛模式'),
-                subtitle: const Text('按照比赛规则进行训练'),
-                value: _isCompetitionMode,
-                onChanged: (value) => setState(() => _isCompetitionMode = value),
-                activeColor: AppColors.primary,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-
-            // Scoring View Mode
-            _buildSection(
-              icon: Icons.view_quilt,
-              title: '计分视图',
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderLight),
                 ),
-                child: Row(
+                const Divider(height: 1),
+                Row(
                   children: [
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _isTargetMode = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: !_isTargetMode ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: !_isTargetMode ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.grid_view, size: 18, color: !_isTargetMode ? AppColors.primary : AppColors.textSlate500),
-                              const SizedBox(width: 8),
-                              Text(
-                                '列表模式',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: !_isTargetMode ? AppColors.primary : AppColors.textSlate500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _buildDropdownItem(
+                        label: '距离', 
+                        value: '${_distance.toInt()}m',
+                        items: _distanceOptions.map((d) => '${d.toInt()}m').toList(),
+                        onChanged: (v) => setState(() => _distance = double.parse(v!.replaceAll('m', ''))),
                       ),
                     ),
+                    Container(width: 1, height: 40, color: Colors.grey.shade200),
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _isTargetMode = true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _isTargetMode ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: _isTargetMode ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.track_changes, size: 18, color: _isTargetMode ? AppColors.primary : AppColors.textSlate500),
-                              const SizedBox(width: 8),
-                              Text(
-                                '靶面模式',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: _isTargetMode ? AppColors.primary : AppColors.textSlate500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _buildDropdownItem(
+                        label: '靶面', 
+                        value: '${_targetFaceSize}cm',
+                        items: _targetSizeOptions.map((s) => '${s}cm').toList(),
+                        onChanged: (v) => setState(() => _targetFaceSize = int.parse(v!.replaceAll('cm', ''))),
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
+            const SizedBox(height: 16),
 
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: ElevatedButton(
-            onPressed: _startTraining,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // 3. 训练规则 (Rules)
+            _buildCardGroup(
+              title: '训练规则',
+              icon: Icons.rule,
               children: [
-                Icon(Icons.play_arrow, size: 24),
-                SizedBox(width: 8),
-                Text(
-                  '开始训练',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildCompactCounter('组数', _endCount, 
+                          () => setState(() => _endCount++), 
+                          () => setState(() { if (_endCount > 1) _endCount--; })
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: _buildCompactCounter('每组箭数', _arrowsPerEnd, 
+                          () => setState(() { if (_arrowsPerEnd < 12) _arrowsPerEnd++; }), 
+                          () => setState(() { if (_arrowsPerEnd > 1) _arrowsPerEnd--; })
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  color: AppColors.primary.withOpacity(0.05),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('预计总箭数', style: TextStyle(fontSize: 12, color: AppColors.textSlate500)),
+                      Text('$totalArrows 支', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ],
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+
+            // 4. 偏好设置 (Preferences)
+            _buildCardGroup(
+              title: '显示与模式',
+              icon: Icons.tune,
+              children: [
+                _buildRowItem(
+                  label: '计分视图',
+                  child: Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildToggleOption('列表', !_isTargetMode, () => setState(() => _isTargetMode = false)),
+                        _buildToggleOption('靶面', _isTargetMode, () => setState(() => _isTargetMode = true)),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  title: const Text('比赛模式', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  value: _isCompetitionMode,
+                  onChanged: (val) => setState(() => _isCompetitionMode = val),
+                  activeColor: AppColors.primary,
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 100), // Bottom padding for FAB
+          ],
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FloatingActionButton.extended(
+            onPressed: _startTraining,
+            backgroundColor: AppColors.primary,
+            elevation: 4,
+            label: const Text('开始训练', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            icon: const Icon(Icons.play_arrow, color: Colors.white),
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  Widget _buildSection({
-    required IconData icon,
-    required String title,
-    required Widget child,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildCardGroup({required String title, required IconData icon, required List<Widget> children}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Row(
             children: [
-              Icon(icon, size: 20, color: AppColors.textSlate500),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSlate900,
-                ),
-              ),
+              Icon(icon, size: 16, color: AppColors.textSlate500),
+              const SizedBox(width: 6),
+              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textSlate500)),
             ],
           ),
-          const SizedBox(height: 12),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRowItem({required String label, required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<String> items,
-    required Function(String?) onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+  Widget _buildToggleOption(String text, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)] : [],
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? AppColors.textSlate900 : AppColors.textSlate500,
+          ),
+        ),
       ),
-      items: items.map((item) {
-        return DropdownMenuItem(value: item, child: Text(item));
-      }).toList(),
-      onChanged: onChanged,
     );
   }
 
-  Widget _buildCounter({
-    required String label,
-    required int value,
-    required VoidCallback onIncrement,
-    required VoidCallback onDecrement,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildDropdownItem({required String label, required String value, required List<String> items, required Function(String?) onChanged}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate400)),
+          DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            underline: const SizedBox(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontWeight: FontWeight.w600)))).toList(),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactCounter(String label, int value, VoidCallback onIncrement, VoidCallback onDecrement) {
+    return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 14)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate400)),
+        const SizedBox(height: 8),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton(
-              onPressed: onDecrement,
-              icon: const Icon(Icons.remove_circle_outline),
-              color: AppColors.primary,
+            InkWell(
+              onTap: onDecrement,
+              child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.remove, size: 20, color: AppColors.primary)),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.borderLight),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                value.toString(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              constraints: const BoxConstraints(minWidth: 32),
+              alignment: Alignment.center,
+              child: Text('$value', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            IconButton(
-              onPressed: onIncrement,
-              icon: const Icon(Icons.add_circle_outline),
-              color: AppColors.primary,
+            InkWell(
+              onTap: onIncrement,
+              child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.add, size: 20, color: AppColors.primary)),
             ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildEnvironmentButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.borderLight,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : AppColors.textSlate500,
-              size: 32,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSlate500,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
