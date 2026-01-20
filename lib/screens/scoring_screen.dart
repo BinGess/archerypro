@@ -89,54 +89,25 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: AppColors.backgroundLight,
-            child: Column(
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildHeaderStat(
-                        '当前组',
-                        '${scoringState.currentEndNumber}',
-                        '/${scoringState.maxEnds}',
-                        Colors.white,
-                        AppColors.textSlate900,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildHeaderStat(
-                        '总分',
-                        '${scoringState.totalScore}',
-                        '',
-                        AppColors.primary,
-                        Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 40,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(10),
+                Expanded(
+                  child: _buildHeaderStat(
+                    '当前组',
+                    '${scoringState.currentEndNumber}',
+                    '/${scoringState.maxEnds}',
+                    Colors.white,
+                    AppColors.textSlate900,
                   ),
-                  child: Row(
-                    children: [
-                      _buildToggleBtn(
-                        '列表视图',
-                        Icons.grid_view,
-                        !scoringState.isTargetView,
-                        () => ref.read(scoringProvider.notifier).toggleView(),
-                      ),
-                      _buildToggleBtn(
-                        '靶面视图',
-                        Icons.track_changes,
-                        scoringState.isTargetView,
-                        () => ref.read(scoringProvider.notifier).toggleView(),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildHeaderStat(
+                    '总分',
+                    '${scoringState.totalScore}',
+                    '',
+                    AppColors.primary,
+                    Colors.white,
                   ),
                 ),
               ],
@@ -210,29 +181,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
-  Widget _buildToggleBtn(String label, IconData icon, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : [],
-          ),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isActive ? AppColors.primary : AppColors.textSlate500),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isActive ? AppColors.primary : AppColors.textSlate500)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSessionList(dynamic scoringState) {
     final ends = scoringState.currentSession?.ends ?? [];

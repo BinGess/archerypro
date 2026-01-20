@@ -108,6 +108,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     EnvironmentType environment = EnvironmentType.indoor,
     int maxEnds = 10,
     int arrowsPerEnd = 6,
+    bool isTargetMode = false,
   }) {
     final session = _sessionService.createSession(
       equipment: equipment,
@@ -125,6 +126,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       error: null,
       maxEnds: maxEnds,
       arrowsPerEnd: arrowsPerEnd,
+      isTargetView: isTargetMode,
     );
   }
 

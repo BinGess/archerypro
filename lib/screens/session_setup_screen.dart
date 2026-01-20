@@ -22,6 +22,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   int _arrowsPerEnd = 6;
   EnvironmentType _environment = EnvironmentType.indoor;
   bool _isCompetitionMode = false;
+  bool _isTargetMode = false; // Default to list view
 
   final List<double> _distanceOptions = [18, 30, 40, 50, 60, 70, 90];
   final List<int> _targetSizeOptions = [40, 60, 80, 122];
@@ -42,6 +43,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
       _endCount = storage.getSetting<int>('lastEndCount', defaultValue: 10) ?? 10;
       _arrowsPerEnd = storage.getSetting<int>('lastArrowsPerEnd', defaultValue: 6) ?? 6;
       _environment = EnvironmentType.values[storage.getSetting<int>('lastEnvironment', defaultValue: 0) ?? 0];
+      _isTargetMode = storage.getSetting<bool>('lastIsTargetMode', defaultValue: false) ?? false;
     });
   }
 
@@ -54,6 +56,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     await storage.saveSetting('lastEndCount', _endCount);
     await storage.saveSetting('lastArrowsPerEnd', _arrowsPerEnd);
     await storage.saveSetting('lastEnvironment', _environment.index);
+    await storage.saveSetting('lastIsTargetMode', _isTargetMode);
   }
 
   void _startTraining() async {
@@ -74,6 +77,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           environment: _environment,
           maxEnds: _endCount,
           arrowsPerEnd: _arrowsPerEnd,
+          isTargetMode: _isTargetMode,
         );
 
     // Navigate to scoring screen
@@ -288,6 +292,77 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 onChanged: (value) => setState(() => _isCompetitionMode = value),
                 activeColor: AppColors.primary,
                 contentPadding: EdgeInsets.zero,
+              ),
+            ),
+
+            // Scoring View Mode
+            _buildSection(
+              icon: Icons.view_quilt,
+              title: '计分视图',
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundLight,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _isTargetMode = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: !_isTargetMode ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: !_isTargetMode ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.grid_view, size: 18, color: !_isTargetMode ? AppColors.primary : AppColors.textSlate500),
+                              const SizedBox(width: 8),
+                              Text(
+                                '列表模式',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: !_isTargetMode ? AppColors.primary : AppColors.textSlate500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _isTargetMode = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _isTargetMode ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: _isTargetMode ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.track_changes, size: 18, color: _isTargetMode ? AppColors.primary : AppColors.textSlate500),
+                              const SizedBox(width: 8),
+                              Text(
+                                '靶面模式',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _isTargetMode ? AppColors.primary : AppColors.textSlate500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
