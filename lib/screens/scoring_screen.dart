@@ -8,6 +8,7 @@ import '../providers/scoring_provider.dart';
 import '../providers/session_provider.dart';
 import '../models/equipment.dart';
 import '../models/training_session.dart';
+import '../widgets/target_face_painter.dart';
 
 class ScoringScreen extends ConsumerStatefulWidget {
   const ScoringScreen({super.key});
@@ -17,6 +18,9 @@ class ScoringScreen extends ConsumerStatefulWidget {
 }
 
 class _ScoringScreenState extends ConsumerState<ScoringScreen> {
+  // List of temporary ripple effects
+  final List<RippleModel> _ripples = [];
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +29,22 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       final scoringState = ref.read(scoringProvider);
       if (!scoringState.hasActiveSession) {
         _startNewSession();
+      }
+    });
+  }
+
+  void _addRipple(Offset position) {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    setState(() {
+      _ripples.add(RippleModel(id: id, position: position));
+    });
+    
+    // Auto remove after animation
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() {
+          _ripples.removeWhere((r) => r.id == id);
+        });
       }
     });
   }
@@ -286,19 +306,27 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             child: SizedBox(
               width: 320,
               height: 320,
-              child: CustomPaint(
-                painter: TargetFacePainter(
-                  targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
-                ),
-                child: Stack(
-                  children: [
-                    if (currentEnd != null)
-                      ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
-                        final position = arrow.position!;
-                        return _arrowMarker(160.0 + position.dy * 140, 160.0 + position.dx * 140);
-                      }).toList(),
-                  ],
-                ),
+              child: Stack(
+                children: [
+                  CustomPaint(
+                    painter: TargetFacePainter(
+                      targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
+                    ),
+                    child: Stack(
+                      children: [
+                        if (currentEnd != null)
+                          ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
+                            final position = arrow.position!;
+                            return _arrowMarker(160.0 + position.dy * 140, 160.0 + position.dx * 140);
+                          }).toList(),
+                      ],
+                    ),
+                  ),
+                  ..._ripples.map((ripple) => RippleWidget(
+                    key: ValueKey(ripple.id),
+                    position: ripple.position,
+                  )).toList(),
+                ],
               ),
             ),
           ),
@@ -455,8 +483,37 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final scoringState = ref.read(scoringProvider);
     if (scoringState.currentEnd == null) return;
 
+    // Check if end is full BEFORE adding arrow (for notification logic)
+    final isEndFullBefore = scoringState.currentEnd!.arrows.length >= (scoringState.arrowsPerEnd - 1);
+
     // Add arrow and check if session is complete
     final isComplete = await ref.read(scoringProvider.notifier).addArrow(score);
+
+    // End Completion Notification
+    if (!isComplete && isEndFullBefore) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('第 ${scoringState.currentEndNumber} 组完成', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('总分: ${scoringState.totalScore}', style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
 
     if (isComplete && mounted) {
       // Refresh session list
@@ -484,6 +541,9 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   void _handleTargetTap(Offset localPosition) async {
     final scoringState = ref.read(scoringProvider);
     if (scoringState.currentEnd == null) return;
+
+    // Add ripple effect
+    _addRipple(localPosition);
 
     // Get target face size from session
     final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
@@ -553,31 +613,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final normalizedPosition = Offset(dx / drawableRadius, dy / drawableRadius);
 
     // Add arrow with position
-    final isComplete = await ref.read(scoringProvider.notifier).addArrow(
-          score,
-          position: normalizedPosition,
-        );
-
-    if (isComplete && mounted) {
-      // Refresh session list
-      await ref.read(sessionProvider.notifier).refresh();
-
-      // Show success message and navigate back
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('训练完成！成绩已保存'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // Navigate back to home
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      });
-    }
+    await _addScore(score); // Re-use _addScore for consistent logic
   }
 
   Future<void> _saveSession() async {
@@ -626,50 +662,67 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 
   Widget _keypadBtn(String text, Color color, {bool isText = false, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(0, 2))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(0, 2))],
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+          ),
         ),
-        alignment: Alignment.center,
-        child: Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
       ),
     );
   }
 
   Widget _iconKeypadBtn(IconData icon, String label, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [Icon(icon, color: AppColors.textSlate500), Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.textSlate500))],
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [Icon(icon, color: AppColors.textSlate500), Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.textSlate500))],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSaveButton() {
-    return GestureDetector(
-      onTap: _saveSession,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primary,
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _saveSession,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 28),
-            SizedBox(height: 4),
-            Text('保存', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-          ],
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 28),
+              SizedBox(height: 4),
+              Text('保存', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
         ),
       ),
     );
@@ -710,22 +763,20 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 
   Widget _scoreBox(int score, Color bg, Color text) {
-    return Container(
-      width: 48,
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]),
-      child: Text('$score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: text)),
+    return AnimatedScoreBox(
+      score: score,
+      bg: bg,
+      text: text,
+      isSmall: false,
     );
   }
 
   Widget _scoreBoxSmall(int score, Color bg) {
-    return Container(
-      width: 32,
-      height: 32,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text('$score', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    return AnimatedScoreBox(
+      score: score,
+      bg: bg,
+      text: Colors.black, // Small text is usually black for readability unless bg is dark
+      isSmall: true,
     );
   }
 
@@ -768,60 +819,145 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 }
 
-class TargetFacePainter extends CustomPainter {
-  final int targetFaceSize;
 
-  TargetFacePainter({required this.targetFaceSize});
+
+class RippleModel {
+  final String id;
+  final Offset position;
+  RippleModel({required this.id, required this.position});
+}
+
+class RippleWidget extends StatefulWidget {
+  final Offset position;
+  final VoidCallback? onComplete;
+
+  const RippleWidget({super.key, required this.position, this.onComplete});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+  State<RippleWidget> createState() => _RippleWidgetState();
+}
 
-    // Render different target faces based on size
-    if (targetFaceSize == 40) {
-      // 40cm target: 6-ring face (rings 6-10 only)
-      // Blue outer ring (6-7)
-      _drawRing(canvas, center, radius, AppColors.targetBlue);
-      // Red ring (8-9)
-      _drawRing(canvas, center, radius * 0.67, AppColors.targetRed);
-      // Yellow/Gold center (10-X)
-      _drawRing(canvas, center, radius * 0.33, AppColors.targetGold);
-      // X Ring
-      canvas.drawCircle(center, radius * 0.08, Paint()..color = Colors.black.withOpacity(0.15));
-    } else {
-      // 60cm, 80cm, 122cm: Full 10-ring target
-      // White outer ring (1-2)
-      _drawRing(canvas, center, radius, AppColors.targetWhite);
-      // Black ring (3-4)
-      _drawRing(canvas, center, radius * 0.8, AppColors.targetBlack);
-      // Blue ring (5-6)
-      _drawRing(canvas, center, radius * 0.6, AppColors.targetBlue);
-      // Red ring (7-8)
-      _drawRing(canvas, center, radius * 0.4, AppColors.targetRed);
-      // Yellow/Gold center (9-10)
-      _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
-      // X Ring
-      canvas.drawCircle(center, radius * 0.05, Paint()..color = Colors.black.withOpacity(0.15));
-    }
+class _RippleWidgetState extends State<RippleWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.8, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _controller.forward().then((_) => widget.onComplete?.call());
   }
 
-  void _drawRing(Canvas canvas, Offset center, double radius, Color color) {
-    final paint = Paint()..color = color;
-    canvas.drawCircle(center, radius, paint);
-    // Divider line
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = Colors.black.withOpacity(0.2)
-        ..strokeWidth = 1.5,
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: widget.position.dy - 40,
+      left: widget.position.dx - 40,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _opacityAnimation.value,
+            child: Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: 2),
+                  color: AppColors.primary.withOpacity(0.2),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
+}
+
+class AnimatedScoreBox extends StatefulWidget {
+  final int score;
+  final Color bg;
+  final Color text;
+  final bool isSmall;
+
+  const AnimatedScoreBox({
+    super.key,
+    required this.score,
+    required this.bg,
+    required this.text,
+    this.isSmall = false,
+  });
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is TargetFacePainter && oldDelegate.targetFaceSize != targetFaceSize;
+  State<AnimatedScoreBox> createState() => _AnimatedScoreBoxState();
+}
+
+class _AnimatedScoreBoxState extends State<AnimatedScoreBox> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: widget.isSmall ? 32 : 48,
+        height: widget.isSmall ? 32 : 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: widget.bg,
+          borderRadius: BorderRadius.circular(widget.isSmall ? 6 : 8),
+          boxShadow: widget.isSmall ? null : [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)
+          ],
+        ),
+        child: Text(
+          '${widget.score}',
+          style: TextStyle(
+            fontSize: widget.isSmall ? 14 : 18,
+            fontWeight: widget.isSmall ? FontWeight.bold : FontWeight.w900,
+            color: widget.text,
+          ),
+        ),
+      ),
+    );
   }
 }

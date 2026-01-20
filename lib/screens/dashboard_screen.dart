@@ -7,6 +7,8 @@ import '../providers/session_provider.dart';
 import '../providers/analytics_provider.dart';
 import 'details_screen.dart';
 
+import '../widgets/score_trend_chart.dart';
+
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -196,7 +198,11 @@ class DashboardScreen extends ConsumerWidget {
                 SizedBox(
                   height: 80,
                   width: double.infinity,
-                  child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
+                  child: ScoreTrendChart(
+                    scores: stats.scoreTrendData.values.toList(),
+                    isCompact: true,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -237,90 +243,90 @@ class DashboardScreen extends ConsumerWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Stack(
-        children: [
-          if (isHighRecord)
-            Positioned(
-              left: 0,
-              bottom: 0,
-              top: 0,
-              child: Container(width: 4, color: AppColors.accentGold),
+      child: ArcheryCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            // Date Box
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isHighRecord ? AppColors.accentGold.withOpacity(0.1) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    date.split(' ')[0], // MMM
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isHighRecord ? AppColors.accentGold : Colors.grey.shade600),
+                  ),
+                  Text(
+                    date.split(' ')[1], // dd
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isHighRecord ? AppColors.accentGold : AppColors.textSlate900),
+                  ),
+                ],
+              ),
             ),
-          ArcheryCard(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(width: 16),
+            
+            // Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              if (isHighRecord) ...[
-                                StatusBadge(text: 'BEST', color: AppColors.accentGold, backgroundColor: AppColors.accentGold.withOpacity(0.1)),
-                                const SizedBox(width: 8),
-                              ],
-                              Text(date, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text('$score', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: isHighRecord ? AppColors.primary : AppColors.textSlate900)),
-                              Text('/$total', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textSlate400)),
-                            ],
-                          ),
-                          Text(type, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Text('查看详情', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isHighRecord ? AppColors.primary : AppColors.textSlate400)),
-                          Icon(Icons.chevron_right, size: 16, color: isHighRecord ? AppColors.primary : AppColors.textSlate400),
-                        ],
-                      )
+                      Text('$score', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textSlate900)),
+                      Text('/$total', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                      if (isHighRecord) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.emoji_events, size: 16, color: AppColors.accentGold),
+                      ]
                     ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: isHighRecord ? Colors.white : Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: _buildMiniStats(percentage, arrowCount),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(type, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500)),
+                  const SizedBox(height: 2),
+                  Text('$arrowCount 支箭', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Percentage Circle
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: percentage / 100,
+                    backgroundColor: Colors.grey.shade100,
+                    color: _getPercentageColor(percentage),
+                    strokeWidth: 4,
+                  ),
+                  Text(
+                    '${percentage.toInt()}%',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getPercentageColor(percentage)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: Colors.grey.shade300),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMiniStats(double percentage, int arrowCount) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary)),
-        const SizedBox(height: 4),
-        Text('准确率', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-        const SizedBox(height: 8),
-        Text('$arrowCount 支箭', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-      ],
-    );
+  Color _getPercentageColor(double percentage) {
+    if (percentage >= 90) return AppColors.targetGold;
+    if (percentage >= 80) return AppColors.targetRed;
+    if (percentage >= 70) return AppColors.targetBlue;
+    return AppColors.textSlate400;
   }
+
 
   String _formatDate(DateTime date) {
     return DateFormat('MMM dd').format(date).toUpperCase();

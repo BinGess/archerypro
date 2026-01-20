@@ -1,14 +1,69 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Run: flutter pub run build_runner build
 
 part of 'arrow.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class ArrowAdapter extends TypeAdapter<Arrow> {
+  @override
+  final int typeId = 0;
+
+  @override
+  Arrow read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Arrow(
+      id: fields[0] as String,
+      score: fields[1] as int,
+      position: fields[2] as Offset?,
+      isX: fields[3] as bool,
+      isMiss: fields[4] as bool,
+      timestamp: fields[5] as DateTime?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Arrow obj) {
+    writer
+      ..writeByte(6)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.score)
+      ..writeByte(2)
+      ..write(obj.position)
+      ..writeByte(3)
+      ..write(obj.isX)
+      ..writeByte(4)
+      ..write(obj.isMiss)
+      ..writeByte(5)
+      ..write(obj.timestamp);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ArrowAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
 Arrow _$ArrowFromJson(Map<String, dynamic> json) => Arrow(
       id: json['id'] as String,
-      score: json['score'] as int,
-      position: json['position'] == null
-          ? null
-          : Arrow._offsetFromJson(json['position'] as Map<String, dynamic>),
+      score: (json['score'] as num).toInt(),
+      position:
+          Arrow._offsetFromJson(json['position'] as Map<String, dynamic>?),
       isX: json['isX'] as bool? ?? false,
       isMiss: json['isMiss'] as bool? ?? false,
       timestamp: json['timestamp'] == null

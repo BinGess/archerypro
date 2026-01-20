@@ -5,6 +5,9 @@ import '../widgets/common_widgets.dart';
 import '../providers/analytics_provider.dart';
 import '../utils/constants.dart';
 
+import '../widgets/score_trend_chart.dart';
+import '../widgets/target_face_painter.dart';
+
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
 
@@ -126,9 +129,16 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 120,
+            height: 180, // Increased height for detail
             width: double.infinity,
-            child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16, bottom: 8),
+              child: ScoreTrendChart(
+                scores: stats.scoreTrendData.values.toList(),
+                isCompact: false,
+                color: AppColors.primary,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           if (stats.totalSessions > 0)
@@ -186,35 +196,42 @@ class AnalysisScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Target Faces
-              _buildRing(180, Colors.grey.shade100),
-              _buildRing(150, Colors.white),
-              _buildRing(120, Colors.white),
-              _buildRing(90, Colors.white),
-              _buildRing(60, Colors.white),
-              _buildRing(30, AppColors.accentGold.withOpacity(0.2)),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accentGold, shape: BoxShape.circle)),
+          SizedBox(
+            width: 240,
+            height: 240,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Target Face
+                CustomPaint(
+                  size: const Size(240, 240),
+                  painter: TargetFacePainter(targetFaceSize: 122),
+                ),
 
-              // Plot actual arrow positions if available
-              if (hasData)
-                ...stats.heatmapData.take(30).map((position) {
-                  return Positioned(
-                    left: 90.0 + position.dx * 80,
-                    top: 90.0 + position.dy * 80,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.6),
-                        shape: BoxShape.circle,
+                // Plot actual arrow positions if available
+                if (hasData)
+                  ...stats.heatmapData.take(50).map((position) {
+                    // Normalize position to fit 240x240
+                    // position.dx/dy are -1 to 1 (usually) relative to center
+                    // We assume the stored heatmap data is normalized (-1 to 1)
+                    // Radius = 120
+                    const double radius = 120.0;
+                    return Positioned(
+                      left: 120.0 + position.dx * radius - 4,
+                      top: 120.0 + position.dy * radius - 4,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 2)],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-            ],
+                    );
+                  }).toList(),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -234,18 +251,10 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRing(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
-      ),
-    );
-  }
-
+  // _buildRing helper is no longer needed but we can leave it or remove it. 
+  // I will remove it to be clean. But I need to verify if it is used elsewhere.
+  // It was only used in _buildHeatmapCard. So I can safely remove it.
+  
   Widget _buildLegend(Color color, String text) {
     return Row(
       children: [

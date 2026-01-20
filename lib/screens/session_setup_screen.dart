@@ -134,6 +134,9 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           children: [
             const SizedBox(height: 8),
 
+            // Quick Start
+            _buildQuickStartSection(),
+            
             // Equipment Selection
             _buildSection(
               icon: Icons.sports_tennis,
@@ -465,6 +468,72 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // --- Quick Start Helpers ---
+
+  void _applyPreset({
+    required double distance,
+    required int targetSize,
+    required EnvironmentType env,
+    required int arrows,
+    required int ends,
+  }) {
+    setState(() {
+      _distance = distance;
+      _targetFaceSize = targetSize;
+      _environment = env;
+      _arrowsPerEnd = arrows;
+      _endCount = ends;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已应用预设: \${distance.toInt()}m, \${arrows}箭/组'), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  Widget _buildQuickStartSection() {
+    return _buildSection(
+      icon: Icons.rocket_launch,
+      title: '快速开始',
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _quickStartBtn('室内 18m', '40cm • 30箭', () => _applyPreset(distance: 18, targetSize: 40, env: EnvironmentType.indoor, arrows: 3, ends: 10)),
+            const SizedBox(width: 12),
+            _quickStartBtn('室外 70m', '122cm • 72箭', () => _applyPreset(distance: 70, targetSize: 122, env: EnvironmentType.outdoor, arrows: 6, ends: 12)),
+            const SizedBox(width: 12),
+            _quickStartBtn('室外 50m', '80cm • 72箭', () => _applyPreset(distance: 50, targetSize: 80, env: EnvironmentType.outdoor, arrows: 6, ends: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickStartBtn(String title, String subtitle, VoidCallback onTap) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 120,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.borderLight),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 4),
+              Text(subtitle, style: const TextStyle(color: AppColors.textSlate500, fontSize: 12)),
+            ],
+          ),
         ),
       ),
     );
