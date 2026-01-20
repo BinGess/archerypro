@@ -67,12 +67,13 @@ class GrowthMixedChart extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
             '平均环数',
-            style: TextStyle(fontSize: 11, color: Colors.grey),
+            style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
+        axisNameSize: 20,
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 36,
+          reservedSize: 28,
           interval: 2.0,
           getTitlesWidget: (value, meta) {
             if (value == 0 || value == 10) {
@@ -83,7 +84,7 @@ class GrowthMixedChart extends StatelessWidget {
               child: Text(
                 value.toInt().toString(),
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: Colors.grey,
                   fontWeight: FontWeight.w500,
                 ),
@@ -97,12 +98,13 @@ class GrowthMixedChart extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
             '箭数',
-            style: TextStyle(fontSize: 11, color: Colors.grey),
+            style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
+        axisNameSize: 20,
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 40,
+          reservedSize: 28,
           getTitlesWidget: (value, meta) {
             if (value == 0 || value >= maxVolume) {
               return const SizedBox.shrink();
@@ -112,7 +114,7 @@ class GrowthMixedChart extends StatelessWidget {
               child: Text(
                 value.toInt().toString(),
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: Colors.grey,
                   fontWeight: FontWeight.w500,
                 ),
@@ -126,16 +128,17 @@ class GrowthMixedChart extends StatelessWidget {
       ),
       bottomTitles: AxisTitles(
         axisNameWidget: const Padding(
-          padding: EdgeInsets.only(top: 8),
+          padding: EdgeInsets.only(top: 4),
           child: Text(
             '日期',
-            style: TextStyle(fontSize: 11, color: Colors.grey),
+            style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
+        axisNameSize: 20,
         sideTitles: SideTitles(
           showTitles: true,
           interval: 1.0,
-          reservedSize: 30,
+          reservedSize: 24,
           getTitlesWidget: (value, meta) {
             final index = value.toInt();
             if (index >= 0 && index < allDates.length) {
@@ -145,11 +148,11 @@ class GrowthMixedChart extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Transform.rotate(
-                    angle: -0.5,
+                    angle: 0,
                     child: Text(
                       DateFormat('MM/dd').format(allDates[index]),
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         color: Colors.grey,
                       ),
                     ),
@@ -168,31 +171,34 @@ class GrowthMixedChart extends StatelessWidget {
       leftTitles: AxisTitles(
         axisNameWidget: const Padding(
           padding: EdgeInsets.only(bottom: 8),
-          child: Text(' ', style: TextStyle(fontSize: 11)),
+          child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
-        sideTitles: SideTitles(showTitles: true, reservedSize: 36, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        axisNameSize: 20,
+        sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
       rightTitles: AxisTitles(
         axisNameWidget: const Padding(
           padding: EdgeInsets.only(bottom: 8),
-          child: Text(' ', style: TextStyle(fontSize: 11)),
+          child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
-        sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        axisNameSize: 20,
+        sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
         axisNameWidget: const Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: Text(' ', style: TextStyle(fontSize: 11)),
+          padding: EdgeInsets.only(top: 4),
+          child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
-        sideTitles: SideTitles(showTitles: true, reservedSize: 30, interval: 1.0, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        axisNameSize: 20,
+        sideTitles: SideTitles(showTitles: true, reservedSize: 24, interval: 1.0, getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
     );
 
     return SizedBox(
       height: height,
       child: Padding(
-        padding: const EdgeInsets.only(right: 24, left: 8, top: 16, bottom: 8),
+        padding: const EdgeInsets.only(right: 16, left: 16, top: 24, bottom: 8),
         child: Stack(
           children: [
             // Background Bar Chart (Volume)
