@@ -20,6 +20,15 @@ Statistics _$StatisticsFromJson(Map<String, dynamic> json) => Statistics(
       avgConsistency: (json['avgConsistency'] as num).toDouble(),
       monthlyGoal: (json['monthlyGoal'] as num?)?.toInt(),
       currentMonthArrows: (json['currentMonthArrows'] as num).toInt(),
+      tenRingRate: (json['tenRingRate'] as num?)?.toDouble() ?? 0.0,
+      quadrantDistribution:
+          (json['quadrantDistribution'] as Map<String, dynamic>?)?.map(
+                (k, e) => MapEntry(k, (e as num).toInt()),
+              ) ??
+              {},
+      radarMetrics: json['radarMetrics'] == null
+          ? null
+          : RadarMetrics.fromJson(json['radarMetrics'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$StatisticsToJson(Statistics instance) =>
@@ -37,4 +46,7 @@ Map<String, dynamic> _$StatisticsToJson(Statistics instance) =>
       'avgConsistency': instance.avgConsistency,
       'monthlyGoal': instance.monthlyGoal,
       'currentMonthArrows': instance.currentMonthArrows,
+      'tenRingRate': instance.tenRingRate,
+      'quadrantDistribution': instance.quadrantDistribution,
+      'radarMetrics': instance.radarMetrics,
     };

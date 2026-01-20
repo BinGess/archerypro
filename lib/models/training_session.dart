@@ -201,6 +201,139 @@ class TrainingSession {
         .toList();
   }
 
+  // ==================== Advanced Analysis Properties ====================
+
+  /// Geometric center point of all arrows (centroid)
+  /// Returns null if no position data available
+  Offset? get geometricCenter {
+    final positions = heatmapPositions;
+    if (positions.isEmpty) return null;
+
+    final centerX = positions.fold(0.0, (sum, p) => sum + p.dx) / positions.length;
+    final centerY = positions.fold(0.0, (sum, p) => sum + p.dy) / positions.length;
+    return Offset(centerX, centerY);
+  }
+
+  /// Grouping radius (scatter radius) - standard deviation of distances from centroid
+  /// Lower value = tighter grouping
+  double get groupingRadius {
+    final positions = heatmapPositions;
+    if (positions.length < 2) return 0.0;
+
+    final center = geometricCenter ?? const Offset(0, 0);
+
+    // Calculate distances from center
+    final distances = positions.map((p) =>
+      math.sqrt(math.pow(p.dx - center.dx, 2) + math.pow(p.dy - center.dy, 2))
+    ).toList();
+
+    // Calculate standard deviation
+    final mean = distances.reduce((a, b) => a + b) / distances.length;
+    final variance = distances.fold(0.0, (sum, d) => sum + math.pow(d - mean, 2)) / distances.length;
+    return math.sqrt(variance);
+  }
+
+  /// Score distribution map (score -> count)
+  /// Example: {10: 5, 9: 8, 8: 12, ...}
+  Map<int, int> get scoreDistribution {
+    final distribution = <int, int>{};
+    for (var arrow in allArrows) {
+      final score = arrow.pointValue;
+      distribution[score] = (distribution[score] ?? 0) + 1;
+    }
+    return distribution;
+  }
+
+  /// Count of 10-ring hits (excluding X)
+  int get tenRingCount {
+    return allArrows.where((a) => a.pointValue == 10 && !a.isX).length;
+  }
+
+  /// Count of X-ring hits (inner 10)
+  int get xRingCount {
+    return allArrows.where((a) => a.isX).length;
+  }
+
+  /// Total 10-ring + X-ring count
+  int get goldRingCount {
+    return tenRingCount + xRingCount;
+  }
+
+  /// 10-ring rate (percentage of arrows in 10-ring + X)
+  double get tenRingRate {
+    if (arrowCount == 0) return 0.0;
+    return (goldRingCount / arrowCount) * 100;
+  }
+
+  /// List of average scores for each end
+  /// Used for end-by-end trend analysis
+  List<double> get endAverageScores {
+    return ends.map((end) => end.averageScore).toList();
+  }
+
+  /// Average score of first 30% of ends
+  /// Used for warm-up detection
+  double get firstThirdAverage {
+    if (ends.isEmpty) return 0.0;
+    final count = math.max(1, (ends.length * 0.3).ceil());
+    final firstEnds = ends.take(count);
+    if (firstEnds.isEmpty) return 0.0;
+    return firstEnds.fold(0.0, (sum, end) => sum + end.averageScore) / count;
+  }
+
+  /// Average score of last 30% of ends
+  /// Used for endurance/fatigue detection
+  double get lastThirdAverage {
+    if (ends.isEmpty) return 0.0;
+    final count = math.max(1, (ends.length * 0.3).ceil());
+    final lastEnds = ends.skip(ends.length - count);
+    if (lastEnds.isEmpty) return 0.0;
+    return lastEnds.fold(0.0, (sum, end) => sum + end.averageScore) / count;
+  }
+
+  /// Quadrant distribution for arrows scoring below 9
+  /// Used for bias detection (systematic errors)
+  /// Returns map: {'top-left': count, 'top-right': count, 'bottom-left': count, 'bottom-right': count}
+  Map<String, int> get quadrantDistribution {
+    final quadrants = {
+      'top-left': 0,
+      'top-right': 0,
+      'bottom-left': 0,
+      'bottom-right': 0,
+    };
+
+    // Only analyze arrows scoring 8 or below (exclude 9, 10, X)
+    for (var arrow in allArrows) {
+      if (arrow.pointValue >= 9 || arrow.position == null) continue;
+
+      final pos = arrow.position!;
+      // Offset coordinates: dx=horizontal, dy=vertical
+      // Negative dx = left, positive dx = right
+      // Negative dy = top, positive dy = bottom
+      if (pos.dx < 0 && pos.dy < 0) {
+        quadrants['top-left'] = quadrants['top-left']! + 1;
+      } else if (pos.dx >= 0 && pos.dy < 0) {
+        quadrants['top-right'] = quadrants['top-right']! + 1;
+      } else if (pos.dx < 0 && pos.dy >= 0) {
+        quadrants['bottom-left'] = quadrants['bottom-left']! + 1;
+      } else {
+        quadrants['bottom-right'] = quadrants['bottom-right']! + 1;
+      }
+    }
+
+    return quadrants;
+  }
+
+  /// Distance of geometric center from target center (normalized 0-1)
+  /// Used for equipment/sight adjustment detection
+  double get centerDeviation {
+    final center = geometricCenter;
+    if (center == null) return 0.0;
+    return math.sqrt(center.dx * center.dx + center.dy * center.dy);
+  }
+
+  // ======================================================================
+
   /// Add an end to the session
   TrainingSession addEnd(End end) {
     return copyWith(ends: [...ends, end]);

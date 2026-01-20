@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'radar_metrics.dart';
 
 part 'statistics.g.dart';
 
@@ -54,6 +55,17 @@ class Statistics {
   /// Current month arrow count
   final int currentMonthArrows;
 
+  /// 10-ring rate (percentage of arrows hitting 10 or X)
+  final double tenRingRate;
+
+  /// Quadrant distribution for bias detection
+  /// Map of quadrant name to count of arrows
+  @JsonKey(defaultValue: {})
+  final Map<String, int> quadrantDistribution;
+
+  /// Radar metrics for comprehensive performance visualization
+  final RadarMetrics? radarMetrics;
+
   const Statistics({
     required this.period,
     required this.totalSessions,
@@ -70,6 +82,9 @@ class Statistics {
     this.scoreTrendData = const {},
     this.monthlyGoal,
     required this.currentMonthArrows,
+    this.tenRingRate = 0.0,
+    this.quadrantDistribution = const {},
+    this.radarMetrics,
   });
 
   /// Empty statistics
@@ -89,6 +104,9 @@ class Statistics {
       heatmapData: const [],
       scoreTrendData: const {},
       currentMonthArrows: 0,
+      tenRingRate: 0.0,
+      quadrantDistribution: const {},
+      radarMetrics: null,
     );
   }
 
@@ -149,6 +167,9 @@ class Statistics {
     Map<DateTime, double>? scoreTrendData,
     int? monthlyGoal,
     int? currentMonthArrows,
+    double? tenRingRate,
+    Map<String, int>? quadrantDistribution,
+    RadarMetrics? radarMetrics,
   }) {
     return Statistics(
       period: period ?? this.period,
@@ -166,6 +187,9 @@ class Statistics {
       scoreTrendData: scoreTrendData ?? this.scoreTrendData,
       monthlyGoal: monthlyGoal ?? this.monthlyGoal,
       currentMonthArrows: currentMonthArrows ?? this.currentMonthArrows,
+      tenRingRate: tenRingRate ?? this.tenRingRate,
+      quadrantDistribution: quadrantDistribution ?? this.quadrantDistribution,
+      radarMetrics: radarMetrics ?? this.radarMetrics,
     );
   }
 
