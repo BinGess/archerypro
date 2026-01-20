@@ -30,10 +30,12 @@ fi
 
 echo ""
 echo "4. Checking List<dynamic> type issues..."
-grep -r "\.map((.*) =>" lib/screens/*.dart | grep "arrows" | grep -v "map<int>" | while read line; do
-    echo "  ⚠️  Potential type issue: $line"
-    echo "     Consider adding map<int> for explicit type casting"
-done
+if grep -r "\.map<int>" lib/screens/*.dart | grep "arrows"; then
+    echo "  ⚠️  Found .map<int> syntax - this is incorrect!"
+    echo "     Use List<int>.from(arrows.map((a) => a.property)) instead"
+else
+    echo "  ✅ No incorrect map<int> syntax found"
+fi
 
 echo ""
 echo "5. Checking for missing imports..."
