@@ -849,6 +849,26 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
+  Widget _buildSaveButton() {
+    return GestureDetector(
+      onTap: _saveSession,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 28),
+            SizedBox(height: 4),
+            Text('保存', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
 
 
   Color _getScoreColor(int score) {
