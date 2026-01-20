@@ -29,6 +29,8 @@ class ScoringState {
   final bool isTargetView;
   final bool isSaving;
   final String? error;
+  final int maxEnds; // 最大组数
+  final int arrowsPerEnd; // 每组箭数
 
   const ScoringState({
     this.currentSession,
@@ -36,6 +38,8 @@ class ScoringState {
     this.isTargetView = false,
     this.isSaving = false,
     this.error,
+    this.maxEnds = 10,
+    this.arrowsPerEnd = 6,
   });
 
   /// Get current end number
@@ -45,13 +49,19 @@ class ScoringState {
   int get totalScore => currentSession?.totalScore ?? 0;
 
   /// Get current end arrow count
-  int get currentEndArrows => currentEnd?.arrowCount ?? 0;
+  int get currentEndArrows => currentEnd?.arrows.length ?? 0;
 
   /// Whether session is active
   bool get hasActiveSession => currentSession != null;
 
+  /// Get completed ends count
+  int get completedEndsCount => currentSession?.ends.length ?? 0;
+
+  /// Whether all ends are completed
+  bool get isSessionComplete => completedEndsCount >= maxEnds;
+
   /// Whether current end is complete
-  bool get isCurrentEndComplete => currentEnd?.isComplete ?? false;
+  bool get isCurrentEndComplete => (currentEnd?.arrows.length ?? 0) >= arrowsPerEnd;
 
   ScoringState copyWith({
     TrainingSession? currentSession,
@@ -59,6 +69,8 @@ class ScoringState {
     bool? isTargetView,
     bool? isSaving,
     String? error,
+    int? maxEnds,
+    int? arrowsPerEnd,
   }) {
     return ScoringState(
       currentSession: currentSession ?? this.currentSession,
@@ -66,6 +78,8 @@ class ScoringState {
       isTargetView: isTargetView ?? this.isTargetView,
       isSaving: isSaving ?? this.isSaving,
       error: error,
+      maxEnds: maxEnds ?? this.maxEnds,
+      arrowsPerEnd: arrowsPerEnd ?? this.arrowsPerEnd,
     );
   }
 }
@@ -84,6 +98,8 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     required int targetFaceSize,
     SessionType sessionType = SessionType.training,
     EnvironmentType environment = EnvironmentType.indoor,
+    int maxEnds = 10,
+    int arrowsPerEnd = 6,
   }) {
     final session = _sessionService.createSession(
       equipment: equipment,
@@ -93,20 +109,22 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       environment: environment,
     );
 
-    final firstEnd = _scoringService.createEnd(1);
+    final firstEnd = _scoringService.createEnd(1, maxArrows: arrowsPerEnd);
 
     state = state.copyWith(
       currentSession: session,
       currentEnd: firstEnd,
       error: null,
+      maxEnds: maxEnds,
+      arrowsPerEnd: arrowsPerEnd,
     );
   }
 
   /// Add an arrow score
-  void addArrow(int score, {Offset? position}) {
+  Future<bool> addArrow(int score, {Offset? position}) async {
     if (state.currentEnd == null) {
       state = state.copyWith(error: 'No active end');
-      return;
+      return false;
     }
 
     try {
@@ -129,8 +147,53 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
         currentSession: updatedSession,
         error: null,
       );
+
+      // Check if end is complete
+      if (updatedEnd.arrows.length >= state.arrowsPerEnd) {
+        // Complete current end and move to next
+        await _completeCurrentEnd();
+
+        // Check if all ends are complete
+        if (state.completedEndsCount >= state.maxEnds) {
+          // Auto save and return true to indicate session complete
+          await saveSession();
+          return true;
+        } else {
+          // Start next end
+          _startNextEnd();
+        }
+      }
+
+      return false;
     } catch (e) {
       state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
+  /// Complete current end
+  Future<void> _completeCurrentEnd() async {
+    if (state.currentEnd == null || state.currentSession == null) return;
+
+    final completedEnd = state.currentEnd!.copyWith(completedAt: DateTime.now());
+    final updatedEnds = [...state.currentSession!.ends];
+    final existingIndex = updatedEnds.indexWhere((e) => e.id == completedEnd.id);
+    if (existingIndex >= 0) {
+      updatedEnds[existingIndex] = completedEnd;
+    } else {
+      updatedEnds.add(completedEnd);
+    }
+
+    final updatedSession = state.currentSession!.copyWith(ends: updatedEnds);
+    state = state.copyWith(currentSession: updatedSession);
+  }
+
+  /// Start next end
+  void _startNextEnd() {
+    final nextEndNumber = state.completedEndsCount + 1;
+    if (nextEndNumber <= state.maxEnds) {
+      final nextEnd = _scoringService.createEnd(nextEndNumber, maxArrows: state.arrowsPerEnd);
+      state = state.copyWith(currentEnd: nextEnd);
     }
   }
 

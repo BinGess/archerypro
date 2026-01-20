@@ -95,9 +95,9 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
               children: [
                 Expanded(
                   child: _buildHeaderStat(
-                    'CURRENT END',
-                    '${scoringState.currentEnd?.arrowCount ?? 0}',
-                    '/6',
+                    '当前组',
+                    '${scoringState.currentEndNumber}',
+                    '/${scoringState.maxEnds}',
                     Colors.white,
                     AppColors.textSlate900,
                   ),
@@ -319,30 +319,87 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
   Widget _buildKeypad() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       color: Colors.white,
-      child: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 4,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.3,
-        physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _keypadBtn('X', Colors.orange, isText: true, onTap: () => _addScore(11)),
-          _keypadBtn('10', AppColors.textSlate900, onTap: () => _addScore(10)),
-          _keypadBtn('9', AppColors.textSlate900, onTap: () => _addScore(9)),
-          _iconKeypadBtn(Icons.backspace, 'Remove', onTap: () => ref.read(scoringProvider.notifier).removeLastArrow()),
-          _keypadBtn('8', AppColors.textSlate900, onTap: () => _addScore(8)),
-          _keypadBtn('7', AppColors.textSlate900, onTap: () => _addScore(7)),
-          _keypadBtn('6', AppColors.textSlate900, onTap: () => _addScore(6)),
-          _keypadBtn('5', AppColors.textSlate900, onTap: () => _addScore(5)),
-          _keypadBtn('4', AppColors.textSlate900, onTap: () => _addScore(4)),
-          _keypadBtn('3', AppColors.textSlate900, onTap: () => _addScore(3)),
-          _completeEndBtn(),
-          _keypadBtn('2', AppColors.textSlate900, onTap: () => _addScore(2)),
-          _keypadBtn('1', AppColors.textSlate900, onTap: () => _addScore(1)),
-          _keypadBtn('M', Colors.red, isText: true, onTap: () => _addScore(0)),
+          // Row 1: X, 10, 9, Delete
+          Row(
+            children: [
+              Expanded(child: _keypadBtn('X', Colors.black, isText: true, onTap: () => _addScore(11))),
+              const SizedBox(width: 8),
+              Expanded(child: _keypadBtn('10', AppColors.textSlate900, onTap: () => _addScore(10))),
+              const SizedBox(width: 8),
+              Expanded(child: _keypadBtn('9', AppColors.textSlate900, onTap: () => _addScore(9))),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _iconKeypadBtn(
+                  Icons.backspace_outlined,
+                  '移除',
+                  onTap: () => ref.read(scoringProvider.notifier).removeLastArrow(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Row 2-4: 8-1, M, and Save button on the right
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Left side: Number grid
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      // Row 2: 8, 7, 6
+                      Row(
+                        children: [
+                          Expanded(child: _keypadBtn('8', AppColors.textSlate900, onTap: () => _addScore(8))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('7', AppColors.textSlate900, onTap: () => _addScore(7))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('6', AppColors.textSlate900, onTap: () => _addScore(6))),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Row 3: 5, 4, 3
+                      Row(
+                        children: [
+                          Expanded(child: _keypadBtn('5', AppColors.textSlate900, onTap: () => _addScore(5))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('4', AppColors.textSlate900, onTap: () => _addScore(4))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('3', AppColors.textSlate900, onTap: () => _addScore(3))),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Row 4: 2, 1, M
+                      Row(
+                        children: [
+                          Expanded(child: _keypadBtn('2', AppColors.textSlate900, onTap: () => _addScore(2))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('1', AppColors.textSlate900, onTap: () => _addScore(1))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _keypadBtn('M', Colors.red, isText: true, onTap: () => _addScore(0))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Right side: Save button (spans 3 rows)
+                Expanded(
+                  child: _buildSaveButton(),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -387,19 +444,32 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
-  void _addScore(int score) {
-    final currentEnd = ref.read(scoringProvider).currentEnd;
-    if (currentEnd != null && currentEnd.canAddArrow) {
-      ref.read(scoringProvider.notifier).addArrow(score);
+  Future<void> _addScore(int score) async {
+    final scoringState = ref.read(scoringProvider);
+    if (scoringState.currentEnd == null) return;
 
-      // Auto-complete end if full
-      if (currentEnd.arrowCount + 1 >= 6) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            ref.read(scoringProvider.notifier).completeEnd();
-          }
-        });
-      }
+    // Add arrow and check if session is complete
+    final isComplete = await ref.read(scoringProvider.notifier).addArrow(score);
+
+    if (isComplete && mounted) {
+      // Refresh session list
+      await ref.read(sessionProvider.notifier).refresh();
+
+      // Show success message and navigate back
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('训练完成！成绩已保存'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate back to home
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      });
     }
   }
 
@@ -468,6 +538,27 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [Icon(icon, color: AppColors.textSlate500), Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.textSlate500))],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return GestureDetector(
+      onTap: _saveSession,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 28),
+            SizedBox(height: 4),
+            Text('保存', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+          ],
         ),
       ),
     );

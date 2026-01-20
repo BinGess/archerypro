@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/training_session.dart';
 import '../utils/constants.dart';
@@ -132,20 +133,28 @@ class StorageService {
     return TrainingSession.fromJson(json);
   }
 
-  /// Simple JSON encoding (placeholder - will use dart:convert in real implementation)
+  /// JSON encoding using dart:convert
   String _encodeJson(Map<String, dynamic> json) {
-    // For now, using toString - in production, use jsonEncode
-    // This is a simplified version since we're storing as String in Hive
-    // In reality, Hive can store objects directly with adapters
-    return json.toString();
+    try {
+      return jsonEncode(json);
+    } catch (e) {
+      print('Error encoding JSON: $e');
+      rethrow;
+    }
   }
 
-  /// Simple JSON decoding (placeholder)
+  /// JSON decoding using dart:convert
   Map<String, dynamic> _decodeJson(String str) {
-    // This is a simplified placeholder
-    // In production, you would use jsonDecode and proper serialization
-    // For now, we'll use a workaround with Hive's native storage
-    return {};
+    try {
+      final decoded = jsonDecode(str);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      throw FormatException('Invalid JSON format');
+    } catch (e) {
+      print('Error decoding JSON: $e');
+      rethrow;
+    }
   }
 
   /// Close all boxes (call when app is closing)

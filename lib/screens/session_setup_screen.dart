@@ -38,6 +38,8 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           distance: _distance,
           targetFaceSize: _targetFaceSize,
           environment: _environment,
+          maxEnds: _endCount,
+          arrowsPerEnd: _arrowsPerEnd,
         );
 
     // Navigate to scoring screen
