@@ -60,203 +60,249 @@ class GrowthMixedChart extends StatelessWidget {
     final lineSpots = _prepareLineSpots(allDates);
     final maxVolume = _calculateMaxVolume();
 
+    // Define titles for LineChart (visible)
+    final titlesData = FlTitlesData(
+      leftTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(
+            '平均环数',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ),
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 36,
+          interval: 2.0,
+          getTitlesWidget: (value, meta) {
+            if (value == 0 || value == 10) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                value.toInt().toString(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      rightTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(
+            '箭数',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ),
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 40,
+          getTitlesWidget: (value, meta) {
+            if (value == 0 || value >= maxVolume) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                value.toInt().toString(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      topTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+      bottomTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Text(
+            '日期',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ),
+        sideTitles: SideTitles(
+          showTitles: true,
+          interval: 1.0,
+          reservedSize: 30,
+          getTitlesWidget: (value, meta) {
+            final index = value.toInt();
+            if (index >= 0 && index < allDates.length) {
+              // Show every Nth date based on data density
+              final showInterval = allDates.length > 10 ? 3 : 1;
+              if (index % showInterval == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Transform.rotate(
+                    angle: -0.5,
+                    child: Text(
+                      DateFormat('MM/dd').format(allDates[index]),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              }
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    // Define titles for BarChart (invisible but occupying space)
+    final hiddenTitlesData = FlTitlesData(
+      leftTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
+        ),
+        sideTitles: SideTitles(showTitles: true, reservedSize: 36, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+      ),
+      rightTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
+        ),
+        sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+      ),
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      bottomTitles: AxisTitles(
+        axisNameWidget: const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
+        ),
+        sideTitles: SideTitles(showTitles: true, reservedSize: 30, interval: 1.0, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+      ),
+    );
+
     return SizedBox(
       height: height,
       child: Padding(
         padding: const EdgeInsets.only(right: 24, left: 8, top: 16, bottom: 8),
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 2.0,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: Colors.grey.withOpacity(0.15),
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                axisNameWidget: const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    '平均环数',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 36,
-                  interval: 2.0,
-                  getTitlesWidget: (value, meta) {
-                    if (value == 0 || value == 10) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Text(
-                        value.toInt().toString(),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              rightTitles: AxisTitles(
-                axisNameWidget: const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    '箭数',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 40,
-                  getTitlesWidget: (value, meta) {
-                    if (value == 0 || value >= maxVolume) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        value.toInt().toString(),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              bottomTitles: AxisTitles(
-                axisNameWidget: const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    '日期',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 1.0,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index >= 0 && index < allDates.length) {
-                      // Show every Nth date based on data density
-                      final showInterval = allDates.length > 10 ? 3 : 1;
-                      if (index % showInterval == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Transform.rotate(
-                            angle: -0.5,
-                            child: Text(
-                              DateFormat('MM/dd').format(allDates[index]),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+        child: Stack(
+          children: [
+            // Background Bar Chart (Volume)
+            BarChart(
+              BarChartData(
+                maxY: 10,
+                minY: 0,
+                barGroups: barGroups,
+                gridData: FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                titlesData: hiddenTitlesData,
+                barTouchData: BarTouchData(enabled: false),
               ),
             ),
-            borderData: FlBorderData(
-              show: true,
-              border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                bottom:
-                    BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                right: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-              ),
-            ),
-            minX: 0,
-            maxX: (allDates.length - 1).toDouble(),
-            minY: 0,
-            maxY: 10,
-            lineBarsData: [
-              // Score trend line
-              LineChartBarData(
-                spots: lineSpots,
-                isCurved: true,
-                curveSmoothness: 0.35,
-                color: AppColors.primary,
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
+            // Foreground Line Chart (Score)
+            LineChart(
+              LineChartData(
+                gridData: FlGridData(
                   show: true,
-                  getDotPainter: (spot, percent, barData, index) {
-                    return FlDotCirclePainter(
-                      radius: 4,
-                      color: AppColors.primary,
-                      strokeWidth: 2,
-                      strokeColor: Colors.white,
+                  drawVerticalLine: false,
+                  horizontalInterval: 2.0,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.grey.withOpacity(0.15),
+                      strokeWidth: 1,
                     );
                   },
                 ),
-                belowBarData: BarAreaData(
-                  show: false,
+                titlesData: titlesData,
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border(
+                    left: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                    bottom:
+                        BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                    right: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                  ),
+                ),
+                minX: 0,
+                maxX: (allDates.length - 1).toDouble(),
+                minY: 0,
+                maxY: 10,
+                lineBarsData: [
+                  // Score trend line
+                  LineChartBarData(
+                    spots: lineSpots,
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    color: AppColors.primary,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: false,
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    tooltipBgColor: Colors.black87,
+                    tooltipRoundedRadius: 8,
+                    tooltipPadding: const EdgeInsets.all(10),
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final index = spot.x.toInt();
+                        if (index >= 0 && index < allDates.length) {
+                          final date = allDates[index];
+                          final score = scoreTrendData[date] ?? 0;
+                          final volume = volumeData[date] ?? 0;
+                          return LineTooltipItem(
+                            '${DateFormat('yyyy/MM/dd').format(date)}\n'
+                            '平均: ${score.toStringAsFixed(1)}\n'
+                            '箭数: $volume',
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          );
+                        }
+                        return null;
+                      }).toList();
+                    },
+                  ),
+                ),
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    // Reference line at score 8.0
+                    HorizontalLine(
+                      y: 8.0,
+                      color: Colors.grey.withOpacity(0.3),
+                      strokeWidth: 1,
+                      dashArray: [5, 5],
+                    ),
+                  ],
                 ),
               ),
-            ],
-            barGroups: barGroups,
-            lineTouchData: LineTouchData(
-              enabled: true,
-              touchTooltipData: LineTouchTooltipData(
-                tooltipBgColor: Colors.black87,
-                tooltipRoundedRadius: 8,
-                tooltipPadding: const EdgeInsets.all(10),
-                getTooltipItems: (touchedSpots) {
-                  return touchedSpots.map((spot) {
-                    final index = spot.x.toInt();
-                    if (index >= 0 && index < allDates.length) {
-                      final date = allDates[index];
-                      final score = scoreTrendData[date] ?? 0;
-                      final volume = volumeData[date] ?? 0;
-                      return LineTooltipItem(
-                        '${DateFormat('yyyy/MM/dd').format(date)}\n'
-                        '平均: ${score.toStringAsFixed(1)}\n'
-                        '箭数: $volume',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      );
-                    }
-                    return null;
-                  }).toList();
-                },
-              ),
             ),
-            extraLinesData: ExtraLinesData(
-              horizontalLines: [
-                // Reference line at score 8.0
-                HorizontalLine(
-                  y: 8.0,
-                  color: Colors.grey.withOpacity(0.3),
-                  strokeWidth: 1,
-                  dashArray: [5, 5],
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

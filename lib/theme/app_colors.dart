@@ -7,7 +7,9 @@ class AppColors {
   static const Color cardDark = Color(0xFF23282B);
   static const Color accentGold = Color(0xFFD4AF37);
   static const Color accentRust = Color(0xFFB26A4D);
+  static const Color accent = accentGold;
   static const Color textSlate900 = Color(0xFF0F172A);
+  static const Color textSlate700 = Color(0xFF334155);
   static const Color textSlate500 = Color(0xFF64748B);
   static const Color textSlate400 = Color(0xFF94A3B8);
   static const Color textSlate300 = Color(0xFFCBD5E1);
