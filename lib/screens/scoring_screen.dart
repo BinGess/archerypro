@@ -3,11 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
-import '../widgets/common_widgets.dart';
 import '../providers/scoring_provider.dart';
 import '../providers/session_provider.dart';
 import '../models/equipment.dart';
 import '../models/training_session.dart';
+import '../models/end.dart';
+import '../models/arrow.dart';
 import '../widgets/target_face_painter.dart';
 
 class ScoringScreen extends ConsumerStatefulWidget {
@@ -184,6 +185,55 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
+  Widget _buildHeaderStat(String label, String value, String sub, Color bg, Color text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: text.withOpacity(0.6))),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(text: value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: text)),
+                TextSpan(text: " $sub", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text.withOpacity(0.5))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleBtn(String label, IconData icon, bool isActive, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : [],
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isActive ? AppColors.primary : AppColors.textSlate500),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isActive ? AppColors.primary : AppColors.textSlate500)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSessionList(dynamic scoringState) {
     final ends = scoringState.currentSession?.ends ?? [];
     final maxEnds = scoringState.maxEnds;
@@ -194,7 +244,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     // The number of items = max(maxEnds, ends.length) + (has extra button ? 1 : 0)
     // Actually, we just iterate up to maxEnds, filling with placeholder if end doesn't exist.
     // If ends.length > maxEnds, we show all of them.
-    final displayCount = max(maxEnds, ends.length);
+    final displayCount = max<int>(maxEnds, ends.length);
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -573,45 +623,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
-  Widget _buildTargetFooter() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => ref.read(scoringProvider.notifier).removeLastArrow(),
-              icon: const Icon(Icons.close, color: AppColors.textSlate500),
-              label: const Text('删除', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade100,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _saveSession,
-              icon: const Icon(Icons.save, color: Colors.white),
-              label: const Text('保存', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 4,
-                shadowColor: AppColors.primary.withOpacity(0.4),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _addScore(int score) async {
     final scoringState = ref.read(scoringProvider);
     if (scoringState.currentEnd == null) return;
@@ -838,51 +849,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
-  Widget _buildSaveButton() {
-    return Container(
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _saveSession,
-          borderRadius: BorderRadius.circular(12),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 28),
-              SizedBox(height: 4),
-              Text('保存', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _completeEndBtn() {
-    return GestureDetector(
-      onTap: () => ref.read(scoringProvider.notifier).completeEnd(),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 28),
-            Text('NEXT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white))
-          ],
-        ),
-      ),
-    );
-  }
 
   Color _getScoreColor(int score) {
     if (score >= 9) return AppColors.targetGold;
