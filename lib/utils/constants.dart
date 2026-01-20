@@ -24,14 +24,14 @@ const int kDefaultWeeklyGoal = 750; // arrows per week
 
 // Time Periods for Analysis
 const String kPeriod7Days = '7天';
-const String kPeriod1Month = '1个月';
-const String kPeriod3Months = '3个月';
+const String kPeriod1Month = '30天';
+const String kPeriodCurrentYear = '本年';
 const String kPeriodAll = '全部';
 
 const List<String> kAnalysisPeriods = [
   kPeriod7Days,
   kPeriod1Month,
-  kPeriod3Months,
+  kPeriodCurrentYear,
   kPeriodAll,
 ];
 

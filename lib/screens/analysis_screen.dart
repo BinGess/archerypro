@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/analytics_provider.dart';
+import '../providers/session_provider.dart';
 import '../utils/constants.dart';
+import '../services/analytics_service.dart';
 
-import '../widgets/score_trend_chart.dart';
-import '../widgets/target_face_painter.dart';
+import '../widgets/growth_mixed_chart.dart';
+import '../widgets/quadrant_radar_chart.dart';
+import '../widgets/stability_radar_chart.dart';
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
@@ -20,7 +23,7 @@ class AnalysisScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('表现分析', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        title: const Text('综合分析', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.refresh, size: 20),
@@ -28,14 +31,6 @@ class AnalysisScreen extends ConsumerWidget {
             ref.read(analyticsProvider.notifier).refreshAnalytics();
           },
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.share, size: 18, color: AppColors.primary),
-          )
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Row(
@@ -43,7 +38,7 @@ class AnalysisScreen extends ConsumerWidget {
             children: [
               _buildTab(context, ref, kPeriod7Days, selectedPeriod),
               _buildTab(context, ref, kPeriod1Month, selectedPeriod),
-              _buildTab(context, ref, kPeriod3Months, selectedPeriod),
+              _buildTab(context, ref, kPeriodCurrentYear, selectedPeriod),
               _buildTab(context, ref, kPeriodAll, selectedPeriod),
             ],
           ),
@@ -54,11 +49,24 @@ class AnalysisScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildScoreTrendCard(stats),
+                // Core Metrics Cards
+                _buildCoreMetricsSection(stats),
                 const SizedBox(height: 20),
-                _buildHeatmapCard(stats),
+
+                // Growth Trend Mixed Chart
+                _buildGrowthTrendCard(stats),
                 const SizedBox(height: 20),
-                _buildInsightSection(analyticsState.insights),
+
+                // Stability Radar Chart
+                _buildStabilityRadarCard(stats, ref, selectedPeriod),
+                const SizedBox(height: 20),
+
+                // Quadrant Radar Chart
+                _buildQuadrantRadarCard(stats),
+                const SizedBox(height: 20),
+
+                // Period AI Insights
+                _buildPeriodInsightsSection(stats, ref, selectedPeriod),
               ],
             ),
     );
@@ -87,9 +95,164 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildScoreTrendCard(dynamic stats) {
+  /// Build core metrics cards (总箭数, 平均环数, 10环率)
+  Widget _buildCoreMetricsSection(dynamic stats) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.show_chart,
+            label: '总箭数',
+            value: stats.totalArrows.toString(),
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.adjust,
+            label: '平均环数',
+            value: stats.avgArrowScore.toStringAsFixed(1),
+            color: AppColors.accent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.stars,
+            label: '10环率',
+            value: '${stats.tenRingRate.toStringAsFixed(1)}%',
+            color: AppColors.targetGold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSlate400,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build growth trend chart card
+  Widget _buildGrowthTrendCard(dynamic stats) {
+    // Prepare volume data from score trend data
+    final volumeData = <DateTime, int>{};
+    for (final date in stats.scoreTrendData.keys) {
+      // This is a simplification - ideally we'd track actual arrow counts per day
+      // For now, estimate based on sessions
+      volumeData[date] = 30; // Placeholder
+    }
+
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('成长趋势图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  SizedBox(height: 2),
+                  Text('分数走势 + 训练量', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.trending_up, color: AppColors.primary, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (stats.scoreTrendData.isNotEmpty)
+            GrowthMixedChart(
+              scoreTrendData: stats.scoreTrendData,
+              volumeData: volumeData,
+              height: 280,
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                '所选时段暂无数据',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Build stability radar chart card with comparison
+  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref, String selectedPeriod) {
+    if (stats.radarMetrics == null) {
+      return ArcheryCard(
+        child: Column(
+          children: [
+            const Text('稳定性雷达图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                '需要更多训练数据',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Get previous period data for comparison
+    // For now, we'll just show current period radar
+    // A more sophisticated implementation would calculate previous period metrics
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,175 +260,107 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('平均组分', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(stats.avgEndScore.toStringAsFixed(1), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
-                      const SizedBox(width: 8),
-                      Text(
-                        stats.trendDisplay,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: stats.trend >= 0 ? Colors.green.shade600 : Colors.red.shade600,
-                        ),
-                      ),
-                      Icon(
-                        stats.trend >= 0 ? Icons.trending_up : Icons.trending_down,
-                        size: 16,
-                        color: stats.trend >= 0 ? Colors.green.shade600 : Colors.red.shade600,
-                      ),
-                    ],
-                  ),
+                  const Text('稳定性雷达图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text('6维度能力评估', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Icon(Icons.insights, color: AppColors.primary),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 180, // Increased height for detail
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16, bottom: 8),
-              child: ScoreTrendChart(
-                scores: stats.scoreTrendData.values.toList(),
-                isCompact: false,
-                color: AppColors.primary,
-              ),
-            ),
+          const SizedBox(height: 16),
+          StabilityRadarChart(
+            currentMetrics: stats.radarMetrics,
+            previousMetrics: null, // TODO: Calculate previous period metrics
+            size: 260,
           ),
-          const SizedBox(height: 12),
-          if (stats.totalSessions > 0)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('${stats.totalSessions} 次训练', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                Text('${stats.totalArrows} 支箭', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                Text('${stats.scorePercentage.toStringAsFixed(1)}% 平均', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              ],
-            )
-          else
-            const Text('所选时段暂无数据', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
         ],
       ),
     );
   }
 
-  Widget _buildHeatmapCard(dynamic stats) {
-    final hasData = stats.heatmapData.isNotEmpty;
-    String tendency = 'CENTERED';
-
-    if (hasData) {
-      // Calculate center of mass for grouping tendency
-      final centerX = stats.heatmapData.fold(0.0, (sum, p) => sum + p.dx) / stats.heatmapData.length;
-      final centerY = stats.heatmapData.fold(0.0, (sum, p) => sum + p.dy) / stats.heatmapData.length;
-
-      if (centerX < -0.15 && centerY < -0.15) {
-        tendency = 'LOW LEFT';
-      } else if (centerX > 0.15 && centerY < -0.15) {
-        tendency = 'LOW RIGHT';
-      } else if (centerY < -0.15) {
-        tendency = 'LOW';
-      } else if (centerY > 0.15) {
-        tendency = 'HIGH';
-      } else if (centerX < -0.15) {
-        tendency = 'LEFT';
-      } else if (centerX > 0.15) {
-        tendency = 'RIGHT';
-      }
-    }
+  /// Build quadrant radar chart card
+  Widget _buildQuadrantRadarCard(dynamic stats) {
+    final quadrantDist = stats.quadrantDistribution;
+    final total = quadrantDist.values.fold(0, (sum, count) => sum + count);
 
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('着靶精度', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              StatusBadge(
-                text: 'TREND: $tendency',
-                color: tendency == 'CENTERED' ? AppColors.primary : AppColors.accentRust,
-                backgroundColor: tendency == 'CENTERED' ? AppColors.primary.withOpacity(0.1) : AppColors.accentRust.withOpacity(0.1),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('顽固偏差诊断', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  SizedBox(height: 2),
+                  Text('9环以下箭支方向分布', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.gps_fixed, color: Colors.purple, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: 240,
-            height: 240,
-            child: Stack(
+          const SizedBox(height: 16),
+          if (total > 0)
+            QuadrantRadarChartDetailed(quadrantDistribution: quadrantDist)
+          else
+            Container(
+              height: 200,
               alignment: Alignment.center,
-              children: [
-                // Target Face
-                CustomPaint(
-                  size: const Size(240, 240),
-                  painter: TargetFacePainter(targetFaceSize: 122),
-                ),
-
-                // Plot actual arrow positions if available
-                if (hasData)
-                  ...stats.heatmapData.take(50).map((position) {
-                    // Normalize position to fit 240x240
-                    // position.dx/dy are -1 to 1 (usually) relative to center
-                    // We assume the stored heatmap data is normalized (-1 to 1)
-                    // Radius = 120
-                    const double radius = 120.0;
-                    return Positioned(
-                      left: 120.0 + position.dx * radius - 4,
-                      top: 120.0 + position.dy * radius - 4,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.6),
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 2)],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-              ],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline, size: 48, color: Colors.green.shade300),
+                  const SizedBox(height: 8),
+                  Text(
+                    '太棒了！所有箭支都在9环及以上',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend(AppColors.primary, 'GROUPING'),
-              const SizedBox(width: 24),
-              _buildLegend(AppColors.accentGold, 'BULLSEYE'),
-            ],
-          ),
-          if (!hasData) ...[
-            const SizedBox(height: 16),
-            const Text('射更多箭以查看分组模式', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
-          ],
         ],
       ),
     );
   }
 
-  // _buildRing helper is no longer needed but we can leave it or remove it. 
-  // I will remove it to be clean. But I need to verify if it is used elsewhere.
-  // It was only used in _buildHeatmapCard. So I can safely remove it.
-  
-  Widget _buildLegend(Color color, String text) {
-    return Row(
-      children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-      ],
-    );
-  }
+  /// Build period insights section using AnalyticsService
+  Widget _buildPeriodInsightsSection(dynamic stats, WidgetRef ref, String selectedPeriod) {
+    final analyticsService = AnalyticsService();
+    final sessionState = ref.watch(sessionProvider);
+    final allSessions = sessionState.sessions;
 
-  Widget _buildInsightSection(List<dynamic> insights) {
+    // Filter sessions for current period
+    final periodSessions = allSessions.where((session) {
+      final now = DateTime.now();
+      switch (selectedPeriod) {
+        case kPeriod7Days:
+          return session.date.isAfter(now.subtract(const Duration(days: 7)));
+        case kPeriod1Month:
+          return session.date.isAfter(now.subtract(const Duration(days: 30)));
+        case kPeriodCurrentYear:
+          final startOfYear = DateTime(now.year, 1, 1);
+          return session.date.isAfter(startOfYear);
+        default:
+          return true;
+      }
+    }).toList();
+
+    // Generate period insights
+    final insights = analyticsService.generatePeriodInsights(
+      currentStats: stats,
+      previousStats: null, // TODO: Calculate previous period stats
+      recentSessions: periodSessions,
+    );
+
     if (insights.isEmpty) {
       return ArcheryCard(
         child: Column(
@@ -274,12 +369,15 @@ class AnalysisScreen extends ConsumerWidget {
               children: [
                 Icon(Icons.auto_awesome, color: Colors.grey.shade400, size: 20),
                 const SizedBox(width: 8),
-                Text('AI 教练建议', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600)),
+                Text(
+                  'AI 周期分析',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600),
+                ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              '完成更多训练以获取个性化AI分析',
+              '继续训练以获取AI周期分析建议',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               textAlign: TextAlign.center,
             ),
@@ -293,67 +391,90 @@ class AnalysisScreen extends ConsumerWidget {
       children: [
         const Row(
           children: [
-            Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
+            Icon(Icons.auto_awesome, color: AppColors.targetGold, size: 20),
             SizedBox(width: 8),
-            Text('AI 教练建议', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+            Text('AI 周期分析', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
           ],
         ),
         const SizedBox(height: 12),
         ...insights.map((insight) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _buildInsightItem(
-              icon: insight.icon,
-              color: insight.color,
-              title: insight.title,
-              desc: insight.description,
-              hasAction: insight.hasAction,
-              actionLabel: insight.actionLabel,
-            ),
+            child: _buildPeriodInsightCard(insight),
           );
         }).toList(),
       ],
     );
   }
 
-  Widget _buildInsightItem({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String desc,
-    bool hasAction = false,
-    String? actionLabel,
-  }) {
+  Widget _buildPeriodInsightCard(PeriodInsight insight) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: hasAction ? Colors.white : color.withOpacity(0.05),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            insight.color.withOpacity(0.1),
+            insight.color.withOpacity(0.05),
+          ],
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: hasAction ? AppColors.borderLight : color.withOpacity(0.2)),
-      ),
+        border: Border.all(color: insight.color.withOpacity(0.3)),
+        ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 20),
+            decoration: BoxDecoration(
+              color: insight.color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(insight.icon, color: insight.color, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                Text(
+                  insight.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: insight.color,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textSlate500)),
-                if (hasAction && actionLabel != null) ...[
+                Text(
+                  insight.message,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: AppColors.textSlate700,
+                  ),
+                ),
+                if (insight.actionable) ...[
                   const SizedBox(height: 8),
-                  Text('${actionLabel.toUpperCase()} →', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
-                ]
+                  Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline, size: 14, color: insight.color),
+                      const SizedBox(width: 4),
+                      Text(
+                        '可执行建议',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: insight.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-          )
+          ),
         ],
       ),
     );

@@ -164,8 +164,9 @@ class AnalyticsService {
       case kPeriod1Month:
         cutoffDate = now.subtract(const Duration(days: 30));
         break;
-      case kPeriod3Months:
-        cutoffDate = now.subtract(const Duration(days: 90));
+      case kPeriodCurrentYear:
+        // Start of current year
+        cutoffDate = DateTime(now.year, 1, 1);
         break;
       case kPeriodAll:
       default:
