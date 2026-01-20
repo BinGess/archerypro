@@ -25,9 +25,9 @@ class DetailsScreen extends ConsumerWidget {
             children: [
               Icon(Icons.list_alt, size: 64, color: Colors.grey.shade300),
               const SizedBox(height: 16),
-              const Text('No Sessions Available', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('暂无训练记录', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('Complete a training session to see details here', style: TextStyle(color: Colors.grey.shade600)),
+              Text('完成一次训练后可在此查看详情', style: TextStyle(color: Colors.grey.shade600)),
             ],
           ),
         ),
@@ -37,16 +37,17 @@ class DetailsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Training Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text('训练详情', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             // Clear selection when going back
             ref.read(selectedSessionProvider.notifier).state = null;
+            Navigator.of(context).pop();
           },
         ),
         actions: [
-          TextButton(onPressed: () {}, child: const Text('Edit', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600))),
+          TextButton(onPressed: () {}, child: const Text('编辑', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600))),
           IconButton(onPressed: () {}, icon: const Icon(Icons.share, size: 20, color: AppColors.primary)),
         ],
       ),
@@ -104,14 +105,14 @@ class DetailsScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const Text('TOTAL SCORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: AppColors.textSlate400)),
+                    const Text('总分', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: AppColors.textSlate400)),
                   ],
                 ),
                 Container(height: 50, width: 1, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 32)),
                 Column(
                   children: [
                     Text('${session.consistency.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppColors.textSlate900)),
-                    const Text('CONSISTENCY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: AppColors.textSlate400)),
+                    const Text('稳定性', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: AppColors.textSlate400)),
                   ],
                 ),
               ],
@@ -142,7 +143,7 @@ class DetailsScreen extends ConsumerWidget {
                         child: const Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
                       ),
                       const SizedBox(width: 8),
-                      const Text('AI Training Advice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const Text('AI 训练建议', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -165,9 +166,9 @@ class DetailsScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Ends Score', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('各组成绩', style: TextStyle(fontWeight: FontWeight.bold)),
                         StatusBadge(
-                          text: '${session.ends.length} Ends',
+                          text: '共 ${session.ends.length} 组',
                           color: AppColors.textSlate500,
                           backgroundColor: AppColors.backgroundLight,
                         ),

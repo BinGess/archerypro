@@ -17,7 +17,7 @@ class AnalysisScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('PERFORMANCE ANALYSIS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        title: const Text('表现分析', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.refresh, size: 20),
@@ -94,7 +94,7 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('AVG. END SCORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                  const Text('平均组分', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -135,13 +135,13 @@ class AnalysisScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${stats.totalSessions} sessions', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                Text('${stats.totalArrows} arrows', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                Text('${stats.scorePercentage.toStringAsFixed(1)}% avg', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                Text('${stats.totalSessions} 次训练', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                Text('${stats.totalArrows} 支箭', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+                Text('${stats.scorePercentage.toStringAsFixed(1)}% 平均', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
               ],
             )
           else
-            const Text('No data for selected period', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
+            const Text('所选时段暂无数据', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
         ],
       ),
     );
@@ -177,7 +177,7 @@ class AnalysisScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('IMPACT ACCURACY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              const Text('着靶精度', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
               StatusBadge(
                 text: 'TREND: $tendency',
                 color: tendency == 'CENTERED' ? AppColors.primary : AppColors.accentRust,
@@ -227,7 +227,7 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           if (!hasData) ...[
             const SizedBox(height: 16),
-            const Text('Shoot more arrows to see grouping pattern', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+            const Text('射更多箭以查看分组模式', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
           ],
         ],
       ),
@@ -265,7 +265,7 @@ class AnalysisScreen extends ConsumerWidget {
               children: [
                 Icon(Icons.auto_awesome, color: Colors.grey.shade400, size: 20),
                 const SizedBox(width: 8),
-                Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600)),
+                Text('AI 教练建议', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600)),
               ],
             ),
             const SizedBox(height: 16),
@@ -286,7 +286,7 @@ class AnalysisScreen extends ConsumerWidget {
           children: [
             Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
             SizedBox(width: 8),
-            Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+            Text('AI 教练建议', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
           ],
         ),
         const SizedBox(height: 12),

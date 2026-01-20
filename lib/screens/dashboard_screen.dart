@@ -91,9 +91,9 @@ class DashboardScreen extends ConsumerWidget {
                               children: [
                                 Icon(Icons.history, size: 64, color: AppColors.textSlate500),
                                 SizedBox(height: 16),
-                                Text('No training sessions yet', style: TextStyle(fontWeight: FontWeight.w600)),
+                                Text('暂无训练记录', style: TextStyle(fontWeight: FontWeight.w600)),
                                 SizedBox(height: 8),
-                                Text('Tap "Score" to start your first session', style: TextStyle(fontSize: 12)),
+                                Text('点击"添加"开始第一次训练', style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           )
@@ -104,7 +104,7 @@ class DashboardScreen extends ConsumerWidget {
                               children: [
                                 const Icon(Icons.check_circle, size: 48, color: AppColors.textSlate500),
                                 const SizedBox(height: 12),
-                                Text('Showing ${sessionState.recentSessions.length} recent sessions', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                Text('显示最近 ${sessionState.recentSessions.length} 次训练', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                               ],
                             ),
                           ),
@@ -151,7 +151,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             Text('${stats.totalSessions}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
                             const SizedBox(width: 4),
-                            const Text('sessions', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600)),
+                            const Text('次训练', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -159,7 +159,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
                             const SizedBox(width: 4),
-                            Text('${stats.currentMonthArrows} arrows this month', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate500)),
+                            Text('本月已射 ${stats.currentMonthArrows} 支箭', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate500)),
                           ],
                         )
                       ],
@@ -173,7 +173,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             Text(stats.avgArrowScore.toStringAsFixed(1), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1, color: AppColors.primary)),
                             const SizedBox(width: 4),
-                            const Text('avg', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600, fontSize: 13)),
+                            const Text('平均', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600, fontSize: 13)),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -185,7 +185,7 @@ class DashboardScreen extends ConsumerWidget {
                               backgroundColor: stats.trend >= 0 ? Colors.green.shade50 : Colors.red.shade50,
                             ),
                             const SizedBox(width: 4),
-                            const Text('Trend', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
+                            const Text('趋势', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
                           ],
                         )
                       ],
@@ -202,7 +202,7 @@ class DashboardScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Monthly Goal: ${stats.monthlyGoal ?? 3000}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                    Text('月度目标：${stats.monthlyGoal ?? 3000} 支箭', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
                     Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
                   ],
                 ),
@@ -283,7 +283,7 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Text('View Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isHighRecord ? AppColors.primary : AppColors.textSlate400)),
+                          Text('查看详情', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isHighRecord ? AppColors.primary : AppColors.textSlate400)),
                           Icon(Icons.chevron_right, size: 16, color: isHighRecord ? AppColors.primary : AppColors.textSlate400),
                         ],
                       )
@@ -315,9 +315,9 @@ class DashboardScreen extends ConsumerWidget {
       children: [
         Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary)),
         const SizedBox(height: 4),
-        Text('Accuracy', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+        Text('准确率', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
         const SizedBox(height: 8),
-        Text('$arrowCount arrows', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        Text('$arrowCount 支箭', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
       ],
     );
   }

@@ -49,14 +49,14 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             children: [
               const Icon(Icons.add_circle_outline, size: 64, color: AppColors.primary),
               const SizedBox(height: 24),
-              const Text('No Active Session', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('暂无训练', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('Tap below to start scoring', style: TextStyle(color: AppColors.textSlate500)),
+              const Text('点击下方开始计分', style: TextStyle(color: AppColors.textSlate500)),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: _startNewSession,
                 icon: const Icon(Icons.play_arrow),
-                label: const Text('START SESSION'),
+                label: const Text('开始训练'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -73,7 +73,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Real-time Scoring', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        title: const Text('实时计分', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -105,7 +105,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildHeaderStat(
-                    'TOTAL SCORE',
+                    '总分',
                     '${scoringState.totalScore}',
                     '',
                     AppColors.primary,
@@ -128,13 +128,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             child: Row(
               children: [
                 _buildToggleBtn(
-                  'Target View',
+                  '靶面视图',
                   Icons.track_changes,
                   scoringState.isTargetView,
                   () => ref.read(scoringProvider.notifier).toggleView(),
                 ),
                 _buildToggleBtn(
-                  'Grid View',
+                  '列表视图',
                   Icons.grid_view,
                   !scoringState.isTargetView,
                   () => ref.read(scoringProvider.notifier).toggleView(),
@@ -226,8 +226,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('END ${currentEnd.endNumber} RECORD', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
-                    Text('${currentEnd.totalScore} pts', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
+                    Text('第 ${currentEnd.endNumber} 组记录', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text('${currentEnd.totalScore} 分', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -244,11 +244,11 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         if (completedEnds.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: Text('HISTORY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400, letterSpacing: 1.5))),
+            child: Center(child: Text('历史记录', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400, letterSpacing: 1.5))),
           ),
           ...completedEnds.reversed.map((end) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildHistoryRow('END ${end.endNumber}', '${end.totalScore}', List<int>.from(end.arrows.map((a) => a.pointValue))),
+                child: _buildHistoryRow('第 ${end.endNumber} 组', '${end.totalScore}', List<int>.from(end.arrows.map((a) => a.pointValue))),
               )),
         ],
       ],
@@ -279,19 +279,24 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           ),
           const SizedBox(height: 20),
           // Target Face
-          SizedBox(
-            width: 320,
-            height: 320,
-            child: CustomPaint(
-              painter: TargetFacePainter(),
-              child: Stack(
-                children: [
-                  if (currentEnd != null)
-                    ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
-                      final position = arrow.position!;
-                      return _arrowMarker(160.0 + position.dy * 140, 160.0 + position.dx * 140);
-                    }).toList(),
-                ],
+          GestureDetector(
+            onTapDown: (details) => _handleTargetTap(details.localPosition),
+            child: SizedBox(
+              width: 320,
+              height: 320,
+              child: CustomPaint(
+                painter: TargetFacePainter(
+                  targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
+                ),
+                child: Stack(
+                  children: [
+                    if (currentEnd != null)
+                      ...currentEnd.arrows.where((a) => a.position != null).map((arrow) {
+                        final position = arrow.position!;
+                        return _arrowMarker(160.0 + position.dy * 140, 160.0 + position.dx * 140);
+                      }).toList(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -415,7 +420,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             child: ElevatedButton.icon(
               onPressed: () => ref.read(scoringProvider.notifier).removeLastArrow(),
               icon: const Icon(Icons.close, color: AppColors.textSlate500),
-              label: const Text('REMOVE', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.bold)),
+              label: const Text('删除', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey.shade100,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -429,7 +434,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             child: ElevatedButton.icon(
               onPressed: _saveSession,
               icon: const Icon(Icons.save, color: Colors.white),
-              label: const Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: const Text('保存', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -473,6 +478,106 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     }
   }
 
+  /// Handle tap on target face to record arrow score
+  void _handleTargetTap(Offset localPosition) async {
+    final scoringState = ref.read(scoringProvider);
+    if (scoringState.currentEnd == null) return;
+
+    // Get target face size from session
+    final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
+
+    // Target dimensions
+    const double targetSize = 320.0;
+    const double center = targetSize / 2; // 160
+    const double drawableRadius = 140.0; // Visual radius for arrow markers
+
+    // Calculate offset from center
+    final double dx = localPosition.dx - center;
+    final double dy = localPosition.dy - center;
+
+    // Calculate distance from center as fraction of radius
+    final double distance = (dx * dx + dy * dy).sqrt() / center;
+
+    // Determine score based on distance and target face size
+    int score;
+
+    if (targetFaceSize == 40) {
+      // 40cm target: 6-ring face (only scores 6-10 + X)
+      if (distance > 1.0) {
+        score = 0; // Miss
+      } else if (distance <= 0.08) {
+        score = 11; // X (inner 10)
+      } else if (distance <= 0.17) {
+        score = 10;
+      } else if (distance <= 0.33) {
+        score = 9;
+      } else if (distance <= 0.50) {
+        score = 8;
+      } else if (distance <= 0.67) {
+        score = 7;
+      } else {
+        score = 6;
+      }
+    } else {
+      // Full 10-ring target (60cm, 80cm, 122cm)
+      if (distance > 1.0) {
+        score = 0; // Miss
+      } else if (distance <= 0.05) {
+        score = 11; // X (inner 10)
+      } else if (distance <= 0.1) {
+        score = 10;
+      } else if (distance <= 0.2) {
+        score = 9;
+      } else if (distance <= 0.3) {
+        score = 8;
+      } else if (distance <= 0.4) {
+        score = 7;
+      } else if (distance <= 0.5) {
+        score = 6;
+      } else if (distance <= 0.6) {
+        score = 5;
+      } else if (distance <= 0.7) {
+        score = 4;
+      } else if (distance <= 0.8) {
+        score = 3;
+      } else if (distance <= 0.9) {
+        score = 2;
+      } else {
+        score = 1;
+      }
+    }
+
+    // Calculate normalized position for storage (-1 to 1 range)
+    final normalizedPosition = Offset(dx / drawableRadius, dy / drawableRadius);
+
+    // Add arrow with position
+    final isComplete = await ref.read(scoringProvider.notifier).addArrow(
+          score,
+          position: normalizedPosition,
+        );
+
+    if (isComplete && mounted) {
+      // Refresh session list
+      await ref.read(sessionProvider.notifier).refresh();
+
+      // Show success message and navigate back
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('训练完成！成绩已保存'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate back to home
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      });
+    }
+  }
+
   Future<void> _saveSession() async {
     await ref.read(scoringProvider.notifier).saveSession();
     await ref.read(sessionProvider.notifier).refresh();
@@ -480,7 +585,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Session saved successfully!'),
+          content: Text('训练已保存！'),
           backgroundColor: Colors.green,
         ),
       );
@@ -492,22 +597,26 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exit Scoring?'),
-        content: const Text('Your current session will be lost. Save before exiting?'),
+        title: const Text('退出计分？'),
+        content: const Text('当前记录将丢失。是否保存后退出？'),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
               ref.read(scoringProvider.notifier).cancelSession();
+              Navigator.of(context).popUntil((route) => route.isFirst); // Return to home
             },
-            child: const Text('DISCARD'),
+            child: const Text('丢弃', style: TextStyle(color: Colors.red)),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _saveSession();
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await _saveSession();
+              if (mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst); // Return to home
+              }
             },
-            child: const Text('SAVE'),
+            child: const Text('保存'),
           ),
         ],
       ),
@@ -548,9 +657,9 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       onTap: _saveSession,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.green,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -658,29 +767,59 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 }
 
 class TargetFacePainter extends CustomPainter {
+  final int targetFaceSize;
+
+  TargetFacePainter({required this.targetFaceSize});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Rings
-    _drawRing(canvas, center, radius, AppColors.targetWhite);
-    _drawRing(canvas, center, radius * 0.8, AppColors.targetBlack);
-    _drawRing(canvas, center, radius * 0.6, AppColors.targetBlue);
-    _drawRing(canvas, center, radius * 0.4, AppColors.targetRed);
-    _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
-
-    // X Ring
-    canvas.drawCircle(center, radius * 0.02, Paint()..color = Colors.black.withOpacity(0.2));
+    // Render different target faces based on size
+    if (targetFaceSize == 40) {
+      // 40cm target: 6-ring face (rings 6-10 only)
+      // Blue outer ring (6-7)
+      _drawRing(canvas, center, radius, AppColors.targetBlue);
+      // Red ring (8-9)
+      _drawRing(canvas, center, radius * 0.67, AppColors.targetRed);
+      // Yellow/Gold center (10-X)
+      _drawRing(canvas, center, radius * 0.33, AppColors.targetGold);
+      // X Ring
+      canvas.drawCircle(center, radius * 0.08, Paint()..color = Colors.black.withOpacity(0.15));
+    } else {
+      // 60cm, 80cm, 122cm: Full 10-ring target
+      // White outer ring (1-2)
+      _drawRing(canvas, center, radius, AppColors.targetWhite);
+      // Black ring (3-4)
+      _drawRing(canvas, center, radius * 0.8, AppColors.targetBlack);
+      // Blue ring (5-6)
+      _drawRing(canvas, center, radius * 0.6, AppColors.targetBlue);
+      // Red ring (7-8)
+      _drawRing(canvas, center, radius * 0.4, AppColors.targetRed);
+      // Yellow/Gold center (9-10)
+      _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
+      // X Ring
+      canvas.drawCircle(center, radius * 0.05, Paint()..color = Colors.black.withOpacity(0.15));
+    }
   }
 
   void _drawRing(Canvas canvas, Offset center, double radius, Color color) {
     final paint = Paint()..color = color;
     canvas.drawCircle(center, radius, paint);
     // Divider line
-    canvas.drawCircle(center, radius, Paint()..style = PaintingStyle.stroke..color = Colors.black12..strokeWidth = 1);
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = Colors.black.withOpacity(0.2)
+        ..strokeWidth = 1.5,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return oldDelegate is TargetFacePainter && oldDelegate.targetFaceSize != targetFaceSize;
+  }
 }

@@ -5,6 +5,7 @@ import '../models/equipment.dart';
 import '../models/training_session.dart';
 import 'scoring_screen.dart';
 import '../providers/scoring_provider.dart';
+import '../services/storage_service.dart';
 
 class SessionSetupScreen extends ConsumerStatefulWidget {
   const SessionSetupScreen({super.key});
@@ -25,7 +26,40 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   final List<double> _distanceOptions = [18, 30, 40, 50, 60, 70, 90];
   final List<int> _targetSizeOptions = [40, 60, 80, 122];
 
-  void _startTraining() {
+  @override
+  void initState() {
+    super.initState();
+    _loadLastSettings();
+  }
+
+  /// Load last training settings from storage
+  void _loadLastSettings() {
+    final storage = ref.read(storageServiceProvider);
+    setState(() {
+      _selectedBowType = BowType.values[storage.getSetting<int>('lastBowType', defaultValue: 1) ?? 1];
+      _distance = storage.getSetting<double>('lastDistance', defaultValue: 70.0) ?? 70.0;
+      _targetFaceSize = storage.getSetting<int>('lastTargetSize', defaultValue: 122) ?? 122;
+      _endCount = storage.getSetting<int>('lastEndCount', defaultValue: 10) ?? 10;
+      _arrowsPerEnd = storage.getSetting<int>('lastArrowsPerEnd', defaultValue: 6) ?? 6;
+      _environment = EnvironmentType.values[storage.getSetting<int>('lastEnvironment', defaultValue: 0) ?? 0];
+    });
+  }
+
+  /// Save current settings to storage
+  Future<void> _saveSettings() async {
+    final storage = ref.read(storageServiceProvider);
+    await storage.saveSetting('lastBowType', _selectedBowType.index);
+    await storage.saveSetting('lastDistance', _distance);
+    await storage.saveSetting('lastTargetSize', _targetFaceSize);
+    await storage.saveSetting('lastEndCount', _endCount);
+    await storage.saveSetting('lastArrowsPerEnd', _arrowsPerEnd);
+    await storage.saveSetting('lastEnvironment', _environment.index);
+  }
+
+  void _startTraining() async {
+    // Save current settings for next time
+    await _saveSettings();
+
     // Create equipment
     final equipment = Equipment(
       bowType: _selectedBowType,
@@ -43,11 +77,13 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         );
 
     // Navigate to scoring screen
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ScoringScreen(),
-      ),
-    );
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const ScoringScreen(),
+        ),
+      );
+    }
   }
 
   String _getBowModelName(BowType type) {
@@ -96,46 +132,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Summary Card
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: AppColors.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '基本信息：${_selectedBowType.displayName} · ${_distance.toInt()}m · ${_targetFaceSize}cm靶面',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      '训练',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 8),
 
             // Equipment Selection
             _buildSection(
