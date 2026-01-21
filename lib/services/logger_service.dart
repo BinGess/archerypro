@@ -111,8 +111,18 @@ class LoggerService {
       _memoryLogs.removeAt(0);
     }
 
-    // Write to file
-    _writeToFile(fullLogMessage);
+    // Write to file synchronously to avoid losing logs
+    _writeToFileSync(fullLogMessage);
+  }
+
+  /// Write log to file synchronously (fire and forget with error handling)
+  void _writeToFileSync(String message) {
+    if (!_isInitialized || _logFile == null) return;
+
+    // Use unawaited to ensure logs are written even if not awaited
+    _writeToFile(message).catchError((e) {
+      debugPrint('⚠️ Failed to write log to file: $e');
+    });
   }
 
   /// Write log to file
