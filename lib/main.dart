@@ -356,15 +356,23 @@ class _MainContainerState extends ConsumerState<MainContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final logger = LoggerService();
 
     if (!_isInitialized) {
+      logger.log('🔄 Building loading screen...', level: LogLevel.debug);
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
       );
     }
+
+    logger.log('🎨 Building main UI...', level: LogLevel.debug);
+
+    // Only get localization after initialization is complete
+    final l10n = AppLocalizations.of(context);
+
+    logger.log('✅ Localization loaded in build', level: LogLevel.debug);
 
     return Scaffold(
       body: IndexedStack(
