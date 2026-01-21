@@ -649,17 +649,18 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     // Get target face size from session
     final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
 
-    // Target dimensions
-    const double targetSize = 320.0;
-    const double center = targetSize / 2; // 160
-    const double drawableRadius = 140.0; // Visual radius for arrow markers
+    // Target dimensions - must match actual widget size (300x300)
+    const double targetSize = 300.0;
+    const double center = targetSize / 2; // 150
+    const double targetRadius = 150.0; // Actual target radius for distance calculation
+    const double drawableRadius = 140.0; // Visual radius for arrow markers (with padding)
 
     // Calculate offset from center
     final double dx = localPosition.dx - center;
     final double dy = localPosition.dy - center;
 
     // Calculate distance from center as fraction of radius
-    final double distance = sqrt(dx * dx + dy * dy) / center;
+    final double distance = sqrt(dx * dx + dy * dy) / targetRadius;
 
     // Determine score based on distance and target face size
     int score;
