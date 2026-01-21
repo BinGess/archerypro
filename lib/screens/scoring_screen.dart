@@ -371,8 +371,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                              .map((arrow) {
                                final position = arrow.position!;
                                // normalized position (-1 to 1) -> scaled to 300x300
-                               // center 150, radius 140 (drawable)
-                               return _arrowMarker(150.0 + position.dy * 140 - 6, 150.0 + position.dx * 140 - 6);
+                               // center 150, radius 150 (drawable)
+                               return _arrowMarker(150.0 + position.dy * 150 - 6, 150.0 + position.dx * 150 - 6);
                              }).toList(),
                              
                       ..._ripples.map((ripple) => RippleWidget(
