@@ -8,8 +8,6 @@ import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
 import 'screens/session_setup_screen.dart';
-import 'services/storage_service.dart';
-import 'services/scoring_service.dart';
 import 'services/logger_service.dart';
 import 'providers/scoring_provider.dart';
 import 'providers/session_provider.dart';
@@ -59,54 +57,7 @@ void main() async {
 
     logger.logLifecycle('Initializing services...');
 
-    // Initialize storage service with error handling
-    final storageService = StorageService();
-    try {
-      logger.log('📦 Initializing storage...', level: LogLevel.info);
-      await storageService.initialize();
-      logger.log('✅ Storage initialized', level: LogLevel.info);
-    } catch (e, stack) {
-      logger.logError(
-        'Failed to initialize storage',
-        error: e,
-        stackTrace: stack,
-      );
-
-      // Try to recover by deleting corrupted boxes
-      try {
-        logger.log('🧹 Attempting storage recovery...', level: LogLevel.warning);
-        await storageService.deleteDataFromDisk();
-        await storageService.initialize();
-        logger.log('✅ Storage recovered', level: LogLevel.info);
-      } catch (e2, stack2) {
-        logger.logError(
-          'Failed to recover storage',
-          error: e2,
-          stackTrace: stack2,
-        );
-        // App continues without persistent storage
-      }
-    }
-
-    // Create provider container
-    final container = ProviderContainer(
-      overrides: [
-        storageServiceProvider.overrideWithValue(storageService),
-      ],
-    );
-
-    // Initialize locale
-    try {
-      logger.log('🌐 Initializing locale...', level: LogLevel.info);
-      await container.read(localeProvider.notifier).initialize();
-      logger.log('✅ Locale initialized', level: LogLevel.info);
-    } catch (e, stack) {
-      logger.logError(
-        'Locale initialization failed',
-        error: e,
-        stackTrace: stack,
-      );
-    }
+    final container = ProviderContainer();
 
     logger.logLifecycle('Starting app...');
 
@@ -175,7 +126,7 @@ class ArcheryApp extends ConsumerWidget {
             elevation: 0,
           ),
         ),
-        home: const MainContainer(),
+        home: const InitializationWrapper(),
         builder: (context, child) {
           // Error boundary for the entire app
           ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -261,56 +212,44 @@ class ArcheryApp extends ConsumerWidget {
   }
 }
 
-class MainContainer extends ConsumerStatefulWidget {
-  const MainContainer({super.key});
+class InitializationWrapper extends ConsumerStatefulWidget {
+  const InitializationWrapper({super.key});
 
   @override
-  ConsumerState<MainContainer> createState() => _MainContainerState();
+  ConsumerState<InitializationWrapper> createState() => _InitializationWrapperState();
 }
 
-class _MainContainerState extends ConsumerState<MainContainer> {
-  int _currentIndex = 0;
+class _InitializationWrapperState extends ConsumerState<InitializationWrapper> {
   bool _isInitialized = false;
-
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const AnalysisScreen(),
-  ];
+  bool _isRecovering = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    // CRITICAL: Cannot modify providers during initState
-    // Must delay until after the widget tree is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
+    Future.microtask(() => _initializeApp());
   }
 
   Future<void> _initializeApp() async {
     final logger = LoggerService();
 
     try {
-      logger.log('📱 Initializing main container...', level: LogLevel.info);
-      logger.log('⏰ Startup timestamp: ${DateTime.now().toIso8601String()}', level: LogLevel.info);
+      logger.log('📦 Initializing storage...', level: LogLevel.info);
+      final storageService = ref.read(storageServiceProvider);
+      await storageService.initialize();
+      logger.log('✅ Storage initialized', level: LogLevel.info);
 
-      // Force flush to ensure this log is written before potential crash
-      await logger.forceFlush();
+      logger.log('🌐 Initializing locale...', level: LogLevel.info);
+      await ref.read(localeProvider.notifier).initialize();
+      logger.log('✅ Locale initialized', level: LogLevel.info);
 
-      // Load existing sessions first
       logger.log('📂 Loading sessions...', level: LogLevel.info);
-      await logger.forceFlush(); // Flush before potentially dangerous operation
-
       await ref.read(sessionProvider.notifier).loadSessions();
-
       logger.log('✅ Sessions loaded successfully', level: LogLevel.info);
-      await logger.forceFlush(); // Flush after critical operation
 
       final sessions = ref.read(sessionProvider).sessions;
       logger.log('Found ${sessions.length} existing sessions', level: LogLevel.info);
-      await logger.forceFlush();
 
-      // Only generate sample data if no sessions exist
       if (sessions.isEmpty) {
         logger.log('🎲 No sessions found, generating sample data...', level: LogLevel.info);
         try {
@@ -321,7 +260,6 @@ class _MainContainerState extends ConsumerState<MainContainer> {
           await generator.generateSampleSessions();
           logger.log('✅ Sample data generated', level: LogLevel.info);
 
-          // Refresh session list after generating samples
           await ref.read(sessionProvider.notifier).loadSessions();
         } catch (e, stack) {
           logger.logError(
@@ -329,50 +267,133 @@ class _MainContainerState extends ConsumerState<MainContainer> {
             error: e,
             stackTrace: stack,
           );
-          // Continue even if sample generation fails
         }
-      } else {
-        logger.log('✅ Using existing sessions', level: LogLevel.info);
       }
-
-      logger.log('✅ Main container initialized', level: LogLevel.info);
     } catch (e, stack) {
       logger.logError(
-        'Main container initialization error',
+        'Initialization error',
         error: e,
         stackTrace: stack,
       );
-      // Force flush error logs immediately
-      await logger.forceFlush();
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
     }
 
     if (mounted) {
       setState(() {
         _isInitialized = true;
       });
-      logger.log('✅ UI ready', level: LogLevel.info);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final logger = LoggerService();
-
-    if (!_isInitialized) {
-      logger.log('🔄 Building loading screen...', level: LogLevel.debug);
-      return const Scaffold(
+    if (_error != null) {
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  '初始化失败',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                _isRecovering
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: _recoverApp,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('重置数据并重试'),
+                      ),
+              ],
+            ),
+          ),
         ),
       );
     }
 
-    logger.log('🎨 Building main UI...', level: LogLevel.debug);
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('加载中...'),
+            ],
+          ),
+        ),
+      );
+    }
 
-    // Only get localization after initialization is complete
+    return const MainContainer();
+  }
+
+  Future<void> _recoverApp() async {
+    setState(() => _isRecovering = true);
+    final logger = LoggerService();
+
+    try {
+      final storageService = ref.read(storageServiceProvider);
+      await storageService.deleteDataFromDisk();
+      setState(() {
+        _error = null;
+        _isRecovering = false;
+        _isInitialized = false;
+      });
+      await _initializeApp();
+    } catch (e, stack) {
+      logger.logError(
+        'Recovery failed',
+        error: e,
+        stackTrace: stack,
+      );
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isRecovering = false;
+        });
+      }
+    }
+  }
+}
+
+class MainContainer extends ConsumerStatefulWidget {
+  const MainContainer({super.key});
+
+  @override
+  ConsumerState<MainContainer> createState() => _MainContainerState();
+}
+
+class _MainContainerState extends ConsumerState<MainContainer> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const DashboardScreen(),
+    const AnalysisScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-
-    logger.log('✅ Localization loaded in build', level: LogLevel.debug);
 
     return Scaffold(
       body: IndexedStack(
