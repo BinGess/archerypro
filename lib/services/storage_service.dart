@@ -5,7 +5,7 @@ import '../utils/constants.dart';
 
 /// Service for local data persistence using Hive
 class StorageService {
-  Box<String>? _sessionsBox;
+  LazyBox<String>? _sessionsBox;
   Box<dynamic>? _settingsBox;
   bool _isInitialized = false;
 
@@ -16,7 +16,8 @@ class StorageService {
     await Hive.initFlutter();
 
     // Open boxes
-    _sessionsBox = await Hive.openBox<String>(kSessionsBoxName);
+    // Use LazyBox for sessions to avoid loading all data into memory at once
+    _sessionsBox = await Hive.openLazyBox<String>(kSessionsBoxName);
     _settingsBox = await Hive.openBox(kSettingsBoxName);
 
     _isInitialized = true;
@@ -50,20 +51,32 @@ class StorageService {
   /// Get a specific session by ID
   Future<TrainingSession?> getSession(String id) async {
     _ensureInitialized();
-    final jsonString = _sessionsBox!.get(id);
+    final jsonString = await _sessionsBox!.get(id);
     if (jsonString == null) return null;
     return _sessionFromJsonString(jsonString);
   }
 
-  /// Get all sessions
-  Future<List<TrainingSession>> getAllSessions() async {
+  /// Get all sessions (limited to prevent OOM)
+  /// [limit] defaults to 50 to ensure app stability
+  Future<List<TrainingSession>> getAllSessions({int limit = 50}) async {
     _ensureInitialized();
     final sessions = <TrainingSession>[];
 
-    for (final jsonString in _sessionsBox!.values) {
+    // Get all keys
+    final keys = _sessionsBox!.keys.toList();
+    
+    // Load only the last [limit] sessions (assuming insertion order)
+    // This prevents loading thousands of sessions into memory
+    final startIndex = (keys.length > limit) ? keys.length - limit : 0;
+    final keysToLoad = keys.skip(startIndex);
+
+    for (final key in keysToLoad) {
       try {
-        final session = _sessionFromJsonString(jsonString);
-        sessions.add(session);
+        final jsonString = await _sessionsBox!.get(key);
+        if (jsonString != null) {
+          final session = _sessionFromJsonString(jsonString);
+          sessions.add(session);
+        }
       } catch (e) {
         // Skip corrupted data
         print('Error loading session: $e');
@@ -73,7 +86,34 @@ class StorageService {
     return sessions;
   }
 
-  /// Update a session
+  /// Get sessions for a specific date range
+  /// Iterates through all data but only keeps matching sessions in memory
+  Future<List<TrainingSession>> getSessionsInRange(DateTime start, DateTime end) async {
+    _ensureInitialized();
+    final sessions = <TrainingSession>[];
+    
+    // Iterate all keys to find matches
+    // This is slower but ensures we find all historical data without loading everything into memory
+    for (final key in _sessionsBox!.keys) {
+      try {
+        final jsonString = await _sessionsBox!.get(key);
+        if (jsonString != null) {
+          final session = _sessionFromJsonString(jsonString);
+          // Check date range (inclusive)
+          if (session.date.isAfter(start.subtract(const Duration(days: 1))) &&
+              session.date.isBefore(end.add(const Duration(days: 1)))) {
+            sessions.add(session);
+          }
+        }
+      } catch (e) {
+        print('Error loading session during range query: $e');
+      }
+    }
+    
+    return sessions;
+  }
+
+  /// Update an existing session
   Future<void> updateSession(TrainingSession session) async {
     await saveSession(session);
   }

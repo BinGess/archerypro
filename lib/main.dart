@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
@@ -15,40 +16,55 @@ import 'l10n/app_localizations.dart';
 import 'utils/sample_data.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    debugPrint('🚀 App starting...');
 
-  // Initialize storage service with error handling
-  final storageService = StorageService();
-  try {
-    await storageService.initialize();
-  } catch (e) {
-    debugPrint('Failed to initialize storage: $e');
-    // If initialization fails (e.g., corrupted box), try to recover by deleting boxes
+    // Initialize storage service with error handling
+    final storageService = StorageService();
     try {
-      await storageService.deleteDataFromDisk();
+      debugPrint('📦 Initializing storage...');
       await storageService.initialize();
-    } catch (e2) {
-      debugPrint('Failed to recover storage: $e2');
-      // Fallback: App runs without persistent storage or shows error screen
+      debugPrint('✅ Storage initialized');
+    } catch (e, stack) {
+      debugPrint('❌ Failed to initialize storage: $e');
+      debugPrint('Stack trace: $stack');
+      // If initialization fails (e.g., corrupted box), try to recover by deleting boxes
+      try {
+        debugPrint('🧹 Attempting storage recovery...');
+        await storageService.deleteDataFromDisk();
+        await storageService.initialize();
+        debugPrint('✅ Storage recovered');
+      } catch (e2) {
+        debugPrint('💀 Failed to recover storage: $e2');
+        // Fallback: App runs without persistent storage or shows error screen
+      }
     }
-  }
 
-  // Create provider container
-  final container = ProviderContainer(
-    overrides: [
-      storageServiceProvider.overrideWithValue(storageService),
-    ],
-  );
+    // Create provider container
+    final container = ProviderContainer(
+      overrides: [
+        storageServiceProvider.overrideWithValue(storageService),
+      ],
+    );
 
-  // Initialize locale
-  await container.read(localeProvider.notifier).initialize();
+    // Initialize locale
+    try {
+      await container.read(localeProvider.notifier).initialize();
+    } catch (e) {
+      debugPrint('⚠️ Locale initialization failed: $e');
+    }
 
-  runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const ArcheryApp(),
-    ),
-  );
+    runApp(
+      UncontrolledProviderScope(
+        container: container,
+        child: const ArcheryApp(),
+      ),
+    );
+  }, (error, stack) {
+    debugPrint('💥 Uncaught error in main zone: $error');
+    debugPrint('Stack trace: $stack');
+  });
 }
 
 class ArcheryApp extends ConsumerWidget {
@@ -81,8 +97,8 @@ class ArcheryApp extends ConsumerWidget {
         primaryColor: AppColors.primary,
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         useMaterial3: true,
-        fontFamily: GoogleFonts.manrope().fontFamily,
-        textTheme: GoogleFonts.manropeTextTheme(Theme.of(context).textTheme),
+        // fontFamily: GoogleFonts.manrope().fontFamily,
+        // textTheme: GoogleFonts.manropeTextTheme(Theme.of(context).textTheme),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,

@@ -43,24 +43,20 @@ class SessionService {
   }
 
   /// Get all sessions
-  Future<List<TrainingSession>> getAllSessions() async {
-    return await _storageService.getAllSessions();
+  Future<List<TrainingSession>> getAllSessions({int limit = 50}) async {
+    return await _storageService.getAllSessions(limit: limit);
   }
 
   /// Get sessions sorted by date (newest first)
-  Future<List<TrainingSession>> getSessionsSortedByDate() async {
-    final sessions = await getAllSessions();
+  Future<List<TrainingSession>> getSessionsSortedByDate({int limit = 50}) async {
+    final sessions = await getAllSessions(limit: limit);
     sessions.sort((a, b) => b.date.compareTo(a.date));
     return sessions;
   }
 
   /// Get sessions for a specific date range
   Future<List<TrainingSession>> getSessionsInRange(DateTime start, DateTime end) async {
-    final allSessions = await getAllSessions();
-    return allSessions.where((session) {
-      return session.date.isAfter(start.subtract(const Duration(days: 1))) &&
-          session.date.isBefore(end.add(const Duration(days: 1)));
-    }).toList();
+    return await _storageService.getSessionsInRange(start, end);
   }
 
   /// Get sessions for current month
