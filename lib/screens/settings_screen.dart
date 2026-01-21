@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/locale_provider.dart';
+import 'logs_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -33,6 +34,9 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           _buildSectionHeader(context, l10n.languageSettings),
           _buildLanguageSection(context, ref, l10n),
+          const SizedBox(height: 24),
+          _buildSectionHeader(context, 'Debug'),
+          _buildDebugSection(context),
           const SizedBox(height: 24),
           _buildSectionHeader(context, l10n.about),
           _buildInfoSection(context, l10n),
@@ -175,6 +179,81 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebugSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const LogsScreen(),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.bug_report_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'View Logs',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'View app logs and crash reports',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: AppColors.textSlate400,
+              ),
+            ],
+          ),
         ),
       ),
     );

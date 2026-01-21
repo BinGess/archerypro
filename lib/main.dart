@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import 'screens/analysis_screen.dart';
 import 'screens/session_setup_screen.dart';
 import 'services/storage_service.dart';
 import 'services/scoring_service.dart';
+import 'services/logger_service.dart';
 import 'providers/scoring_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/locale_provider.dart';
@@ -16,28 +18,64 @@ import 'l10n/app_localizations.dart';
 import 'utils/sample_data.dart';
 
 void main() async {
+  // Ensure Flutter binding is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize logger first
+  final logger = LoggerService();
+  await logger.initialize();
+  logger.log('🚀 App starting...', level: LogLevel.info);
+
+  // Set up Flutter error handler
+  FlutterError.onError = (FlutterErrorDetails details) {
+    logger.logError(
+      'Flutter framework error',
+      error: details.exception,
+      stackTrace: details.stack,
+      context: details.context?.toString(),
+    );
+    FlutterError.presentError(details);
+  };
+
+  // Set up platform error handler
+  PlatformDispatcher.instance.onError = (error, stack) {
+    logger.logFatal(
+      'Platform dispatcher error',
+      error: error,
+      stackTrace: stack,
+    );
+    return true;
+  };
+
   runZonedGuarded<Future<void>>(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    debugPrint('🚀 App starting...');
+    logger.logLifecycle('Initializing services...');
 
     // Initialize storage service with error handling
     final storageService = StorageService();
     try {
-      debugPrint('📦 Initializing storage...');
+      logger.log('📦 Initializing storage...', level: LogLevel.info);
       await storageService.initialize();
-      debugPrint('✅ Storage initialized');
+      logger.log('✅ Storage initialized', level: LogLevel.info);
     } catch (e, stack) {
-      debugPrint('❌ Failed to initialize storage: $e');
-      debugPrint('Stack trace: $stack');
-      // If initialization fails (e.g., corrupted box), try to recover by deleting boxes
+      logger.logError(
+        'Failed to initialize storage',
+        error: e,
+        stackTrace: stack,
+      );
+
+      // Try to recover by deleting corrupted boxes
       try {
-        debugPrint('🧹 Attempting storage recovery...');
+        logger.log('🧹 Attempting storage recovery...', level: LogLevel.warning);
         await storageService.deleteDataFromDisk();
         await storageService.initialize();
-        debugPrint('✅ Storage recovered');
-      } catch (e2) {
-        debugPrint('💀 Failed to recover storage: $e2');
-        // Fallback: App runs without persistent storage or shows error screen
+        logger.log('✅ Storage recovered', level: LogLevel.info);
+      } catch (e2, stack2) {
+        logger.logError(
+          'Failed to recover storage',
+          error: e2,
+          stackTrace: stack2,
+        );
+        // App continues without persistent storage
       }
     }
 
@@ -50,10 +88,18 @@ void main() async {
 
     // Initialize locale
     try {
+      logger.log('🌐 Initializing locale...', level: LogLevel.info);
       await container.read(localeProvider.notifier).initialize();
-    } catch (e) {
-      debugPrint('⚠️ Locale initialization failed: $e');
+      logger.log('✅ Locale initialized', level: LogLevel.info);
+    } catch (e, stack) {
+      logger.logError(
+        'Locale initialization failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
+
+    logger.logLifecycle('Starting app...');
 
     runApp(
       UncontrolledProviderScope(
@@ -62,8 +108,11 @@ void main() async {
       ),
     );
   }, (error, stack) {
-    debugPrint('💥 Uncaught error in main zone: $error');
-    debugPrint('Stack trace: $stack');
+    logger.logFatal(
+      'Uncaught error in main zone',
+      error: error,
+      stackTrace: stack,
+    );
   });
 }
 

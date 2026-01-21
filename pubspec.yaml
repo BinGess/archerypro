@@ -31,6 +31,9 @@ dependencies:
   # Preferences Storage
   shared_preferences: ^2.2.2
 
+  # Path Provider for file storage
+  path_provider: ^2.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
