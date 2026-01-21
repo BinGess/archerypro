@@ -140,6 +140,20 @@ class LoggerService {
     }
   }
 
+  /// Force flush all pending logs to disk immediately (for critical logs before potential crash)
+  Future<void> forceFlush() async {
+    if (!_isInitialized || _logFile == null) return;
+
+    try {
+      // Ensure file is synced to disk
+      final raf = await _logFile!.open(mode: FileMode.append);
+      await raf.flush();
+      await raf.close();
+    } catch (e) {
+      debugPrint('Failed to force flush logs: $e');
+    }
+  }
+
   /// Get all log files
   Future<List<File>> getLogFiles() async {
     try {

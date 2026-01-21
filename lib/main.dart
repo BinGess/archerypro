@@ -26,7 +26,15 @@ void main() async {
     // Initialize logger first
     final logger = LoggerService();
     await logger.initialize();
+
+    // Log startup attempt with timestamp
+    final startTime = DateTime.now();
     logger.log('🚀 App starting...', level: LogLevel.info);
+    logger.log('📅 Startup time: ${startTime.toIso8601String()}', level: LogLevel.info);
+    logger.log('🔢 Process attempt ID: ${startTime.millisecondsSinceEpoch}', level: LogLevel.info);
+
+    // Force flush immediately to ensure these logs are persisted
+    await logger.forceFlush();
 
     // Set up Flutter error handler
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -284,13 +292,23 @@ class _MainContainerState extends ConsumerState<MainContainer> {
 
     try {
       logger.log('📱 Initializing main container...', level: LogLevel.info);
+      logger.log('⏰ Startup timestamp: ${DateTime.now().toIso8601String()}', level: LogLevel.info);
+
+      // Force flush to ensure this log is written before potential crash
+      await logger.forceFlush();
 
       // Load existing sessions first
       logger.log('📂 Loading sessions...', level: LogLevel.info);
+      await logger.forceFlush(); // Flush before potentially dangerous operation
+
       await ref.read(sessionProvider.notifier).loadSessions();
+
+      logger.log('✅ Sessions loaded successfully', level: LogLevel.info);
+      await logger.forceFlush(); // Flush after critical operation
 
       final sessions = ref.read(sessionProvider).sessions;
       logger.log('Found ${sessions.length} existing sessions', level: LogLevel.info);
+      await logger.forceFlush();
 
       // Only generate sample data if no sessions exist
       if (sessions.isEmpty) {
@@ -324,6 +342,8 @@ class _MainContainerState extends ConsumerState<MainContainer> {
         error: e,
         stackTrace: stack,
       );
+      // Force flush error logs immediately
+      await logger.forceFlush();
     }
 
     if (mounted) {
