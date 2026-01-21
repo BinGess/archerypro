@@ -370,9 +370,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                              .where((a) => a.position != null)
                              .map((arrow) {
                                final position = arrow.position!;
-                               // normalized position (-1 to 1) -> scaled to 300x300
-                               // center 150, radius 150 (drawable)
-                               return _arrowMarker(150.0 + position.dy * 150 - 6, 150.0 + position.dx * 150 - 6);
+                               // normalized position (-1 to 1) -> scaled to display area
+                               // center 150, use drawable radius 140 to keep markers within bounds
+                               const double displayRadius = 140.0;
+                               return _arrowMarker(
+                                 150.0 + position.dy * displayRadius - 6,
+                                 150.0 + position.dx * displayRadius - 6
+                               );
                              }).toList(),
                              
                       ..._ripples.map((ripple) => RippleWidget(
@@ -667,55 +671,60 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
     if (targetFaceSize == 40) {
       // 40cm target: 6-ring face (only scores 6-10 + X)
+      // This represents the inner 60% of a full target (rings 6-10)
+      // Based on World Archery specs scaled proportionally
       if (distance > 1.0) {
-        score = 0; // Miss
-      } else if (distance <= 0.08) {
-        score = 11; // X (inner 10)
-      } else if (distance <= 0.17) {
-        score = 10;
-      } else if (distance <= 0.33) {
-        score = 9;
-      } else if (distance <= 0.50) {
-        score = 8;
-      } else if (distance <= 0.67) {
-        score = 7;
+        score = 0; // Miss - outside target
+      } else if (distance <= 0.083) {
+        score = 11; // X ring - innermost circle (half of 10-ring scaled)
+      } else if (distance <= 0.167) {
+        score = 10; // 10 ring - gold center
+      } else if (distance <= 0.333) {
+        score = 9; // 9 ring - outer gold
+      } else if (distance <= 0.500) {
+        score = 8; // 8 ring - inner red
+      } else if (distance <= 0.667) {
+        score = 7; // 7 ring - outer red
       } else {
-        score = 6;
+        score = 6; // 6 ring - blue area
       }
     } else {
       // Full 10-ring target (60cm, 80cm, 122cm)
+      // Each ring is 10% of the radius (1/10th)
+      // Based on World Archery standard dimensions
       if (distance > 1.0) {
-        score = 0; // Miss
-      } else if (distance <= 0.05) {
-        score = 11; // X (inner 10)
-      } else if (distance <= 0.1) {
-        score = 10;
-      } else if (distance <= 0.2) {
-        score = 9;
-      } else if (distance <= 0.3) {
-        score = 8;
-      } else if (distance <= 0.4) {
-        score = 7;
-      } else if (distance <= 0.5) {
-        score = 6;
-      } else if (distance <= 0.6) {
-        score = 5;
-      } else if (distance <= 0.7) {
-        score = 4;
-      } else if (distance <= 0.8) {
-        score = 3;
-      } else if (distance <= 0.9) {
-        score = 2;
+        score = 0; // Miss - outside target
+      } else if (distance <= 0.050) {
+        score = 11; // X ring - innermost circle (half of 10-ring)
+      } else if (distance <= 0.10) {
+        score = 10; // 10 ring
+      } else if (distance <= 0.20) {
+        score = 9; // 9 ring
+      } else if (distance <= 0.30) {
+        score = 8; // 8 ring
+      } else if (distance <= 0.40) {
+        score = 7; // 7 ring
+      } else if (distance <= 0.50) {
+        score = 6; // 6 ring
+      } else if (distance <= 0.60) {
+        score = 5; // 5 ring
+      } else if (distance <= 0.70) {
+        score = 4; // 4 ring
+      } else if (distance <= 0.80) {
+        score = 3; // 3 ring
+      } else if (distance <= 0.90) {
+        score = 2; // 2 ring
       } else {
-        score = 1;
+        score = 1; // 1 ring
       }
     }
 
     // Calculate normalized position for storage (-1 to 1 range)
-    final normalizedPosition = Offset(dx / drawableRadius, dy / drawableRadius);
+    // IMPORTANT: Use targetRadius (not drawableRadius) for accurate normalization
+    final normalizedPosition = Offset(dx / targetRadius, dy / targetRadius);
 
     // Add arrow with position
-    await _addScore(score); // Re-use _addScore for consistent logic
+    await ref.read(scoringProvider.notifier).addArrow(score, position: normalizedPosition);
   }
 
   Future<void> _saveSession() async {
