@@ -18,36 +18,37 @@ import 'l10n/app_localizations.dart';
 import 'utils/sample_data.dart';
 
 void main() async {
-  // Ensure Flutter binding is initialized
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize logger first
-  final logger = LoggerService();
-  await logger.initialize();
-  logger.log('🚀 App starting...', level: LogLevel.info);
-
-  // Set up Flutter error handler
-  FlutterError.onError = (FlutterErrorDetails details) {
-    logger.logError(
-      'Flutter framework error',
-      error: details.exception,
-      stackTrace: details.stack,
-      context: details.context?.toString(),
-    );
-    FlutterError.presentError(details);
-  };
-
-  // Set up platform error handler
-  PlatformDispatcher.instance.onError = (error, stack) {
-    logger.logFatal(
-      'Platform dispatcher error',
-      error: error,
-      stackTrace: stack,
-    );
-    return true;
-  };
-
+  // Run everything in a guarded zone
   runZonedGuarded<Future<void>>(() async {
+    // Ensure Flutter binding is initialized - MUST be in the same zone as runApp
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialize logger first
+    final logger = LoggerService();
+    await logger.initialize();
+    logger.log('🚀 App starting...', level: LogLevel.info);
+
+    // Set up Flutter error handler
+    FlutterError.onError = (FlutterErrorDetails details) {
+      logger.logError(
+        'Flutter framework error',
+        error: details.exception,
+        stackTrace: details.stack,
+        context: details.context?.toString(),
+      );
+      FlutterError.presentError(details);
+    };
+
+    // Set up platform error handler
+    PlatformDispatcher.instance.onError = (error, stack) {
+      logger.logFatal(
+        'Platform dispatcher error',
+        error: error,
+        stackTrace: stack,
+      );
+      return true;
+    };
+
     logger.logLifecycle('Initializing services...');
 
     // Initialize storage service with error handling
@@ -108,11 +109,19 @@ void main() async {
       ),
     );
   }, (error, stack) {
-    logger.logFatal(
-      'Uncaught error in main zone',
-      error: error,
-      stackTrace: stack,
-    );
+    debugPrint('💥 Uncaught error in main zone: $error');
+    debugPrint('Stack trace: $stack');
+
+    // Try to log even if logger might not be initialized
+    try {
+      LoggerService().logFatal(
+        'Uncaught error in main zone',
+        error: error,
+        stackTrace: stack,
+      );
+    } catch (_) {
+      // Logger not available, just print
+    }
   });
 }
 
