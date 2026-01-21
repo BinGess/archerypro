@@ -272,7 +272,11 @@ class _MainContainerState extends ConsumerState<MainContainer> {
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // CRITICAL: Cannot modify providers during initState
+    // Must delay until after the widget tree is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
   }
 
   Future<void> _initializeApp() async {
