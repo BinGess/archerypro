@@ -130,41 +130,126 @@ class ArcheryApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final localeState = ref.watch(localeProvider);
+    final logger = LoggerService();
 
-    return MaterialApp(
-      title: 'Archery Tracker',
-      debugShowCheckedModeBanner: false,
+    try {
+      logger.log('🎨 Building ArcheryApp...', level: LogLevel.info);
+      final localeState = ref.watch(localeProvider);
 
-      // Localization delegates
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      return MaterialApp(
+        title: 'Archery Tracker',
+        debugShowCheckedModeBanner: false,
 
-      // Supported locales
-      supportedLocales: AppLocalizations.supportedLocales,
+        // Localization delegates
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
 
-      // Current locale
-      locale: localeState.locale,
+        // Supported locales
+        supportedLocales: AppLocalizations.supportedLocales,
 
-      theme: ThemeData(
-        scaffoldBackgroundColor: AppColors.backgroundLight,
-        primaryColor: AppColors.primary,
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-        useMaterial3: true,
-        // fontFamily: GoogleFonts.manrope().fontFamily,
-        // textTheme: GoogleFonts.manropeTextTheme(Theme.of(context).textTheme),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
+        // Current locale
+        locale: localeState.locale,
+
+        theme: ThemeData(
+          scaffoldBackgroundColor: AppColors.backgroundLight,
+          primaryColor: AppColors.primary,
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          useMaterial3: true,
+          // fontFamily: GoogleFonts.manrope().fontFamily,
+          // textTheme: GoogleFonts.manropeTextTheme(Theme.of(context).textTheme),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+          ),
         ),
-      ),
-      home: const MainContainer(),
-    );
+        home: const MainContainer(),
+        builder: (context, child) {
+          // Error boundary for the entire app
+          ErrorWidget.builder = (FlutterErrorDetails details) {
+            logger.logError(
+              'Widget error',
+              error: details.exception,
+              stackTrace: details.stack,
+            );
+            return Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Something went wrong',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        details.exception.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Try to restart the app
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const MainContainer()),
+                            (route) => false,
+                          );
+                        },
+                        child: const Text('Restart App'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          };
+          return child ?? const SizedBox.shrink();
+        },
+      );
+    } catch (e, stack) {
+      logger.logError(
+        'Failed to build ArcheryApp',
+        error: e,
+        stackTrace: stack,
+      );
+
+      // Return a minimal error screen
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to start app',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    e.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
   }
 }
 
@@ -191,24 +276,57 @@ class _MainContainerState extends ConsumerState<MainContainer> {
   }
 
   Future<void> _initializeApp() async {
+    final logger = LoggerService();
+
     try {
-      // Generate sample data on first launch
-      final sessionService = ref.read(sessionServiceProvider);
-      final scoringService = ref.read(scoringServiceProvider);
-      final generator = SampleDataGenerator(sessionService, scoringService);
+      logger.log('📱 Initializing main container...', level: LogLevel.info);
 
-      await generator.generateSampleSessions();
-
-      // Refresh session list
+      // Load existing sessions first
+      logger.log('📂 Loading sessions...', level: LogLevel.info);
       await ref.read(sessionProvider.notifier).loadSessions();
-    } catch (e) {
-      debugPrint('Initialization error: $e');
+
+      final sessions = ref.read(sessionProvider).sessions;
+      logger.log('Found ${sessions.length} existing sessions', level: LogLevel.info);
+
+      // Only generate sample data if no sessions exist
+      if (sessions.isEmpty) {
+        logger.log('🎲 No sessions found, generating sample data...', level: LogLevel.info);
+        try {
+          final sessionService = ref.read(sessionServiceProvider);
+          final scoringService = ref.read(scoringServiceProvider);
+          final generator = SampleDataGenerator(sessionService, scoringService);
+
+          await generator.generateSampleSessions();
+          logger.log('✅ Sample data generated', level: LogLevel.info);
+
+          // Refresh session list after generating samples
+          await ref.read(sessionProvider.notifier).loadSessions();
+        } catch (e, stack) {
+          logger.logError(
+            'Failed to generate sample data',
+            error: e,
+            stackTrace: stack,
+          );
+          // Continue even if sample generation fails
+        }
+      } else {
+        logger.log('✅ Using existing sessions', level: LogLevel.info);
+      }
+
+      logger.log('✅ Main container initialized', level: LogLevel.info);
+    } catch (e, stack) {
+      logger.logError(
+        'Main container initialization error',
+        error: e,
+        stackTrace: stack,
+      );
     }
 
     if (mounted) {
       setState(() {
         _isInitialized = true;
       });
+      logger.log('✅ UI ready', level: LogLevel.info);
     }
   }
 
