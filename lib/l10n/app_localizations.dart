@@ -105,6 +105,88 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
+  // Time Periods
+  String get period7Days;
+  String get period1Month;
+  String get periodCurrentYear;
+  String get periodAll;
+
+  // Analysis Charts
+  String get growthTrendChart;
+  String get growthTrendSubtitle;
+  String get noDataForPeriod;
+  String get stabilityRadarChart;
+  String get needMoreData;
+  String get stabilityRadarSubtitle;
+  String get quadrantRadarChart;
+  String get quadrantRadarSubtitle;
+  String get allArrowsGood;
+
+  // Analysis Insights & AI
+  String get aiPeriodAnalysis;
+  String get aiCoachAdvice;
+  String get keepTrainingForInsights;
+  String get actionableTip;
+  
+  // Insight Messages
+  String get insightPlateauTitle;
+  String get insightPlateauMessage;
+  String get insightVolumeWarningTitle;
+  String insightVolumeWarningMessage(String decline);
+  String get insightAdvancementTitle;
+  String insightAdvancementMessage(String rate);
+  String get insightChronicBiasTitle;
+  String insightChronicBiasMessage(String percent, String direction);
+  String get insightExcellenceTitle;
+  String insightExcellenceMessage(String consistency);
+  String insightGroupingTitle(String tendency);
+  String insightGroupingMessage(String tendency);
+  
+  // Directions
+  String get directionTopLeft;
+  String get directionTopRight;
+  String get directionBottomLeft;
+  String get directionBottomRight;
+  String get directionTop;
+  String get directionBottom;
+  String get directionLeft;
+  String get directionRight;
+
+  // Chart Titles
+  String get visualization;
+  String get heatmapTitle;
+  String get heatmapSubtitle;
+  String get endTrendTitle;
+  String get endTrendSubtitle;
+  String get scoreDistTitle;
+  String get scoreDistSubtitle;
+  
+  // Dialogs
+  String get deleteRecordTitle;
+  String get deleteRecordMessage;
+  String get recordDeleted;
+  String get featureInDev;
+
+  // Dashboard
+  String get sessions;
+  String monthlyArrowsMessage(String count);
+  String get average;
+  String get trend;
+  String monthlyGoalMessage(String count);
+  String get noRecords;
+  String get clickToAdd;
+  String showingRecentMessage(String count);
+  String get totalArrows; // New key added for fix
+
+  // Bow Types
+  String get bowCompound;
+  String get bowRecurve;
+  String get bowBarebow;
+  String get bowLongbow;
+  
+  // Units
+  String get unitArrows; // "支箭" / "arrows"
+
   static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   static const List<Locale> supportedLocales = [

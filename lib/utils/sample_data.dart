@@ -18,16 +18,14 @@ class SampleDataGenerator {
   /// Generate and save comprehensive sample training sessions
   /// Replaces existing data with a 30-day progression history
   Future<void> generateSampleSessions() async {
-    // Check if we should force regenerate (for now, let's assume if < 2 sessions, we generate)
+    // Check if we should generate sample data
+    // Only generate if NO data exists to avoid overwriting user data
     final existing = await _sessionService.getAllSessions();
-    if (existing.length > 5) {
-      // Assuming user already has data, we might want to ask or skip.
-      // But for this specific task "Help me generate some test data", we will force clear and generate.
-      await _sessionService.clearAllSessions();
-    } else if (existing.isNotEmpty) {
-       await _sessionService.clearAllSessions();
+    if (existing.isNotEmpty) {
+      return;
     }
-
+    
+    // Only proceed if empty
     final now = DateTime.now();
     final startDate = now.subtract(const Duration(days: 30));
     final sessions = <TrainingSession>[];

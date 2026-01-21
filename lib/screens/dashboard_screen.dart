@@ -6,6 +6,7 @@ import '../widgets/common_widgets.dart';
 import '../providers/session_provider.dart';
 import '../providers/analytics_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../models/equipment.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
 
@@ -32,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
                     pinned: true,
                     backgroundColor: AppColors.backgroundLight.withOpacity(0.95),
                     title: Text(
-                      l10n.dashboard,
+                      l10n.navHome, // "首页" / "Home"
                       style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
                     ),
                     actions: [
@@ -68,7 +69,7 @@ class DashboardScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        _buildSummaryCard(analyticsState.statistics),
+                        _buildSummaryCard(analyticsState.statistics, l10n),
                         const SizedBox(height: 24),
 
                         // Display sessions from provider
@@ -79,12 +80,14 @@ class DashboardScreen extends ConsumerWidget {
                             child: _buildHistoryItem(
                               context: context,
                               isHighRecord: isHighRecord,
-                              date: _formatDate(session.date),
+                              date: session.date,
                               score: session.totalScore,
                               total: session.maxScore,
-                              type: '${session.equipment.bowTypeDisplay} • ${session.distance.toInt()}m',
+                              // Localized Bow Type
+                              type: '${_getBowTypeDisplay(session.equipment.bowType, l10n)} • ${session.distance.toInt()}m',
                               percentage: session.scorePercentage,
                               arrowCount: session.arrowCount,
+                              l10n: l10n,
                               onTap: () {
                                 ref.read(selectedSessionProvider.notifier).state = session;
                                 Navigator.of(context).push(
@@ -99,15 +102,15 @@ class DashboardScreen extends ConsumerWidget {
 
                         const SizedBox(height: 32),
                         if (sessionState.sessions.isEmpty)
-                          const Opacity(
+                          Opacity(
                             opacity: 0.4,
                             child: Column(
                               children: [
-                                Icon(Icons.history, size: 64, color: AppColors.textSlate500),
-                                SizedBox(height: 16),
-                                Text('暂无训练记录', style: TextStyle(fontWeight: FontWeight.w600)),
-                                SizedBox(height: 8),
-                                Text('点击"添加"开始第一次训练', style: TextStyle(fontSize: 12)),
+                                const Icon(Icons.history, size: 64, color: AppColors.textSlate500),
+                                const SizedBox(height: 16),
+                                Text(l10n.noRecords, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 8),
+                                Text(l10n.clickToAdd, style: const TextStyle(fontSize: 12)),
                               ],
                             ),
                           )
@@ -118,7 +121,7 @@ class DashboardScreen extends ConsumerWidget {
                               children: [
                                 const Icon(Icons.check_circle, size: 48, color: AppColors.textSlate500),
                                 const SizedBox(height: 12),
-                                Text('显示最近 ${sessionState.recentSessions.length} 次训练', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                Text(l10n.showingRecentMessage(sessionState.recentSessions.length.toString()), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                               ],
                             ),
                           ),
@@ -131,7 +134,20 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCard(dynamic stats) {
+  String _getBowTypeDisplay(BowType type, AppLocalizations l10n) {
+    switch (type) {
+      case BowType.compound:
+        return l10n.bowCompound;
+      case BowType.recurve:
+        return l10n.bowRecurve;
+      case BowType.barebow:
+        return l10n.bowBarebow;
+      case BowType.longbow:
+        return l10n.bowLongbow;
+    }
+  }
+
+  Widget _buildSummaryCard(dynamic stats, AppLocalizations l10n) {
     return ArcheryCard(
       padding: const EdgeInsets.all(0),
       child: Stack(
@@ -165,7 +181,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             Text('${stats.totalSessions}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
                             const SizedBox(width: 4),
-                            const Text('次训练', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600)),
+                            Text(l10n.sessions, style: const TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -173,7 +189,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
                             const SizedBox(width: 4),
-                            Text('本月已射 ${stats.currentMonthArrows} 支箭', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate500)),
+                            Text(l10n.monthlyArrowsMessage(stats.currentMonthArrows.toString()), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate500)),
                           ],
                         )
                       ],
@@ -187,19 +203,19 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             Text(stats.avgArrowScore.toStringAsFixed(1), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1, color: AppColors.primary)),
                             const SizedBox(width: 4),
-                            const Text('平均', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600, fontSize: 13)),
+                            Text(l10n.average, style: const TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600, fontSize: 13)),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
                             StatusBadge(
-                              text: stats.trendDisplay,
+                              text: stats.trendDisplay, // This might still be hardcoded in model, but acceptable for now
                               color: stats.trend >= 0 ? Colors.green.shade700 : Colors.red.shade700,
                               backgroundColor: stats.trend >= 0 ? Colors.green.shade50 : Colors.red.shade50,
                             ),
                             const SizedBox(width: 4),
-                            const Text('趋势', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
+                            Text(l10n.trend, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
                           ],
                         )
                       ],
@@ -220,7 +236,7 @@ class DashboardScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('月度目标：${stats.monthlyGoal ?? 3000} 支箭', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                    Text(l10n.monthlyGoalMessage('${stats.monthlyGoal ?? 3000}'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
                     Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
                   ],
                 ),
@@ -245,37 +261,25 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildHistoryItem({
     required BuildContext context,
     required bool isHighRecord,
-    required String date,
+    required DateTime date,
     required int score,
     required int total,
     required String type,
     required double percentage,
     required int arrowCount,
     required VoidCallback onTap,
+    required AppLocalizations l10n,
   }) {
-    // 处理日期显示，适应中文格式
-    String monthPart = '';
-    String dayPart = '';
+    // Format date based on locale
+    final locale = Localizations.localeOf(context).toString();
+    final monthFormat = DateFormat.MMM(locale);
+    final dayFormat = DateFormat.d(locale);
     
-    if (date.contains('月')) {
-       final parts = date.split('月');
-       if (parts.length >= 2) {
-         monthPart = '${parts[0]}月';
-         dayPart = parts[1];
-       } else {
-         monthPart = date;
-       }
-    } else if (date.contains(' ')) {
-      final parts = date.split(' ');
-      if (parts.length >= 2) {
-        monthPart = parts[0];
-        dayPart = parts[1];
-      } else {
-        monthPart = date;
-      }
-    } else {
-      monthPart = date;
-    }
+    // For Chinese, we want "X月" and "X日"
+    // For English, we want "Jan" and "1"
+    
+    String monthPart = monthFormat.format(date);
+    String dayPart = dayFormat.format(date);
 
     return GestureDetector(
       onTap: onTap,
@@ -323,7 +327,7 @@ class DashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(type, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500)),
                   const SizedBox(height: 2),
-                  Text('$arrowCount 支箭', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+                  Text('$arrowCount ${l10n.unitArrows}', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
                 ],
               ),
             ),
@@ -361,10 +365,5 @@ class DashboardScreen extends ConsumerWidget {
     if (percentage >= 80) return AppColors.targetRed;
     if (percentage >= 70) return AppColors.targetBlue;
     return AppColors.textSlate400;
-  }
-
-
-  String _formatDate(DateTime date) {
-    return DateFormat('MM月dd日').format(date);
   }
 }

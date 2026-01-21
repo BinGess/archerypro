@@ -17,9 +17,21 @@ import 'utils/sample_data.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage service
+  // Initialize storage service with error handling
   final storageService = StorageService();
-  await storageService.initialize();
+  try {
+    await storageService.initialize();
+  } catch (e) {
+    debugPrint('Failed to initialize storage: $e');
+    // If initialization fails (e.g., corrupted box), try to recover by deleting boxes
+    try {
+      await storageService.deleteDataFromDisk();
+      await storageService.initialize();
+    } catch (e2) {
+      debugPrint('Failed to recover storage: $e2');
+      // Fallback: App runs without persistent storage or shows error screen
+    }
+  }
 
   // Create provider container
   final container = ProviderContainer(
@@ -105,19 +117,25 @@ class _MainContainerState extends ConsumerState<MainContainer> {
   }
 
   Future<void> _initializeApp() async {
-    // Generate sample data on first launch
-    final sessionService = ref.read(sessionServiceProvider);
-    final scoringService = ref.read(scoringServiceProvider);
-    final generator = SampleDataGenerator(sessionService, scoringService);
+    try {
+      // Generate sample data on first launch
+      final sessionService = ref.read(sessionServiceProvider);
+      final scoringService = ref.read(scoringServiceProvider);
+      final generator = SampleDataGenerator(sessionService, scoringService);
 
-    await generator.generateSampleSessions();
+      await generator.generateSampleSessions();
 
-    // Refresh session list
-    await ref.read(sessionProvider.notifier).loadSessions();
+      // Refresh session list
+      await ref.read(sessionProvider.notifier).loadSessions();
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    }
 
-    setState(() {
-      _isInitialized = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   @override

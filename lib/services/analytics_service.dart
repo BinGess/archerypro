@@ -7,6 +7,7 @@ import '../models/statistics.dart';
 import '../models/ai_insight.dart';
 import '../models/radar_metrics.dart';
 import '../utils/constants.dart';
+import '../l10n/app_localizations.dart';
 
 /// Service for analytics and AI insights generation
 class AnalyticsService {
@@ -386,6 +387,7 @@ class AnalyticsService {
     required Statistics currentStats,
     Statistics? previousStats,
     required List<TrainingSession> recentSessions,
+    required AppLocalizations l10n,
   }) {
     final insights = <PeriodInsight>[];
 
@@ -393,8 +395,8 @@ class AnalyticsService {
     if (detectPlateau(recentSessions)) {
       insights.add(PeriodInsight(
         type: PeriodInsightType.plateau,
-        title: '平台期识别',
-        message: '近期成绩进入平台期，建议尝试新的训练方法或技术调整以突破瓶颈。',
+        title: l10n.insightPlateauTitle,
+        message: l10n.insightPlateauMessage,
         icon: Icons.trending_flat,
         color: Colors.orange,
         actionable: true,
@@ -407,8 +409,8 @@ class AnalyticsService {
           .toStringAsFixed(0);
       insights.add(PeriodInsight(
         type: PeriodInsightType.volumeWarning,
-        title: '训练量下降预警',
-        message: '本周期训练量较上周期下降${decline}%，建议增加训练频次或进行恢复性训练。',
+        title: l10n.insightVolumeWarningTitle,
+        message: l10n.insightVolumeWarningMessage(decline),
         icon: Icons.warning_amber,
         color: Colors.red,
         actionable: true,
@@ -419,9 +421,8 @@ class AnalyticsService {
     if (currentStats.tenRingRate > 60.0 && currentStats.avgConsistency > 85.0) {
       insights.add(PeriodInsight(
         type: PeriodInsightType.advancement,
-        title: '进阶建议',
-        message: '10环率达到${currentStats.tenRingRate.toStringAsFixed(1)}%且稳定性优秀，'
-            '建议尝试增加射击距离或提高难度。',
+        title: l10n.insightAdvancementTitle,
+        message: l10n.insightAdvancementMessage(currentStats.tenRingRate.toStringAsFixed(1)),
         icon: Icons.arrow_upward,
         color: Colors.green,
         actionable: true,
@@ -437,12 +438,11 @@ class AnalyticsService {
       final dominancePercentage = (maxQuadrant.value / totalBelowNine * 100);
 
       if (dominancePercentage > 40.0) {
-        final quadrantName = _getQuadrantNameChinese(maxQuadrant.key);
+        final quadrantName = _getQuadrantNameLocalized(maxQuadrant.key, l10n);
         insights.add(PeriodInsight(
           type: PeriodInsightType.chronicBias,
-          title: '顽固偏差诊断',
-          message: '脱靶箭支${dominancePercentage.toStringAsFixed(0)}%偏向$quadrantName，'
-              '建议针对性调整动作或器材。',
+          title: l10n.insightChronicBiasTitle,
+          message: l10n.insightChronicBiasMessage(dominancePercentage.toStringAsFixed(0), quadrantName),
           icon: Icons.gps_fixed,
           color: Colors.purple,
           actionable: true,
@@ -454,8 +454,8 @@ class AnalyticsService {
     if (currentStats.avgConsistency > 90.0) {
       insights.add(PeriodInsight(
         type: PeriodInsightType.excellence,
-        title: '稳定性优秀',
-        message: '稳定性达到${currentStats.avgConsistency.toStringAsFixed(1)}%，动作一致性表现优异！',
+        title: l10n.insightExcellenceTitle,
+        message: l10n.insightExcellenceMessage(currentStats.avgConsistency.toStringAsFixed(1)),
         icon: Icons.emoji_events,
         color: Colors.amber,
         actionable: false,
@@ -465,17 +465,17 @@ class AnalyticsService {
     return insights;
   }
 
-  /// Get Chinese name for quadrant
-  String _getQuadrantNameChinese(String quadrantKey) {
+  /// Get Localized name for quadrant
+  String _getQuadrantNameLocalized(String quadrantKey, AppLocalizations l10n) {
     switch (quadrantKey) {
       case 'top-left':
-        return '左上';
+        return l10n.directionTopLeft;
       case 'top-right':
-        return '右上';
+        return l10n.directionTopRight;
       case 'bottom-left':
-        return '左下';
+        return l10n.directionBottomLeft;
       case 'bottom-right':
-        return '右下';
+        return l10n.directionBottomRight;
       default:
         return quadrantKey;
     }

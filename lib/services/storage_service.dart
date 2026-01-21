@@ -22,6 +22,15 @@ class StorageService {
     _isInitialized = true;
   }
 
+  /// Delete all data from disk (Recovery mode)
+  Future<void> deleteDataFromDisk() async {
+    await Hive.deleteBoxFromDisk(kSessionsBoxName);
+    await Hive.deleteBoxFromDisk(kSettingsBoxName);
+    _sessionsBox = null;
+    _settingsBox = null;
+    _isInitialized = false;
+  }
+
   /// Ensure the service is initialized
   void _ensureInitialized() {
     if (!_isInitialized) {

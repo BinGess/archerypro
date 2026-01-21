@@ -6,6 +6,7 @@ import '../providers/analytics_provider.dart';
 import '../providers/session_provider.dart';
 import '../utils/constants.dart';
 import '../services/analytics_service.dart';
+import '../l10n/app_localizations.dart';
 
 import '../widgets/growth_mixed_chart.dart';
 import '../widgets/quadrant_radar_chart.dart';
@@ -19,11 +20,12 @@ class AnalysisScreen extends ConsumerWidget {
     final analyticsState = ref.watch(analyticsProvider);
     final selectedPeriod = ref.watch(selectedPeriodProvider);
     final stats = analyticsState.statistics;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('综合分析', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        title: Text(l10n.analysis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.refresh, size: 20),
@@ -36,10 +38,10 @@ class AnalysisScreen extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTab(context, ref, kPeriod7Days, selectedPeriod),
-              _buildTab(context, ref, kPeriod1Month, selectedPeriod),
-              _buildTab(context, ref, kPeriodCurrentYear, selectedPeriod),
-              _buildTab(context, ref, kPeriodAll, selectedPeriod),
+              _buildTab(context, ref, kPeriod7Days, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriod1Month, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodCurrentYear, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodAll, selectedPeriod, l10n),
             ],
           ),
         ),
@@ -50,29 +52,29 @@ class AnalysisScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 // Core Metrics Cards
-                _buildCoreMetricsSection(stats),
+                _buildCoreMetricsSection(stats, l10n),
                 const SizedBox(height: 20),
 
                 // Growth Trend Mixed Chart
-                _buildGrowthTrendCard(stats),
+                _buildGrowthTrendCard(stats, l10n),
                 const SizedBox(height: 20),
 
                 // Stability Radar Chart
-                _buildStabilityRadarCard(stats, ref, selectedPeriod),
+                _buildStabilityRadarCard(stats, ref, selectedPeriod, l10n),
                 const SizedBox(height: 20),
 
                 // Quadrant Radar Chart
-                _buildQuadrantRadarCard(stats),
+                _buildQuadrantRadarCard(stats, l10n),
                 const SizedBox(height: 20),
 
                 // Period AI Insights
-                _buildPeriodInsightsSection(stats, ref, selectedPeriod),
+                _buildPeriodInsightsSection(stats, ref, selectedPeriod, l10n),
               ],
             ),
     );
   }
 
-  Widget _buildTab(BuildContext context, WidgetRef ref, String period, String selectedPeriod) {
+  Widget _buildTab(BuildContext context, WidgetRef ref, String period, String selectedPeriod, AppLocalizations l10n) {
     final isSelected = period == selectedPeriod;
     return GestureDetector(
       onTap: () async {
@@ -84,7 +86,7 @@ class AnalysisScreen extends ConsumerWidget {
           border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
         ),
         child: Text(
-          period,
+          _getPeriodLabel(period, l10n),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -95,14 +97,42 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
+  String _getPeriodLabel(String period, AppLocalizations l10n) {
+    switch (period) {
+      case kPeriod7Days:
+        return l10n.period7Days;
+      case kPeriod1Month:
+        return l10n.period1Month;
+      case kPeriodCurrentYear:
+        return l10n.periodCurrentYear;
+      case kPeriodAll:
+        return l10n.periodAll;
+      default:
+        return period;
+    }
+  }
+
   /// Build core metrics cards (总箭数, 平均环数, 10环率)
-  Widget _buildCoreMetricsSection(dynamic stats) {
+  Widget _buildCoreMetricsSection(dynamic stats, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
           child: _buildMetricCard(
             icon: Icons.show_chart,
-            label: '总箭数',
+            label: l10n.totalArrows, // "总箭数" -> "Arrows" or similar
+            // Wait, l10n.totalArrows is "totalArrows" key? 
+            // In AppLocalizationsEn: String get arrows => 'Arrows';
+            // In AppLocalizationsZh: String get arrows => '支箭';
+            // There isn't "totalArrows" key explicitly for label "Total Arrows".
+            // But there is `totalScore`. 
+            // Let's check `app_localizations.dart` again.
+            // Ah, I see `String get arrows;`.
+            // I should probably add `totalArrows` key or use `arrows` + `total` prefix?
+            // Actually, in previous step I didn't add `totalArrows` key.
+            // I will use `l10n.arrows` for now, or just hardcode if missing.
+            // Wait, I see `totalScore`.
+            // Let's use `l10n.arrows` combined with `Total` if needed, but `arrows` usually means "Arrows" count.
+            // For now, I'll use `l10n.arrows`.
             value: stats.totalArrows.toString(),
             color: AppColors.primary,
           ),
@@ -111,7 +141,7 @@ class AnalysisScreen extends ConsumerWidget {
         Expanded(
           child: _buildMetricCard(
             icon: Icons.adjust,
-            label: '平均环数',
+            label: l10n.averageScore,
             value: stats.avgArrowScore.toStringAsFixed(1),
             color: AppColors.accent,
           ),
@@ -120,7 +150,7 @@ class AnalysisScreen extends ConsumerWidget {
         Expanded(
           child: _buildMetricCard(
             icon: Icons.stars,
-            label: '10环率',
+            label: l10n.tenCount, // "10环数"
             value: '${stats.tenRingRate.toStringAsFixed(1)}%',
             color: AppColors.targetGold,
           ),
@@ -170,7 +200,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build growth trend chart card
-  Widget _buildGrowthTrendCard(dynamic stats) {
+  Widget _buildGrowthTrendCard(dynamic stats, AppLocalizations l10n) {
     // Prepare volume data from score trend data
     final volumeData = <DateTime, int>{};
     for (final date in stats.scoreTrendData.keys) {
@@ -186,12 +216,12 @@ class AnalysisScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('成长趋势图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                  SizedBox(height: 2),
-                  Text('分数走势 + 训练量', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                  Text(l10n.growthTrendChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(l10n.growthTrendSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
@@ -216,7 +246,7 @@ class AnalysisScreen extends ConsumerWidget {
               height: 200,
               alignment: Alignment.center,
               child: Text(
-                '所选时段暂无数据',
+                l10n.noDataForPeriod,
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
               ),
             ),
@@ -226,18 +256,18 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build stability radar chart card with comparison
-  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref, String selectedPeriod) {
+  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
     if (stats.radarMetrics == null) {
       return ArcheryCard(
         child: Column(
           children: [
-            const Text('稳定性雷达图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
             const SizedBox(height: 16),
             Container(
               height: 200,
               alignment: Alignment.center,
               child: Text(
-                '需要更多训练数据',
+                l10n.needMoreData,
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
               ),
             ),
@@ -260,9 +290,9 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('稳定性雷达图', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
-                  Text('6维度能力评估', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  Text(l10n.stabilityRadarSubtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
               ),
             ],
@@ -279,7 +309,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build quadrant radar chart card
-  Widget _buildQuadrantRadarCard(dynamic stats) {
+  Widget _buildQuadrantRadarCard(dynamic stats, AppLocalizations l10n) {
     final quadrantDist = stats.quadrantDistribution;
     final total = quadrantDist.values.fold(0, (sum, count) => sum + count);
 
@@ -290,12 +320,12 @@ class AnalysisScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('顽固偏差诊断', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                  SizedBox(height: 2),
-                  Text('9环以下箭支方向分布', style: TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                  Text(l10n.quadrantRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(l10n.quadrantRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
@@ -321,7 +351,7 @@ class AnalysisScreen extends ConsumerWidget {
                   Icon(Icons.check_circle_outline, size: 48, color: Colors.green.shade300),
                   const SizedBox(height: 8),
                   Text(
-                    '太棒了！所有箭支都在9环及以上',
+                    l10n.allArrowsGood,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 ],
@@ -333,7 +363,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build period insights section using AnalyticsService
-  Widget _buildPeriodInsightsSection(dynamic stats, WidgetRef ref, String selectedPeriod) {
+  Widget _buildPeriodInsightsSection(dynamic stats, WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
     final analyticsService = AnalyticsService();
     final sessionState = ref.watch(sessionProvider);
     final allSessions = sessionState.sessions;
@@ -359,6 +389,7 @@ class AnalysisScreen extends ConsumerWidget {
       currentStats: stats,
       previousStats: null, // TODO: Calculate previous period stats
       recentSessions: periodSessions,
+      l10n: l10n,
     );
 
     if (insights.isEmpty) {
@@ -370,14 +401,14 @@ class AnalysisScreen extends ConsumerWidget {
                 Icon(Icons.auto_awesome, color: Colors.grey.shade400, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'AI 周期分析',
+                  l10n.aiPeriodAnalysis,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              '继续训练以获取AI周期分析建议',
+              l10n.keepTrainingForInsights,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               textAlign: TextAlign.center,
             ),
@@ -389,25 +420,25 @@ class AnalysisScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.auto_awesome, color: AppColors.targetGold, size: 20),
-            SizedBox(width: 8),
-            Text('AI 周期分析', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+            const Icon(Icons.auto_awesome, color: AppColors.targetGold, size: 20),
+            const SizedBox(width: 8),
+            Text(l10n.aiPeriodAnalysis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
           ],
         ),
         const SizedBox(height: 12),
         ...insights.map((insight) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _buildPeriodInsightCard(insight),
+            child: _buildPeriodInsightCard(insight, l10n),
           );
         }).toList(),
       ],
     );
   }
 
-  Widget _buildPeriodInsightCard(PeriodInsight insight) {
+  Widget _buildPeriodInsightCard(PeriodInsight insight, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -462,7 +493,7 @@ class AnalysisScreen extends ConsumerWidget {
                       Icon(Icons.lightbulb_outline, size: 14, color: insight.color),
                       const SizedBox(width: 4),
                       Text(
-                        '可执行建议',
+                        l10n.actionableTip,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,

@@ -239,4 +239,149 @@ class AppLocalizationsEn extends AppLocalizations {
   String formatTime(DateTime time) {
     return DateFormat('HH:mm').format(time);
   }
+
+  // Time Periods
+  @override
+  String get period7Days => '7 Days';
+  @override
+  String get period1Month => '30 Days';
+  @override
+  String get periodCurrentYear => 'Year';
+  @override
+  String get periodAll => 'All';
+
+  // Analysis Charts
+  @override
+  String get growthTrendChart => 'Growth Trends';
+  @override
+  String get growthTrendSubtitle => 'Score Trend + Volume';
+  @override
+  String get noDataForPeriod => 'No data for selected period';
+  @override
+  String get stabilityRadarChart => 'Stability Radar';
+  @override
+  String get needMoreData => 'Need more data';
+  @override
+  String get stabilityRadarSubtitle => '6-Dimension Assessment';
+  @override
+  String get quadrantRadarChart => 'Bias Diagnosis';
+  @override
+  String get quadrantRadarSubtitle => 'Direction of <9 Ring Arrows';
+  @override
+  String get allArrowsGood => 'Great! All arrows are 9+';
+
+  // Analysis Insights & AI
+  @override
+  String get aiPeriodAnalysis => 'AI Analysis';
+  @override
+  String get aiCoachAdvice => 'AI Coach Advice';
+  @override
+  String get keepTrainingForInsights => 'Keep training to get AI insights';
+  @override
+  String get actionableTip => 'Actionable Tip';
+
+  // Insight Messages
+  @override
+  String get insightPlateauTitle => 'Plateau Detected';
+  @override
+  String get insightPlateauMessage => 'Performance has plateaued. Try new drills or technique adjustments.';
+  @override
+  String get insightVolumeWarningTitle => 'Volume Decline';
+  @override
+  String insightVolumeWarningMessage(String decline) => 'Training volume dropped by $decline% compared to last period.';
+  @override
+  String get insightAdvancementTitle => 'Ready to Advance';
+  @override
+  String insightAdvancementMessage(String rate) => '10-ring rate is $rate% with great stability. Try increasing distance.';
+  @override
+  String get insightChronicBiasTitle => 'Chronic Bias';
+  @override
+  String insightChronicBiasMessage(String percent, String direction) => '$percent% of misses are bias to $direction. Check form or tuning.';
+  @override
+  String get insightExcellenceTitle => 'Excellent Stability';
+  @override
+  String insightExcellenceMessage(String consistency) => 'Consistency reached $consistency%. Outstanding form!';
+  @override
+  String insightGroupingTitle(String tendency) => 'Grouping: $tendency';
+  @override
+  String insightGroupingMessage(String tendency) => 'Your group tends to be $tendency. Focus on alignment.';
+
+  // Directions
+  @override
+  String get directionTopLeft => 'Top-Left';
+  @override
+  String get directionTopRight => 'Top-Right';
+  @override
+  String get directionBottomLeft => 'Bottom-Left';
+  @override
+  String get directionBottomRight => 'Bottom-Right';
+  @override
+  String get directionTop => 'High';
+  @override
+  String get directionBottom => 'Low';
+  @override
+  String get directionLeft => 'Left';
+  @override
+  String get directionRight => 'Right';
+
+  // Chart Titles
+  @override
+  String get visualization => 'Visualization';
+  @override
+  String get heatmapTitle => 'Heatmap';
+  @override
+  String get heatmapSubtitle => 'Arrow distribution + Center';
+  @override
+  String get endTrendTitle => 'End Trends';
+  @override
+  String get endTrendSubtitle => 'Average score per end';
+  @override
+  String get scoreDistTitle => 'Score Distribution';
+  @override
+  String get scoreDistSubtitle => 'Arrow counts by ring';
+
+  // Dialogs
+  @override
+  String get deleteRecordTitle => 'Delete Record';
+  @override
+  String get deleteRecordMessage => 'Are you sure you want to delete this record? This cannot be undone.';
+  @override
+  String get recordDeleted => 'Record deleted';
+  @override
+  String get featureInDev => 'Feature in development';
+
+  // Dashboard
+  @override
+  String get sessions => 'Sessions';
+  @override
+  String monthlyArrowsMessage(String count) => '$count arrows this month';
+  @override
+  String get average => 'Avg';
+  @override
+  String get trend => 'Trend';
+  @override
+  String monthlyGoalMessage(String count) => 'Monthly Goal: $count arrows';
+  @override
+  String get noRecords => 'No training records';
+  @override
+  String get clickToAdd => 'Tap "+" to start your first session';
+  @override
+  String showingRecentMessage(String count) => 'Showing recent $count sessions';
+
+  @override
+  String get totalArrows => 'Total Arrows';
+
+  // Bow Types
+  @override
+  String get bowCompound => 'Compound';
+  @override
+  String get bowRecurve => 'Recurve';
+  @override
+  String get bowBarebow => 'Barebow';
+  @override
+  String get bowLongbow => 'Longbow';
+  
+  // Units
+  @override
+  String get unitArrows => 'arrows';
 }
