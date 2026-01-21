@@ -47,13 +47,13 @@ class Equipment {
   String get bowTypeDisplay {
     switch (bowType) {
       case BowType.compound:
-        return 'Compound';
+        return '复合弓';
       case BowType.recurve:
-        return 'Recurve';
+        return '反曲弓';
       case BowType.barebow:
-        return 'Barebow';
+        return '光弓';
       case BowType.longbow:
-        return 'Longbow';
+        return '长弓';
     }
   }
 

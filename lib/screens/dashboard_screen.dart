@@ -29,7 +29,7 @@ class DashboardScreen extends ConsumerWidget {
                     pinned: true,
                     backgroundColor: AppColors.backgroundLight.withOpacity(0.95),
                     title: const Text(
-                      'Training History',
+                      '首页',
                       style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
                     ),
                     actions: [

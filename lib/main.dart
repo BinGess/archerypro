@@ -135,7 +135,7 @@ class _MainContainerState extends ConsumerState<MainContainer> {
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.history), label: '历史'),
+            BottomNavigationBarItem(icon: Icon(Icons.history), label: '首页'),
             BottomNavigationBarItem(
               icon: SizedBox(
                 width: 44,
