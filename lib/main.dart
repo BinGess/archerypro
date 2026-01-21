@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
@@ -9,6 +10,8 @@ import 'services/storage_service.dart';
 import 'services/scoring_service.dart';
 import 'providers/scoring_provider.dart';
 import 'providers/session_provider.dart';
+import 'providers/locale_provider.dart';
+import 'l10n/app_localizations.dart';
 import 'utils/sample_data.dart';
 
 void main() async {
@@ -18,24 +21,49 @@ void main() async {
   final storageService = StorageService();
   await storageService.initialize();
 
+  // Create provider container
+  final container = ProviderContainer(
+    overrides: [
+      storageServiceProvider.overrideWithValue(storageService),
+    ],
+  );
+
+  // Initialize locale
+  await container.read(localeProvider.notifier).initialize();
+
   runApp(
-    ProviderScope(
-      overrides: [
-        storageServiceProvider.overrideWithValue(storageService),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const ArcheryApp(),
     ),
   );
 }
 
-class ArcheryApp extends StatelessWidget {
+class ArcheryApp extends ConsumerWidget {
   const ArcheryApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeState = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'Archery Tracker',
       debugShowCheckedModeBanner: false,
+
+      // Localization delegates
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+
+      // Supported locales
+      supportedLocales: AppLocalizations.supportedLocales,
+
+      // Current locale
+      locale: localeState.locale,
+
       theme: ThemeData(
         scaffoldBackgroundColor: AppColors.backgroundLight,
         primaryColor: AppColors.primary,
@@ -94,6 +122,8 @@ class _MainContainerState extends ConsumerState<MainContainer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (!_isInitialized) {
       return const Scaffold(
         body: Center(
@@ -134,10 +164,10 @@ class _MainContainerState extends ConsumerState<MainContainer> {
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           elevation: 0,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.history), label: '首页'),
+          items: [
+            BottomNavigationBarItem(icon: const Icon(Icons.history), label: l10n.navHome),
             BottomNavigationBarItem(
-              icon: SizedBox(
+              icon: const SizedBox(
                 width: 44,
                 height: 44,
                 child: DecoratedBox(
@@ -145,7 +175,7 @@ class _MainContainerState extends ConsumerState<MainContainer> {
                   child: Icon(Icons.add, color: Colors.white),
                 ),
               ),
-              activeIcon: SizedBox(
+              activeIcon: const SizedBox(
                 width: 44,
                 height: 44,
                 child: DecoratedBox(
@@ -153,9 +183,9 @@ class _MainContainerState extends ConsumerState<MainContainer> {
                   child: Icon(Icons.add, color: Colors.white),
                 ),
               ),
-              label: '添加',
+              label: l10n.navAdd,
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: '统计'),
+            BottomNavigationBarItem(icon: const Icon(Icons.analytics_outlined), label: l10n.navStatistics),
           ],
         ),
       ),

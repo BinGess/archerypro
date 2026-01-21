@@ -5,7 +5,9 @@ import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/session_provider.dart';
 import '../providers/analytics_provider.dart';
+import '../l10n/app_localizations.dart';
 import 'details_screen.dart';
+import 'settings_screen.dart';
 
 import '../widgets/score_trend_chart.dart';
 
@@ -16,6 +18,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionState = ref.watch(sessionProvider);
     final analyticsState = ref.watch(analyticsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -28,9 +31,9 @@ class DashboardScreen extends ConsumerWidget {
                     floating: true,
                     pinned: true,
                     backgroundColor: AppColors.backgroundLight.withOpacity(0.95),
-                    title: const Text(
-                      '首页',
-                      style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
+                    title: Text(
+                      l10n.dashboard,
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
                     ),
                     actions: [
                       IconButton(
@@ -40,15 +43,24 @@ class DashboardScreen extends ConsumerWidget {
                           ref.read(analyticsProvider.notifier).refreshAnalytics();
                         },
                       ),
-                      Container(
-                        margin: const EdgeInsets.only(right: 16),
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 16),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.tune, color: AppColors.primary, size: 20),
                         ),
-                        child: const Icon(Icons.tune, color: AppColors.primary, size: 20),
                       )
                     ],
                   ),
