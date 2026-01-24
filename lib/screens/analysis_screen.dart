@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/session_provider.dart';
+import '../providers/ai_coach_provider.dart';
 import '../utils/constants.dart';
 import '../services/analytics_service.dart';
 import '../l10n/app_localizations.dart';
@@ -11,6 +12,8 @@ import '../l10n/app_localizations.dart';
 import '../widgets/growth_mixed_chart.dart';
 import '../widgets/quadrant_radar_chart.dart';
 import '../widgets/stability_radar_chart.dart';
+import '../widgets/ai_coach/ai_loading_widget.dart';
+import '../widgets/ai_coach/ai_result_card.dart';
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
@@ -65,6 +68,10 @@ class AnalysisScreen extends ConsumerWidget {
 
                 // Quadrant Radar Chart
                 _buildQuadrantRadarCard(stats, l10n),
+                const SizedBox(height: 20),
+
+                // AI Coach Analysis Section
+                _buildAICoachSection(ref, selectedPeriod, l10n),
                 const SizedBox(height: 20),
 
                 // Period AI Insights
@@ -505,6 +512,193 @@ class AnalysisScreen extends ConsumerWidget {
                 ],
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build AI Coach analysis section
+  Widget _buildAICoachSection(WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+    final aiCoachState = ref.watch(aiCoachProvider);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.psychology,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI 教练分析',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '基于周期数据的专业建议',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Analyze button
+              if (!aiCoachState.isLoading && aiCoachState.latestResult == null)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: const Text(
+                    '分析',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Content area
+          if (aiCoachState.isLoading)
+            AILoadingWidget(message: aiCoachState.loadingMessage)
+          else if (aiCoachState.error != null)
+            _buildErrorState(ref, aiCoachState.error!)
+          else if (aiCoachState.latestResult != null)
+            Column(
+              children: [
+                AIResultCard(
+                  result: aiCoachState.latestResult!,
+                  onDismiss: () {
+                    ref.read(aiCoachProvider.notifier).clearResult();
+                  },
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text(
+                    '重新分析',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            _buildEmptyState(ref, selectedPeriod),
+        ],
+      ),
+    );
+  }
+
+  /// Error state widget
+  Widget _buildErrorState(WidgetRef ref, String error) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '分析失败',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              ref.read(aiCoachProvider.notifier).clearError();
+            },
+            icon: const Icon(Icons.close, size: 16),
+            label: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Empty state widget
+  Widget _buildEmptyState(WidgetRef ref, String selectedPeriod) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Icon(
+            Icons.auto_awesome_outlined,
+            size: 48,
+            color: AppColors.textSecondary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '点击"分析"按钮获取 AI 教练的专业建议',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
