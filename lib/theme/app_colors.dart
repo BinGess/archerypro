@@ -13,6 +13,8 @@ class AppColors {
   static const Color textSlate500 = Color(0xFF64748B);
   static const Color textSlate400 = Color(0xFF94A3B8);
   static const Color textSlate300 = Color(0xFFCBD5E1);
+  static const Color textPrimary = textSlate900;
+  static const Color textSecondary = textSlate500;
   
   // Target Colors
   static const Color targetGold = Color(0xFFFFD700);

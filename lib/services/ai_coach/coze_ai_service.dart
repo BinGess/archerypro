@@ -156,22 +156,23 @@ class CozeAIService {
           'session_id': sessionId,
           'project_id': AIConfig.projectId,
         },
+        options: Options(responseType: ResponseType.stream),
       );
 
       // 处理响应
       if (response.statusCode == 200) {
-        // 如果返回的是流式数据，需要特殊处理
-        // 这里假设返回的是完整的JSON响应
         final responseData = response.data;
+        if (responseData is ResponseBody) {
+          final streamText = await utf8.decoder.bind(responseData.stream).join();
+          final answer = _extractAnswerFromSse(streamText);
+          return answer.isNotEmpty ? answer : streamText;
+        }
 
-        // 根据实际API返回格式提取文本
-        // 可能需要根据实际返回调整
         if (responseData is Map) {
-          // 尝试多种可能的响应格式
           final text = responseData['text'] ??
-                      responseData['content'] ??
-                      responseData['response'] ??
-                      responseData.toString();
+              responseData['content'] ??
+              responseData['response'] ??
+              responseData.toString();
           return text;
         } else if (responseData is String) {
           return responseData;
@@ -187,6 +188,75 @@ class CozeAIService {
     } on DioException catch (e) {
       throw CozeAPIException.fromDioError(e);
     }
+  }
+
+  String _extractAnswerFromSse(String streamText) {
+    final buffer = StringBuffer();
+    final lines = streamText.split(RegExp(r'\r?\n'));
+    for (final line in lines) {
+      final trimmed = line.trimLeft();
+      if (!trimmed.startsWith('data:')) {
+        continue;
+      }
+      final data = trimmed.substring(5).trim();
+      if (data.isEmpty || data == '[DONE]') {
+        continue;
+      }
+      try {
+        final jsonData = jsonDecode(data);
+        if (jsonData is Map<String, dynamic>) {
+          if (jsonData['type'] == 'answer') {
+            final content = jsonData['content'];
+            final answer = content is Map ? content['answer'] : null;
+            if (answer is String && answer.isNotEmpty) {
+              buffer.write(answer);
+              continue;
+            }
+          }
+          final content = jsonData['content'];
+          final answer = content is Map ? content['answer'] : null;
+          if (answer is String && answer.isNotEmpty) {
+            buffer.write(answer);
+          } else if (jsonData['answer'] is String) {
+            buffer.write(jsonData['answer'] as String);
+          }
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+    if (buffer.isEmpty) {
+      final matches = RegExp(r'data:\s*(\{[^\r\n]*\})').allMatches(streamText);
+      for (final match in matches) {
+        final data = match.group(1);
+        if (data == null || data.isEmpty || data == '[DONE]') {
+          continue;
+        }
+        try {
+          final jsonData = jsonDecode(data);
+          if (jsonData is Map<String, dynamic>) {
+            if (jsonData['type'] == 'answer') {
+              final content = jsonData['content'];
+              final answer = content is Map ? content['answer'] : null;
+              if (answer is String && answer.isNotEmpty) {
+                buffer.write(answer);
+                continue;
+              }
+            }
+            final content = jsonData['content'];
+            final answer = content is Map ? content['answer'] : null;
+            if (answer is String && answer.isNotEmpty) {
+              buffer.write(answer);
+            } else if (jsonData['answer'] is String) {
+              buffer.write(jsonData['answer'] as String);
+            }
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+    }
+    return buffer.toString();
   }
 
   // ========== 提示词构建方法 ==========

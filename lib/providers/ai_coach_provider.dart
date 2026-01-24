@@ -13,6 +13,7 @@ import '../services/session_analysis_service.dart';
 import 'session_provider.dart';
 import 'analytics_provider.dart';
 import 'locale_provider.dart';
+import 'scoring_provider.dart';
 
 // ========== Service Providers ==========
 
@@ -236,12 +237,13 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       }
 
       // 获取统计数据
-      final analyticsState = _ref.read(analyticsProvider);
-      final stats = analyticsState.stats[period];
-
-      if (stats == null) {
-        throw Exception('无法获取统计数据');
-      }
+      final analyticsService = _ref.read(analyticsServiceProvider);
+      final storageService = _ref.read(storageServiceProvider);
+      final stats = analyticsService.calculateStatistics(
+        sessions: allSessions,
+        period: period,
+        monthlyGoal: storageService.getMonthlyGoal(),
+      );
 
       // 获取当前语言
       final locale = _ref.read(localeProvider);

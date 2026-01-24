@@ -21,6 +21,10 @@ class LocaleState {
       isSystemDefault: isSystemDefault ?? this.isSystemDefault,
     );
   }
+
+  String get languageCode {
+    return locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode;
+  }
 }
 
 /// Notifier for locale management with persistence

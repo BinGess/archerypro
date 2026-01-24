@@ -1,17 +1,17 @@
 import '../../models/training_session.dart';
 import '../../models/ai_insight.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
-import '../session_analysis_service.dart';
+import '../session_analysis_service.dart' as session_analysis;
 import '../analytics_service.dart';
 
 /// 本地 AI 服务 - 离线降级方案
 /// 使用现有的 AnalyticsService 和 SessionAnalysisService 提供本地分析
 class LocalAIService {
-  final SessionAnalysisService _sessionAnalysisService;
+  final session_analysis.SessionAnalysisService _sessionAnalysisService;
   final AnalyticsService _analyticsService;
 
   LocalAIService({
-    required SessionAnalysisService sessionAnalysisService,
+    required session_analysis.SessionAnalysisService sessionAnalysisService,
     required AnalyticsService analyticsService,
   })  : _sessionAnalysisService = sessionAnalysisService,
         _analyticsService = analyticsService;
@@ -40,7 +40,10 @@ class LocalAIService {
     List<TrainingSession> allSessions,
   ) async {
     // 使用 AnalyticsService 计算统计数据
-    final stats = _analyticsService.calculateStatistics(allSessions, period);
+    final stats = _analyticsService.calculateStatistics(
+      sessions: allSessions,
+      period: period,
+    );
 
     // 生成基于统计的简单洞察
     final diagnosis = _generatePeriodDiagnosis(stats, allSessions);
