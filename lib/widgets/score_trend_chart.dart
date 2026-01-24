@@ -16,7 +16,10 @@ class ScoreTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (scores.isEmpty) {
+    // Filter valid scores
+    final validScores = scores.where((s) => s.isFinite).toList();
+
+    if (validScores.isEmpty) {
       return Center(
         child: Text(
           '暂无数据',
@@ -28,12 +31,28 @@ class ScoreTrendChart extends StatelessWidget {
     final lineColor = color ?? AppColors.primary;
 
     // Calculate dynamic Y-axis range
-    final double maxScore = scores.reduce((curr, next) => curr > next ? curr : next);
-    final double minScore = scores.reduce((curr, next) => curr < next ? curr : next);
+    double maxScore = validScores.reduce((curr, next) => curr > next ? curr : next);
+    double minScore = validScores.reduce((curr, next) => curr < next ? curr : next);
     
+    // Handle edge case where max == min (single point or flat line)
+    if (maxScore == minScore) {
+      if (maxScore > 0) {
+        maxScore *= 1.1;
+        minScore *= 0.9;
+      } else {
+        maxScore = 10;
+        minScore = 0;
+      }
+    }
+
     // Add padding to range
-    final double maxY = maxScore > 10 ? maxScore * 1.1 : 10.5; // If total score, add 10% padding. If average (<=10), use 10.5
-    final double minY = minScore > 10 ? minScore * 0.9 : 0; // If total score, sub 10% padding. If average, use 0
+    double maxY = maxScore > 10 ? maxScore * 1.1 : 10.5; // If total score, add 10% padding. If average (<=10), use 10.5
+    double minY = minScore > 10 ? minScore * 0.9 : 0; // If total score, sub 10% padding. If average, use 0
+    
+    // Ensure range is valid
+    if (maxY <= minY) {
+      maxY = minY + 1;
+    }
 
     return LineChart(
       LineChartData(
@@ -59,7 +78,7 @@ class ScoreTrendChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: !isCompact,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= 0 && value.toInt() < scores.length) {
+                if (value.toInt() >= 0 && value.toInt() < validScores.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
@@ -75,12 +94,12 @@ class ScoreTrendChart extends StatelessWidget {
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
-        maxX: (scores.length - 1).toDouble(),
+        maxX: (validScores.length > 1 ? validScores.length - 1 : 0).toDouble(),
         minY: minY,
         maxY: maxY,
         lineBarsData: [
           LineChartBarData(
-            spots: scores.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+            spots: validScores.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
             isCurved: true,
             color: lineColor,
             barWidth: 3,

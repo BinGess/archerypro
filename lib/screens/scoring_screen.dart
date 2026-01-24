@@ -328,6 +328,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 
   Widget _buildTargetPanel(dynamic scoringState) {
+    final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
+    final bowType = scoringState.currentSession?.equipment.bowType;
+    final useSixRingFace = targetFaceSize == 40 && bowType == BowType.compound;
+
     return Container(
       height: 380, // Fixed height for target panel
       decoration: BoxDecoration(
@@ -358,7 +362,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                       CustomPaint(
                         size: const Size(300, 300),
                         painter: TargetFacePainter(
-                          targetFaceSize: scoringState.currentSession?.targetFaceSize ?? 122,
+                          targetFaceSize: targetFaceSize,
+                          useSixRingFace: useSixRingFace,
                         ),
                       ),
                       // Show marker for current focused arrow if it has a position
@@ -646,12 +651,15 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   void _handleTargetTap(Offset localPosition) async {
     final scoringState = ref.read(scoringProvider);
     if (scoringState.currentEnd == null) return;
+    if (scoringState.focusedEndIndex >= scoringState.maxEnds) return;
 
     // Add ripple effect
     _addRipple(localPosition);
 
     // Get target face size from session
     final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
+    final bowType = scoringState.currentSession?.equipment.bowType;
+    final useSixRingFace = targetFaceSize == 40 && bowType == BowType.compound;
 
     // Target dimensions - must match actual widget size (300x300)
     const double targetSize = 300.0;
@@ -669,13 +677,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     // Determine score based on distance and target face size
     int score;
 
-    if (targetFaceSize == 40) {
+    if (useSixRingFace) {
       // 40cm target: 6-ring face (only scores 6-10 + X)
       // This represents the inner 60% of a full target (rings 6-10)
       // Based on World Archery specs scaled proportionally
       if (distance > 1.0) {
         score = 0; // Miss - outside target
-      } else if (distance <= 0.083) {
+      } else if (distance <= 0.08) {
         score = 11; // X ring - innermost circle (half of 10-ring scaled)
       } else if (distance <= 0.167) {
         score = 10; // 10 ring - gold center

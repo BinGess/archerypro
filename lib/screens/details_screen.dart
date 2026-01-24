@@ -8,6 +8,7 @@ import '../widgets/end_trend_chart.dart';
 import '../widgets/score_distribution_chart.dart';
 import '../providers/session_provider.dart';
 import '../models/training_session.dart';
+import '../models/equipment.dart';
 import '../services/session_analysis_service.dart';
 
 class DetailsScreen extends ConsumerWidget {
@@ -210,6 +211,8 @@ class DetailsScreen extends ConsumerWidget {
 
   /// Build visualization section with three charts
   Widget _buildVisualizationSection(TrainingSession session) {
+    final useSixRingFace = session.targetFaceSize == 40 && session.equipment.bowType == BowType.compound;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -233,6 +236,7 @@ class DetailsScreen extends ConsumerWidget {
               arrowPositions: session.heatmapPositions,
               geometricCenter: session.geometricCenter,
               targetFaceSize: session.targetFaceSize,
+              useSixRingFace: useSixRingFace,
               size: 280,
             ),
           ),
@@ -318,7 +322,7 @@ class DetailsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          child,
+          Center(child: child),
         ],
       ),
     );
@@ -500,4 +504,3 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 }
-

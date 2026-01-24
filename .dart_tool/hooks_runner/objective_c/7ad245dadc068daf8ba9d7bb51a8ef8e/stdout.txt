@@ -1,0 +1,41 @@
+Running `(cd /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/; TMPDIR=/var/folders/06/1prwh2rn1gngxq2w0b4tn48w0000gn/T/ PATH=/Users/bytedance/.trae/sdks/workspaces/67972873/versions/node/current:/Users/bytedance/.trae/sdks/versions/node/current:/Users/bytedance/flutter/bin:/Users/bytedance/.trae/sdks/workspaces/67972873/versions/node/current:/Users/bytedance/.trae/sdks/versions/node/current:/Users/bytedance/flutter/bin/:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/opt/puppetlabs/bin:/Applications/Trae.app/Contents/Resources/app/bin:/Users/bytedance/flutter/bin/:/Users/bytedance/.trae/sdks/workspaces/67972873/versions/node/current:/Users/bytedance/.trae/sdks/versions/node/current:/Users/bytedance/flutter/bin:/usr/local/bin/python3:/Library/Frameworks/Python.framework/Versions/3.13/bin:/Applications/Postgres.app/Contents/Versions/latest/bin HOME=/Users/bytedance /Users/bytedance/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/bytedance/Documents/Code/archerypro/.dart_tool/package_config.json /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/7ad245dadc068daf8ba9d7bb51a8ef8e/hook.dill --config=/Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/7ad245dadc068daf8ba9d7bb51a8ef8e/input.json )`.
+INFO: 2026-01-23 23:52:33.164146: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-01-23 23:52:33.279073: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-01-23 23:52:33.298070: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-darwin -c /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/src/include/dart_api_dl.c -fpic -I src -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-01-23 23:52:33.306637: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-darwin -x objective-c -fobjc-arc -c /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/src/ns_number.m -fpic -I src -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o
+
+j/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-01-23 23:52:33.471946: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o
+
+/shared/objective_c/build/7ad245dadc/obj/src/objective_c.c.o
+INFO: 2026-01-23 23:52:33.471924: 
+INFO: 2026-01-23 23:52:33.471937: 
+
+INFO: 2026-01-23 23:52:33.487148: 
+INFO: 2026-01-23 23:52:33.487192: 
+INFO: 2026-01-23 23:52:33.487203: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/test/util.c.o
+
+o
+
+INFO: 2026-01-23 23:52:33.891389: 
+INFO: 2026-01-23 23:52:33.891428: 
+INFO: 2026-01-23 23:52:33.891439: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o
+
+INFO: 2026-01-23 23:52:33.899262: 
+INFO: 2026-01-23 23:52:33.899300: 
+INFO: 2026-01-23 23:52:33.899311: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.m.o
+
+INFO: 2026-01-23 23:52:33.902551: 
+INFO: 2026-01-23 23:52:33.902592: 
+INFO: 2026-01-23 23:52:33.902604: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-01-23 23:52:33.918740: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-darwin /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.c.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/test/util.c.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/input_stream_adapter.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/observer.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/protocol.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c_bindings_generated.m.o -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/objective_c.dylib
+
+INFO: 2026-01-23 23:52:34.054799: 
+INFO: 2026-01-23 23:52:34.054871: 
+INFO: 2026-01-23 23:52:34.054881: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/objective_c.dylib
+

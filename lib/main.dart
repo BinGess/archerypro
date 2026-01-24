@@ -219,7 +219,7 @@ class InitializationWrapper extends ConsumerStatefulWidget {
   ConsumerState<InitializationWrapper> createState() => _InitializationWrapperState();
 }
 
-class _InitializationWrapperState extends ConsumerState<InitializationWrapper> {
+class _InitializationWrapperState extends ConsumerState<InitializationWrapper> with WidgetsBindingObserver {
   bool _isInitialized = false;
   bool _isRecovering = false;
   String? _error;
@@ -227,7 +227,35 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future.microtask(() => _initializeApp());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      _flushData();
+    }
+  }
+
+  Future<void> _flushData() async {
+    try {
+      final storageService = ref.read(storageServiceProvider);
+      // Compact to ensure data is written and log file is clean
+      await storageService.compact();
+      
+      final logger = LoggerService();
+      logger.logLifecycle('App paused/detached, storage compacted');
+      await logger.forceFlush();
+    } catch (e) {
+      print('Error flushing data: $e');
+    }
   }
 
   Future<void> _initializeApp() async {
@@ -249,6 +277,11 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> {
 
       final sessions = ref.read(sessionProvider).sessions;
       logger.log('Found ${sessions.length} existing sessions', level: LogLevel.info);
+      if (sessions.isNotEmpty) {
+        logger.log('🔍 First session ID: ${sessions.first.id}, Date: ${sessions.first.date}', level: LogLevel.debug);
+      }
+      
+      await logger.forceFlush();
 
       if (sessions.isEmpty) {
         logger.log('🎲 No sessions found, generating sample data...', level: LogLevel.info);

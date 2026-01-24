@@ -1,0 +1,48 @@
+Running `(cd /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/; ANDROID_HOME=/Users/bytedance/Library/Android/sdk TMPDIR=/var/folders/06/1prwh2rn1gngxq2w0b4tn48w0000gn/T/ PATH=/Applications/Xcode.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/local/bin:/Users/bytedance/.trae/sdks/workspaces/67972873/versions/node/current:/Users/bytedance/.trae/sdks/versions/node/current:/Users/bytedance/flutter/bin:/Users/bytedance/flutter/bin/:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/opt/puppetlabs/bin:/Applications/Trae.app/Contents/Resources/app/bin:/usr/local/bin/python3:/Library/Frameworks/Python.framework/Versions/3.13/bin:/Applications/Postgres.app/Contents/Versions/latest/bin HOME=/Users/bytedance /Users/bytedance/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/bytedance/Documents/Code/archerypro/.dart_tool/package_config.json /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/0b28f89409983829d6356966c2c3da83/hook.dill --config=/Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/0b28f89409983829d6356966c2c3da83/input.json )`.
+INFO: 2026-01-21 23:28:26.494242: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-01-21 23:28:26.513804: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-01-21 23:28:26.532949: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -x objective-c -fobjc-arc -c /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/src/protocol.m -fpic -I src -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/protocol.m.o
+INFO: 2026-01-21 23:28:26.533046: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -x objective-c -fobjc-arc -c /Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/src/objective_c_bindings_generated.m -fpic -I src -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-01-21 23:28:26.616396: 
+INFO: 2026-01-21 23:28:26.616517: 
+INFO: 2026-01-21 23:28:26.616549: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-01-21 23:28:26.620830: 
+INFO: 2026-01-21 23:28:26.620867: 
+INFO: 2026-01-21 23:28:26.620879: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/observer.m.o
+
+INFO: 2026-01-21 23:28:26.626070: 
+INFO: 2026-01-21 23:28:26.626112: 
+INFO: 2026-01-21 23:28:26.626132: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/protocol.m.o
+
+INFO: 2026-01-21 23:28:26.774487: 
+INFO: 2026-01-21 23:28:26.774529: 
+INFO: 2026-01-21 23:28:26.774542: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/ns_number.m.o
+
+INFO: 2026-01-21 23:28:26.784865: 
+INFO: 2026-01-21 23:28:26.784886: 
+INFO: 2026-01-21 23:28:26.784898: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-01-21 23:28:26.808689: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/include/dart_api_dl.c.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/objective_c.c.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/input_stream_adapter.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/objective_c.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/observer.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/ns_number.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/protocol.m.o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/objective_c_bindings_generated.m.o -o /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/objective_c.dylib
+
+bility  _1wx624s_protocolTrampoline_1ldqghh(id target, void * sel, id arg1) {
+      | ^
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSItemProvider.h:16:28: note: 'NSItemProviderRepresentationVisibility' has been marked as being introduced in iOS 11.0 here, but the deployment target is iOS 7.0.0
+   16 | typedef NS_ENUM(NSInteger, NSItemProviderRepresentationVisibility) {
+      |                            ^
+/Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/src/objective_c_bindings_generated.m:84:41: note: annotate '_1wx624s_protocolTrampoline_1ldqghh' with an availability attribute to silence this warning
+   83 | __attribute__((visibility("default"))) __attribute__((used))
+   84 | NSItemProviderRepresentationVisibility  _1wx624s_protocolTrampoline_1ldqghh(id target, void * sel, id arg1) {
+      |                                         ^
+2 warnings generated.
+
+INFO: 2026-01-21 23:28:26.808396: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-01-21 23:28:26.845124: 
+INFO: 2026-01-21 23:28:26.845201: ld: warning: -undefined dynamic_lookup is deprecated on iOS
+
+INFO: 2026-01-21 23:28:26.845214: Generated /Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/0b28f89409/objective_c.dylib
+

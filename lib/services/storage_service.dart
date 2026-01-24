@@ -13,14 +13,32 @@ class StorageService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    await Hive.initFlutter();
+    try {
+      await Hive.initFlutter();
 
-    // Open boxes
-    // Use LazyBox for sessions to avoid loading all data into memory at once
-    _sessionsBox = await Hive.openLazyBox<String>(kSessionsBoxName);
-    _settingsBox = await Hive.openBox(kSettingsBoxName);
+      // Open boxes with recovery strategy
+      // Use LazyBox for sessions to avoid loading all data into memory at once
+      try {
+        _sessionsBox = await Hive.openLazyBox<String>(kSessionsBoxName);
+      } catch (e) {
+        print('Error opening sessions box: $e. Deleting and recreating...');
+        await Hive.deleteBoxFromDisk(kSessionsBoxName);
+        _sessionsBox = await Hive.openLazyBox<String>(kSessionsBoxName);
+      }
 
-    _isInitialized = true;
+      try {
+        _settingsBox = await Hive.openBox(kSettingsBoxName);
+      } catch (e) {
+        print('Error opening settings box: $e. Deleting and recreating...');
+        await Hive.deleteBoxFromDisk(kSettingsBoxName);
+        _settingsBox = await Hive.openBox(kSettingsBoxName);
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      print('Fatal error initializing storage: $e');
+      rethrow;
+    }
   }
 
   /// Delete all data from disk (Recovery mode)

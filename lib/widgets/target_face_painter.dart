@@ -3,8 +3,12 @@ import '../theme/app_colors.dart';
 
 class TargetFacePainter extends CustomPainter {
   final int targetFaceSize;
+  final bool useSixRingFace;
 
-  TargetFacePainter({required this.targetFaceSize});
+  TargetFacePainter({
+    required this.targetFaceSize,
+    bool? useSixRingFace,
+  }) : useSixRingFace = useSixRingFace ?? targetFaceSize == 40;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -12,7 +16,7 @@ class TargetFacePainter extends CustomPainter {
     final radius = size.width / 2;
 
     // Render different target faces based on size
-    if (targetFaceSize == 40) {
+    if (targetFaceSize == 40 && useSixRingFace) {
       // 40cm target: 6-ring face (rings 6-10 only)
       // Blue outer ring (6-7)
       _drawRing(canvas, center, radius, AppColors.targetBlue);
@@ -55,6 +59,7 @@ class TargetFacePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is TargetFacePainter && oldDelegate.targetFaceSize != targetFaceSize;
+    return oldDelegate is TargetFacePainter &&
+        (oldDelegate.targetFaceSize != targetFaceSize || oldDelegate.useSixRingFace != useSixRingFace);
   }
 }

@@ -151,6 +151,9 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       state = state.copyWith(error: 'No active session');
       return false;
     }
+    if (state.focusedEndIndex >= state.maxEnds) {
+      return false;
+    }
 
     try {
       // 1. Determine target End

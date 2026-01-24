@@ -288,25 +288,85 @@ class DashboardScreen extends ConsumerWidget {
         child: Row(
           children: [
             // Date Box
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isHighRecord ? AppColors.accentGold.withOpacity(0.1) : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    monthPart, 
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isHighRecord ? AppColors.accentGold : Colors.grey.shade600),
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: (isHighRecord ? AppColors.accentGold : AppColors.primary).withOpacity(0.25),
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(
+                              Icons.calendar_month_outlined,
+                              color: (isHighRecord ? AppColors.accentGold : AppColors.primary).withOpacity(0.08),
+                              size: 44,
+                            ),
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            Container(
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: (isHighRecord ? AppColors.accentGold : AppColors.primary).withOpacity(0.95),
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                monthPart,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  dayPart,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isHighRecord ? AppColors.accentGold : AppColors.textSlate900,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          ),
+                        ),
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(
-                    dayPart,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isHighRecord ? AppColors.accentGold : AppColors.textSlate900),
-                  ),
-                ],
-              ),
-            ),
+                ),
             const SizedBox(width: 16),
             
             // Details
@@ -340,13 +400,13 @@ class DashboardScreen extends ConsumerWidget {
                 alignment: Alignment.center,
                 children: [
                   CircularProgressIndicator(
-                    value: percentage / 100,
+                    value: (percentage.isNaN || percentage.isInfinite) ? 0 : (percentage / 100).clamp(0.0, 1.0),
                     backgroundColor: Colors.grey.shade100,
                     color: _getPercentageColor(percentage),
                     strokeWidth: 4,
                   ),
                   Text(
-                    '${percentage.toInt()}%',
+                    '${(percentage.isNaN || percentage.isInfinite) ? 0 : percentage.toInt()}%',
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getPercentageColor(percentage)),
                   ),
                 ],

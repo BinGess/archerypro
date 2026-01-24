@@ -14,6 +14,8 @@ class HeatmapWithCenter extends StatelessWidget {
   /// Target face size in centimeters
   final int targetFaceSize;
 
+  final bool? useSixRingFace;
+
   /// Size of the widget
   final double size;
 
@@ -25,6 +27,7 @@ class HeatmapWithCenter extends StatelessWidget {
     required this.arrowPositions,
     this.geometricCenter,
     required this.targetFaceSize,
+    this.useSixRingFace,
     this.size = 300.0,
     this.showCenter = true,
   });
@@ -39,6 +42,7 @@ class HeatmapWithCenter extends StatelessWidget {
           arrowPositions: arrowPositions,
           geometricCenter: geometricCenter,
           targetFaceSize: targetFaceSize,
+          useSixRingFace: useSixRingFace,
           showCenter: showCenter,
         ),
       ),
@@ -51,12 +55,14 @@ class _HeatmapPainter extends CustomPainter {
   final List<Offset> arrowPositions;
   final Offset? geometricCenter;
   final int targetFaceSize;
+  final bool? useSixRingFace;
   final bool showCenter;
 
   _HeatmapPainter({
     required this.arrowPositions,
     required this.geometricCenter,
     required this.targetFaceSize,
+    required this.useSixRingFace,
     required this.showCenter,
   });
 
@@ -66,7 +72,10 @@ class _HeatmapPainter extends CustomPainter {
     final radius = size.width / 2;
 
     // Draw target face first
-    final targetPainter = TargetFacePainter(targetFaceSize: targetFaceSize);
+    final targetPainter = TargetFacePainter(
+      targetFaceSize: targetFaceSize,
+      useSixRingFace: useSixRingFace,
+    );
     targetPainter.paint(canvas, size);
 
     // Draw arrow impact points
@@ -148,6 +157,7 @@ class _HeatmapPainter extends CustomPainter {
     return oldDelegate.arrowPositions != arrowPositions ||
         oldDelegate.geometricCenter != geometricCenter ||
         oldDelegate.targetFaceSize != targetFaceSize ||
+        oldDelegate.useSixRingFace != useSixRingFace ||
         oldDelegate.showCenter != showCenter;
   }
 }
@@ -157,12 +167,14 @@ class HeatmapWithCenterCompact extends StatelessWidget {
   final List<Offset> arrowPositions;
   final Offset? geometricCenter;
   final int targetFaceSize;
+  final bool? useSixRingFace;
 
   const HeatmapWithCenterCompact({
     super.key,
     required this.arrowPositions,
     this.geometricCenter,
     required this.targetFaceSize,
+    this.useSixRingFace,
   });
 
   @override
@@ -171,6 +183,7 @@ class HeatmapWithCenterCompact extends StatelessWidget {
       arrowPositions: arrowPositions,
       geometricCenter: geometricCenter,
       targetFaceSize: targetFaceSize,
+      useSixRingFace: useSixRingFace,
       size: 150.0,
       showCenter: true,
     );
