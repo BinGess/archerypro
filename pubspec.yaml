@@ -34,6 +34,10 @@ dependencies:
   # Path Provider for file storage
   path_provider: ^2.1.1
 
+  # Network & API
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
