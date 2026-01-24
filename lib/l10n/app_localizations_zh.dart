@@ -384,4 +384,82 @@ class AppLocalizationsZh extends AppLocalizations {
   // Units
   @override
   String get unitArrows => '支箭';
+
+  // AI Coach
+  @override
+  String get aiCoachAnalysis => 'AI 教练分析';
+  @override
+  String get aiCoachDeepAnalysis => 'AI 教练深度分析';
+  @override
+  String get aiCoachPeriodAnalysis => 'AI 周期分析';
+  @override
+  String get aiCoachBasedOnData => '基于训练数据的专业建议';
+  @override
+  String get aiCoachGetProfessionalAdvice => '获取更详细的专业建议和训练计划';
+  @override
+  String get aiCoachAnalyzeButton => '分析';
+  @override
+  String get aiCoachDeepAnalyzeButton => '深度分析';
+  @override
+  String get aiCoachReanalyzeButton => '重新分析';
+  @override
+  String get aiCoachAnalyzing => 'AI 教练分析中...';
+  @override
+  String get aiCoachAnalyzingPeriod => '正在分析周期表现...';
+  @override
+  String get aiCoachAnalysisComplete => '分析完成';
+  @override
+  String get aiCoachAnalysisFailed => '分析失败';
+  @override
+  String get aiCoachNetworkError => '网络连接失败，请检查网络后重试';
+  @override
+  String get aiCoachClickToAnalyze => '点击"分析"按钮获取 AI 教练的专业建议';
+  @override
+  String get aiCoachClickForDeepAnalysis => '点击"深度分析"获取 AI 教练的全面建议和训练计划';
+  @override
+  String get aiCoachDismiss => '关闭';
+  @override
+  String get aiCoachClose => '关闭';
+  @override
+  String get aiCoachDiagnosis => '核心诊断';
+  @override
+  String get aiCoachStrengths => '优势';
+  @override
+  String get aiCoachWeaknesses => '待改进';
+  @override
+  String get aiCoachSuggestions => '改进建议';
+  @override
+  String get aiCoachTrainingPlan => '训练计划';
+  @override
+  String get aiCoachEncouragement => '鼓励';
+  @override
+  String get aiCoachSourceOnline => 'AI 在线分析';
+  @override
+  String get aiCoachSourceLocal => '本地分析';
+  @override
+  String get aiCoachSourceOffline => '离线模式';
+  @override
+  String get aiCoachCategoryTechnique => '技术';
+  @override
+  String get aiCoachCategoryPhysical => '体能';
+  @override
+  String get aiCoachCategoryMental => '心理';
+  @override
+  String get aiCoachCategoryEquipment => '器材';
+  @override
+  String get aiCoachCategoryGeneral => '综合';
+  @override
+  String get aiCoachActionSteps => '行动步骤';
+  @override
+  String get aiCoachPhaseFocus => '训练重点';
+  @override
+  String get aiCoachDrills => '训练项目';
+  @override
+  String get aiCoachDays => '天';
+  @override
+  String get aiCoachArrowsUnit => '支';
+  @override
+  String get aiCoachPhase => '阶段';
+  @override
+  String get aiCoachSuggestionsCount => '条';
 }

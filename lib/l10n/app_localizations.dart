@@ -187,6 +187,46 @@ abstract class AppLocalizations {
   // Units
   String get unitArrows; // "支箭" / "arrows"
 
+  // AI Coach
+  String get aiCoachAnalysis;
+  String get aiCoachDeepAnalysis;
+  String get aiCoachPeriodAnalysis;
+  String get aiCoachBasedOnData;
+  String get aiCoachGetProfessionalAdvice;
+  String get aiCoachAnalyzeButton;
+  String get aiCoachDeepAnalyzeButton;
+  String get aiCoachReanalyzeButton;
+  String get aiCoachAnalyzing;
+  String get aiCoachAnalyzingPeriod;
+  String get aiCoachAnalysisComplete;
+  String get aiCoachAnalysisFailed;
+  String get aiCoachNetworkError;
+  String get aiCoachClickToAnalyze;
+  String get aiCoachClickForDeepAnalysis;
+  String get aiCoachDismiss;
+  String get aiCoachClose;
+  String get aiCoachDiagnosis;
+  String get aiCoachStrengths;
+  String get aiCoachWeaknesses;
+  String get aiCoachSuggestions;
+  String get aiCoachTrainingPlan;
+  String get aiCoachEncouragement;
+  String get aiCoachSourceOnline;
+  String get aiCoachSourceLocal;
+  String get aiCoachSourceOffline;
+  String get aiCoachCategoryTechnique;
+  String get aiCoachCategoryPhysical;
+  String get aiCoachCategoryMental;
+  String get aiCoachCategoryEquipment;
+  String get aiCoachCategoryGeneral;
+  String get aiCoachActionSteps;
+  String get aiCoachPhaseFocus;
+  String get aiCoachDrills;
+  String get aiCoachDays;
+  String get aiCoachArrowsUnit;
+  String get aiCoachPhase;
+  String get aiCoachSuggestionsCount;
+
   static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   static const List<Locale> supportedLocales = [

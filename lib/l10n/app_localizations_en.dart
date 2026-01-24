@@ -384,4 +384,82 @@ class AppLocalizationsEn extends AppLocalizations {
   // Units
   @override
   String get unitArrows => 'arrows';
+
+  // AI Coach
+  @override
+  String get aiCoachAnalysis => 'AI Coach Analysis';
+  @override
+  String get aiCoachDeepAnalysis => 'AI Coach Deep Analysis';
+  @override
+  String get aiCoachPeriodAnalysis => 'AI Period Analysis';
+  @override
+  String get aiCoachBasedOnData => 'Professional advice based on training data';
+  @override
+  String get aiCoachGetProfessionalAdvice => 'Get detailed professional advice and training plans';
+  @override
+  String get aiCoachAnalyzeButton => 'Analyze';
+  @override
+  String get aiCoachDeepAnalyzeButton => 'Deep Analysis';
+  @override
+  String get aiCoachReanalyzeButton => 'Reanalyze';
+  @override
+  String get aiCoachAnalyzing => 'AI Coach analyzing...';
+  @override
+  String get aiCoachAnalyzingPeriod => 'Analyzing period performance...';
+  @override
+  String get aiCoachAnalysisComplete => 'Analysis Complete';
+  @override
+  String get aiCoachAnalysisFailed => 'Analysis Failed';
+  @override
+  String get aiCoachNetworkError => 'Network connection failed, please check and retry';
+  @override
+  String get aiCoachClickToAnalyze => 'Click "Analyze" to get AI coach professional advice';
+  @override
+  String get aiCoachClickForDeepAnalysis => 'Click "Deep Analysis" to get comprehensive advice and training plans';
+  @override
+  String get aiCoachDismiss => 'Dismiss';
+  @override
+  String get aiCoachClose => 'Close';
+  @override
+  String get aiCoachDiagnosis => 'Core Diagnosis';
+  @override
+  String get aiCoachStrengths => 'Strengths';
+  @override
+  String get aiCoachWeaknesses => 'Areas for Improvement';
+  @override
+  String get aiCoachSuggestions => 'Suggestions';
+  @override
+  String get aiCoachTrainingPlan => 'Training Plan';
+  @override
+  String get aiCoachEncouragement => 'Encouragement';
+  @override
+  String get aiCoachSourceOnline => 'AI Online Analysis';
+  @override
+  String get aiCoachSourceLocal => 'Local Analysis';
+  @override
+  String get aiCoachSourceOffline => 'Offline Mode';
+  @override
+  String get aiCoachCategoryTechnique => 'Technique';
+  @override
+  String get aiCoachCategoryPhysical => 'Physical';
+  @override
+  String get aiCoachCategoryMental => 'Mental';
+  @override
+  String get aiCoachCategoryEquipment => 'Equipment';
+  @override
+  String get aiCoachCategoryGeneral => 'General';
+  @override
+  String get aiCoachActionSteps => 'Action Steps';
+  @override
+  String get aiCoachPhaseFocus => 'Training Focus';
+  @override
+  String get aiCoachDrills => 'Training Drills';
+  @override
+  String get aiCoachDays => 'days';
+  @override
+  String get aiCoachArrowsUnit => 'arrows';
+  @override
+  String get aiCoachPhase => 'Phase';
+  @override
+  String get aiCoachSuggestionsCount => 'items';
 }
