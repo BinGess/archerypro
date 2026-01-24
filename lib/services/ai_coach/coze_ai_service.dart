@@ -191,72 +191,104 @@ class CozeAIService {
   }
 
   String _extractAnswerFromSse(String streamText) {
+    _logger.log('SSE 原始响应长度: ${streamText.length}', level: LogLevel.debug);
+
     final buffer = StringBuffer();
     final lines = streamText.split(RegExp(r'\r?\n'));
+
+    int eventCount = 0;
     for (final line in lines) {
-      final trimmed = line.trimLeft();
+      final trimmed = line.trim();
       if (!trimmed.startsWith('data:')) {
         continue;
       }
+
       final data = trimmed.substring(5).trim();
       if (data.isEmpty || data == '[DONE]') {
         continue;
       }
+
       try {
         final jsonData = jsonDecode(data);
-        if (jsonData is Map<String, dynamic>) {
-          if (jsonData['type'] == 'answer') {
-            final content = jsonData['content'];
-            final answer = content is Map ? content['answer'] : null;
-            if (answer is String && answer.isNotEmpty) {
-              buffer.write(answer);
-              continue;
-            }
-          }
-          final content = jsonData['content'];
-          final answer = content is Map ? content['answer'] : null;
-          if (answer is String && answer.isNotEmpty) {
-            buffer.write(answer);
-          } else if (jsonData['answer'] is String) {
-            buffer.write(jsonData['answer'] as String);
-          }
+        if (jsonData is! Map<String, dynamic>) {
+          continue;
         }
-      } catch (_) {
+
+        eventCount++;
+        _logger.log('事件 #$eventCount, type: ${jsonData['type']}', level: LogLevel.debug);
+
+        // 尝试多种可能的字段位置提取 answer
+        final String? answer = _tryExtractAnswer(jsonData);
+
+        if (answer != null && answer.isNotEmpty) {
+          _logger.log('找到答案片段，长度: ${answer.length}', level: LogLevel.debug);
+          buffer.write(answer);
+        }
+      } catch (e) {
+        _logger.log('解析 SSE 数据行失败: $e', level: LogLevel.debug);
         continue;
       }
     }
-    if (buffer.isEmpty) {
-      final matches = RegExp(r'data:\s*(\{[^\r\n]*\})').allMatches(streamText);
-      for (final match in matches) {
-        final data = match.group(1);
-        if (data == null || data.isEmpty || data == '[DONE]') {
-          continue;
-        }
-        try {
-          final jsonData = jsonDecode(data);
-          if (jsonData is Map<String, dynamic>) {
-            if (jsonData['type'] == 'answer') {
-              final content = jsonData['content'];
-              final answer = content is Map ? content['answer'] : null;
-              if (answer is String && answer.isNotEmpty) {
-                buffer.write(answer);
-                continue;
-              }
-            }
-            final content = jsonData['content'];
-            final answer = content is Map ? content['answer'] : null;
-            if (answer is String && answer.isNotEmpty) {
-              buffer.write(answer);
-            } else if (jsonData['answer'] is String) {
-              buffer.write(jsonData['answer'] as String);
-            }
-          }
-        } catch (_) {
-          continue;
+
+    final result = buffer.toString();
+    _logger.log('SSE 解析完成，共 $eventCount 个事件，提取内容长度: ${result.length}', level: LogLevel.debug);
+
+    return result;
+  }
+
+  /// 尝试从多个可能的位置提取 answer
+  String? _tryExtractAnswer(Map<String, dynamic> jsonData) {
+    // 方法1: 检查 type == 'answer'
+    if (jsonData['type'] == 'answer') {
+      final content = jsonData['content'];
+      if (content is Map) {
+        final answer = content['answer'];
+        if (answer is String && answer.isNotEmpty) {
+          return answer;
         }
       }
     }
-    return buffer.toString();
+
+    // 方法2: 检查 content.answer
+    final content = jsonData['content'];
+    if (content is Map) {
+      final answer = content['answer'];
+      if (answer is String && answer.isNotEmpty) {
+        return answer;
+      }
+
+      // 方法3: 检查 content.text
+      final text = content['text'];
+      if (text is String && text.isNotEmpty) {
+        return text;
+      }
+
+      // 方法4: 检查 content.message
+      final message = content['message'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    }
+
+    // 方法5: 直接检查 answer 字段
+    final answer = jsonData['answer'];
+    if (answer is String && answer.isNotEmpty) {
+      return answer;
+    }
+
+    // 方法6: 检查 text 字段
+    final text = jsonData['text'];
+    if (text is String && text.isNotEmpty) {
+      return text;
+    }
+
+    // 方法7: 检查 message 字段
+    final message = jsonData['message'];
+    if (message is String && message.isNotEmpty) {
+      return message;
+    }
+
+    return null;
   }
 
   // ========== 提示词构建方法 ==========
