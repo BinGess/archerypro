@@ -37,6 +37,7 @@ dependencies:
   # Network & API
   dio: ^5.4.0
   connectivity_plus: ^5.0.0
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -50,3 +51,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env

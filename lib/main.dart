@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_colors.dart';
@@ -24,6 +25,15 @@ void main() async {
     // Initialize logger first
     final logger = LoggerService();
     await logger.initialize();
+
+    // Load environment variables from .env file
+    try {
+      await dotenv.load(fileName: '.env');
+      logger.log('✅ Environment variables loaded', level: LogLevel.info);
+    } catch (e) {
+      logger.log('⚠️ Failed to load .env file: $e', level: LogLevel.warning);
+      logger.log('💡 AI Coach features may not work without API token', level: LogLevel.warning);
+    }
 
     // Log startup attempt with timestamp
     final startTime = DateTime.now();
