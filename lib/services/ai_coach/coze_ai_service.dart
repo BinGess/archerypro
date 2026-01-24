@@ -215,14 +215,25 @@ class CozeAIService {
         }
 
         eventCount++;
-        _logger.log('事件 #$eventCount, type: ${jsonData['type']}', level: LogLevel.debug);
+        final eventType = jsonData['type'] ?? 'unknown';
+        _logger.log('🔍 事件 #$eventCount, type: $eventType', level: LogLevel.debug);
+
+        // 输出完整的事件JSON结构（便于调试）
+        try {
+          final eventJson = jsonEncode(jsonData);
+          _logger.log('📋 事件完整JSON: $eventJson', level: LogLevel.debug);
+        } catch (e) {
+          _logger.log('⚠️ 无法序列化事件JSON: $e', level: LogLevel.debug);
+        }
 
         // 尝试多种可能的字段位置提取 answer
         final String? answer = _tryExtractAnswer(jsonData);
 
         if (answer != null && answer.isNotEmpty) {
-          _logger.log('找到答案片段，长度: ${answer.length}', level: LogLevel.debug);
+          _logger.log('✅ 找到答案片段，长度: ${answer.length}', level: LogLevel.debug);
           buffer.write(answer);
+        } else {
+          _logger.log('❌ 该事件未提取到内容', level: LogLevel.debug);
         }
       } catch (e) {
         _logger.log('解析 SSE 数据行失败: $e', level: LogLevel.debug);
@@ -231,7 +242,15 @@ class CozeAIService {
     }
 
     final result = buffer.toString();
-    _logger.log('SSE 解析完成，共 $eventCount 个事件，提取内容长度: ${result.length}', level: LogLevel.debug);
+    _logger.log('🎯 SSE 解析完成，共 $eventCount 个事件，提取内容长度: ${result.length}', level: LogLevel.debug);
+
+    // 如果没有提取到内容，输出原始响应的前500个字符以便调试
+    if (result.isEmpty && streamText.isNotEmpty) {
+      final preview = streamText.length > 500
+          ? streamText.substring(0, 500) + '...'
+          : streamText;
+      _logger.log('⚠️ 未提取到内容，原始SSE响应预览:\n$preview', level: LogLevel.warning);
+    }
 
     return result;
   }
