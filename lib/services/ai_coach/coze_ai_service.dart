@@ -467,10 +467,8 @@ Please return in JSON format.
 
   /// 解析 AI 建议
   AICoachResult _parseAIAdvice(String aiAdvice, String language) {
-    _logger.log(
-      '解析 AI 回复: ${aiAdvice.length > 100 ? aiAdvice.substring(0, 100) : aiAdvice}...',
-      level: LogLevel.debug,
-    );
+    // 输出完整的AI回复用于调试
+    _logger.log('📝 完整AI回复:\n$aiAdvice', level: LogLevel.debug);
 
     try {
       // 尝试提取JSON（AI可能返回包含markdown的文本）
@@ -492,14 +490,20 @@ Please return in JSON format.
       // 如果整个字符串看起来像JSON，直接解析
       jsonStr = jsonStr.trim();
       if (jsonStr.startsWith('{')) {
-        final jsonData = jsonDecode(jsonStr);
-        return AICoachResult.fromCozeJson(jsonData, 'coze');
+        final jsonData = jsonDecode(jsonStr) as Map<String, dynamic>;
+        _logger.log('✅ JSON解析成功，顶层字段: ${jsonData.keys.toList()}', level: LogLevel.debug);
+
+        // 尝试标准格式解析
+        final result = _parseFlexibleJson(jsonData);
+        _logger.log('✅ AI建议解析完成: 诊断=${result.diagnosis.isNotEmpty}, 优势=${result.strengths.length}, 弱点=${result.weaknesses.length}, 建议=${result.suggestions.length}', level: LogLevel.info);
+        return result;
       }
 
       // 如果解析失败，返回基于文本的简化结果
       throw FormatException('无法解析为JSON');
-    } catch (e) {
-      _logger.log('AI 回复不是标准 JSON 格式，使用文本解析', level: LogLevel.warning, error: e);
+    } catch (e, stackTrace) {
+      _logger.log('❌ AI回复解析失败', level: LogLevel.warning, error: e);
+      _logger.log('堆栈: $stackTrace', level: LogLevel.debug);
 
       // 返回基于原始文本的结果
       return AICoachResult(
@@ -522,6 +526,125 @@ Please return in JSON format.
         rawResponse: aiAdvice,
       );
     }
+  }
+
+  /// 灵活解析JSON，兼容多种格式
+  AICoachResult _parseFlexibleJson(Map<String, dynamic> json) {
+    // 诊断：支持多种字段名
+    String diagnosis = '';
+    if (json['诊断'] != null) {
+      diagnosis = json['诊断'].toString();
+    } else if (json['diagnosis'] != null) {
+      diagnosis = json['diagnosis'].toString();
+    } else if (json['周期诊断'] != null) {
+      // 处理嵌套的周期诊断对象
+      final periodDiag = json['周期诊断'];
+      if (periodDiag is Map) {
+        diagnosis = periodDiag.values.join('；');
+      } else {
+        diagnosis = periodDiag.toString();
+      }
+    } else if (json['单次诊断'] != null) {
+      final sessionDiag = json['单次诊断'];
+      if (sessionDiag is Map) {
+        diagnosis = sessionDiag.values.join('；');
+      } else {
+        diagnosis = sessionDiag.toString();
+      }
+    }
+
+    // 优势：支持多种字段名
+    List<String> strengths = [];
+    if (json['优势'] != null && json['优势'] is List) {
+      strengths = List<String>.from(json['优势']);
+    } else if (json['strengths'] != null && json['strengths'] is List) {
+      strengths = List<String>.from(json['strengths']);
+    } else if (json['优势分析'] != null) {
+      strengths = _extractListFromField(json['优势分析']);
+    }
+
+    // 弱点：支持多种字段名
+    List<String> weaknesses = [];
+    if (json['弱点'] != null && json['弱点'] is List) {
+      weaknesses = List<String>.from(json['弱点']);
+    } else if (json['weaknesses'] != null && json['weaknesses'] is List) {
+      weaknesses = List<String>.from(json['weaknesses']);
+    } else if (json['待改进点'] != null) {
+      weaknesses = _extractListFromField(json['待改进点']);
+    } else if (json['改进点'] != null) {
+      weaknesses = _extractListFromField(json['改进点']);
+    }
+
+    // 建议：支持多种字段名
+    List<CoachingSuggestion> suggestions = [];
+    if (json['建议'] != null && json['建议'] is List) {
+      for (var item in json['建议']) {
+        try {
+          suggestions.add(CoachingSuggestion.fromJson(item));
+        } catch (e) {
+          _logger.log('⚠️ 建议项解析失败: $e', level: LogLevel.debug);
+        }
+      }
+    } else if (json['suggestions'] != null && json['suggestions'] is List) {
+      for (var item in json['suggestions']) {
+        try {
+          suggestions.add(CoachingSuggestion.fromJson(item));
+        } catch (e) {
+          _logger.log('⚠️ 建议项解析失败: $e', level: LogLevel.debug);
+        }
+      }
+    } else if (json['改进建议'] != null && json['改进建议'] is List) {
+      for (var item in json['改进建议']) {
+        try {
+          suggestions.add(CoachingSuggestion.fromJson(item));
+        } catch (e) {
+          _logger.log('⚠️ 建议项解析失败: $e', level: LogLevel.debug);
+        }
+      }
+    }
+
+    // 训练计划
+    TrainingPlan? trainingPlan;
+    if (json['训练计划'] != null) {
+      try {
+        trainingPlan = TrainingPlan.fromJson(json['训练计划']);
+      } catch (e) {
+        _logger.log('⚠️ 训练计划解析失败: $e', level: LogLevel.debug);
+      }
+    } else if (json['trainingPlan'] != null) {
+      try {
+        trainingPlan = TrainingPlan.fromJson(json['trainingPlan']);
+      } catch (e) {
+        _logger.log('⚠️ 训练计划解析失败: $e', level: LogLevel.debug);
+      }
+    }
+
+    // 鼓励语
+    String? encouragement = json['鼓励'] ?? json['encouragement'] ?? json['鼓励语'];
+
+    return AICoachResult(
+      diagnosis: diagnosis,
+      strengths: strengths,
+      weaknesses: weaknesses,
+      suggestions: suggestions,
+      trainingPlan: trainingPlan,
+      encouragement: encouragement,
+      source: 'coze',
+      timestamp: DateTime.now(),
+      rawResponse: json.toString(),
+    );
+  }
+
+  /// 从字段中提取列表（处理嵌套对象或数组）
+  List<String> _extractListFromField(dynamic field) {
+    if (field is List) {
+      return field.map((e) => e.toString()).toList();
+    } else if (field is Map) {
+      return field.values.map((e) => e.toString()).toList();
+    } else if (field is String) {
+      return [field];
+    }
+    return [];
   }
 }
 
