@@ -123,13 +123,8 @@ class DetailsScreen extends ConsumerWidget {
 
             const SizedBox(height: 32),
 
-            // AI Advice Card (Basic Insights)
-            _buildEnhancedAIAdvice(session, ref),
-
-            const SizedBox(height: 20),
-
-            // AI Coach Deep Analysis
-            _buildAICoachDeepAnalysis(session, ref),
+            // AI Coach Analysis (优先在线，失败降级到本地)
+            _buildAICoachAnalysis(session, ref),
 
             const SizedBox(height: 20),
 
@@ -338,97 +333,6 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Build enhanced AI advice using SessionAnalysisService
-  Widget _buildEnhancedAIAdvice(TrainingSession session, WidgetRef ref) {
-    final sessionState = ref.watch(sessionProvider);
-    final analysisService = SessionAnalysisService();
-
-    // Generate insight using AI service
-    final insight = analysisService.generateSessionInsight(
-      session,
-      sessionState.sessions.where((s) => s.id != session.id).toList(),
-    );
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            insight.color.withOpacity(0.1),
-            insight.color.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: insight.color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: insight.color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(insight.icon, size: 20, color: insight.color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.auto_awesome,
-                          size: 14,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'AI 教练建议',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSlate400,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      insight.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: insight.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            insight.message,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.6,
-              color: AppColors.textSlate700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSimpleInfo(IconData icon, String text) {
     return Row(
       children: [
@@ -514,8 +418,8 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Build AI Coach deep analysis section
-  Widget _buildAICoachDeepAnalysis(TrainingSession session, WidgetRef ref) {
+  /// Build AI Coach analysis section (智能降级：在线 → 本地)
+  Widget _buildAICoachAnalysis(TrainingSession session, WidgetRef ref) {
     final aiCoachState = ref.watch(aiCoachProvider);
 
     // 获取当前会话的分析结果
@@ -556,25 +460,69 @@ class DetailsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'AI 教练深度分析',
+                    const Text(
+                      'AI 教练分析',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      '基于本次训练的专业建议',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        // 显示来源标识
+                        if (sessionResult != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: sessionResult.source == 'coze'
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  sessionResult.source == 'coze'
+                                      ? Icons.cloud_done
+                                      : Icons.phone_android,
+                                  size: 10,
+                                  color: sessionResult.source == 'coze'
+                                      ? Colors.green
+                                      : Colors.orange,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  sessionResult.source == 'coze' ? '在线分析' : '本地分析',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: sessionResult.source == 'coze'
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        const Expanded(
+                          child: Text(
+                            '基于本次训练的专业建议',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -587,7 +535,7 @@ class DetailsScreen extends ConsumerWidget {
                   },
                   icon: const Icon(Icons.auto_awesome, size: 16),
                   label: const Text(
-                    '深度分析',
+                    '开始分析',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -608,7 +556,7 @@ class DetailsScreen extends ConsumerWidget {
           if (isAnalyzing)
             AILoadingWidget(message: aiCoachState.loadingMessage)
           else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'session')
-            _buildDeepAnalysisError(ref, session.id, aiCoachState.error!)
+            _buildAnalysisError(ref, session.id, aiCoachState.error!)
           else if (sessionResult != null)
             Column(
               children: [
@@ -640,14 +588,14 @@ class DetailsScreen extends ConsumerWidget {
               ],
             )
           else
-            _buildDeepAnalysisEmpty(),
+            _buildAnalysisEmpty(),
         ],
       ),
     );
   }
 
-  /// Error state for deep analysis
-  Widget _buildDeepAnalysisError(WidgetRef ref, String sessionId, String error) {
+  /// Error state for analysis
+  Widget _buildAnalysisError(WidgetRef ref, String sessionId, String error) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -663,7 +611,7 @@ class DetailsScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '深度分析失败',
+                  '分析失败',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -694,8 +642,8 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Empty state for deep analysis
-  Widget _buildDeepAnalysisEmpty() {
+  /// Empty state for analysis
+  Widget _buildAnalysisEmpty() {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -707,10 +655,11 @@ class DetailsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            '点击"深度分析"获取 AI 教练的全面建议和训练计划',
+            '点击"开始分析"获取 AI 教练的专业建议\n优先使用在线分析，离线时自动切换本地分析',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
