@@ -70,12 +70,8 @@ class AnalysisScreen extends ConsumerWidget {
                 _buildQuadrantRadarCard(stats, l10n),
                 const SizedBox(height: 20),
 
-                // AI Coach Analysis Section
+                // AI Coach Analysis Section (优先在线，失败自动降级到本地)
                 _buildAICoachSection(ref, selectedPeriod, l10n),
-                const SizedBox(height: 20),
-
-                // Period AI Insights
-                _buildPeriodInsightsSection(stats, ref, selectedPeriod, l10n),
               ],
             ),
     );
@@ -369,154 +365,6 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-  /// Build period insights section using AnalyticsService
-  Widget _buildPeriodInsightsSection(dynamic stats, WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
-    final analyticsService = AnalyticsService();
-    final sessionState = ref.watch(sessionProvider);
-    final allSessions = sessionState.sessions;
-
-    // Filter sessions for current period
-    final periodSessions = allSessions.where((session) {
-      final now = DateTime.now();
-      switch (selectedPeriod) {
-        case kPeriod7Days:
-          return session.date.isAfter(now.subtract(const Duration(days: 7)));
-        case kPeriod1Month:
-          return session.date.isAfter(now.subtract(const Duration(days: 30)));
-        case kPeriodCurrentYear:
-          final startOfYear = DateTime(now.year, 1, 1);
-          return session.date.isAfter(startOfYear);
-        default:
-          return true;
-      }
-    }).toList();
-
-    // Generate period insights
-    final insights = analyticsService.generatePeriodInsights(
-      currentStats: stats,
-      previousStats: null, // TODO: Calculate previous period stats
-      recentSessions: periodSessions,
-      l10n: l10n,
-    );
-
-    if (insights.isEmpty) {
-      return ArcheryCard(
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(Icons.auto_awesome, color: Colors.grey.shade400, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.aiPeriodAnalysis,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.keepTrainingForInsights,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: AppColors.targetGold, size: 20),
-            const SizedBox(width: 8),
-            Text(l10n.aiPeriodAnalysis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...insights.map((insight) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildPeriodInsightCard(insight, l10n),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  Widget _buildPeriodInsightCard(PeriodInsight insight, AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            insight.color.withOpacity(0.1),
-            insight.color.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: insight.color.withOpacity(0.3)),
-        ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: insight.color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(insight.icon, color: insight.color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  insight.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: insight.color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  insight.message,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                    color: AppColors.textSlate700,
-                  ),
-                ),
-                if (insight.actionable) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, size: 14, color: insight.color),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.actionableTip,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: insight.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Build AI Coach analysis section
   Widget _buildAICoachSection(WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
@@ -546,20 +394,68 @@ class AnalysisScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'AI 教练周期分析',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'AI 教练周期分析',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        // Source badge
+                        if (periodResult != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: periodResult.source == 'coze'
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: periodResult.source == 'coze'
+                                    ? Colors.green.withOpacity(0.3)
+                                    : Colors.orange.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  periodResult.source == 'coze'
+                                      ? Icons.cloud_done
+                                      : Icons.phone_android,
+                                  color: periodResult.source == 'coze'
+                                      ? Colors.green
+                                      : Colors.orange,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  periodResult.source == 'coze' ? '在线分析' : '本地分析',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: periodResult.source == 'coze'
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    SizedBox(height: 2),
-                    Text(
+                    const SizedBox(height: 2),
+                    const Text(
                       '基于最近10次训练的整体评估',
                       style: TextStyle(
                         fontSize: 11,
@@ -701,6 +597,15 @@ class AnalysisScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '优先使用在线分析，网络不可用时自动降级到本地分析',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),
