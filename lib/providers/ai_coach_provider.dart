@@ -89,30 +89,72 @@ final aiCoachProvider =
 
 /// AI 教练状态
 class AICoachState {
-  final AICoachResult? latestResult;
+  // 单次训练分析结果（按 session ID 存储）
+  final Map<String, AICoachResult> sessionResults;
+
+  // 周期分析结果（按 period 存储）
+  final Map<String, AICoachResult> periodResults;
+
   final bool isLoading;
   final String? error;
   final String? loadingMessage;
 
+  // 当前正在分析的类型和ID（用于UI显示）
+  final String? currentAnalysisType; // 'session' or 'period'
+  final String? currentAnalysisId; // sessionId or period
+
   const AICoachState({
-    this.latestResult,
+    this.sessionResults = const {},
+    this.periodResults = const {},
     this.isLoading = false,
     this.error,
     this.loadingMessage,
+    this.currentAnalysisType,
+    this.currentAnalysisId,
   });
 
   AICoachState copyWith({
-    AICoachResult? latestResult,
+    Map<String, AICoachResult>? sessionResults,
+    Map<String, AICoachResult>? periodResults,
     bool? isLoading,
     String? error,
     String? loadingMessage,
+    String? currentAnalysisType,
+    String? currentAnalysisId,
   }) {
     return AICoachState(
-      latestResult: latestResult ?? this.latestResult,
+      sessionResults: sessionResults ?? this.sessionResults,
+      periodResults: periodResults ?? this.periodResults,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       loadingMessage: loadingMessage ?? this.loadingMessage,
+      currentAnalysisType: currentAnalysisType ?? this.currentAnalysisType,
+      currentAnalysisId: currentAnalysisId ?? this.currentAnalysisId,
     );
+  }
+
+  /// 获取特定训练会话的分析结果
+  AICoachResult? getSessionResult(String sessionId) {
+    return sessionResults[sessionId];
+  }
+
+  /// 获取特定周期的分析结果
+  AICoachResult? getPeriodResult(String period) {
+    return periodResults[period];
+  }
+
+  /// 检查是否正在分析特定会话
+  bool isAnalyzingSession(String sessionId) {
+    return isLoading &&
+           currentAnalysisType == 'session' &&
+           currentAnalysisId == sessionId;
+  }
+
+  /// 检查是否正在分析特定周期
+  bool isAnalyzingPeriod(String period) {
+    return isLoading &&
+           currentAnalysisType == 'period' &&
+           currentAnalysisId == period;
   }
 }
 
@@ -132,50 +174,18 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
 
   /// 分析最新训练
   Future<void> analyzeLatestSession() async {
-    state = state.copyWith(
-      isLoading: true,
-      loadingMessage: '正在分析训练数据...',
-      error: null,
-    );
+    // 获取最新的训练会话
+    final sessionState = _ref.read(sessionProvider);
+    final session = sessionState.sessions.firstOrNull;
 
-    try {
-      // 获取最新的训练会话
-      final sessionState = _ref.read(sessionProvider);
-      final session = sessionState.sessions.firstOrNull;
-
-      if (session == null) {
-        throw Exception('没有可分析的训练数据');
-      }
-
-      // 获取历史会话用于对比
-      final historicalSessions = sessionState.sessions
-          .where((s) => s.id != session.id)
-          .take(10)
-          .toList();
-
-      // 获取当前语言
-      final locale = _ref.read(localeProvider);
-      final language = locale.languageCode;
-
-      // 调用智能 AI 服务分析
-      final result = await _smartAIService.analyzeSession(
-        session,
-        historicalSessions,
-        language,
-      );
-
+    if (session == null) {
       state = state.copyWith(
-        latestResult: result,
-        isLoading: false,
-        loadingMessage: null,
+        error: '没有可分析的训练数据',
       );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-        loadingMessage: null,
-      );
+      return;
     }
+
+    await analyzeSession(session);
   }
 
   /// 分析指定的训练会话
@@ -184,6 +194,8 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       isLoading: true,
       loadingMessage: '正在分析训练数据...',
       error: null,
+      currentAnalysisType: 'session',
+      currentAnalysisId: session.id,
     );
 
     try {
@@ -205,16 +217,24 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
         language,
       );
 
+      // 更新该会话的分析结果
+      final updatedSessionResults = Map<String, AICoachResult>.from(state.sessionResults);
+      updatedSessionResults[session.id] = result;
+
       state = state.copyWith(
-        latestResult: result,
+        sessionResults: updatedSessionResults,
         isLoading: false,
         loadingMessage: null,
+        currentAnalysisType: null,
+        currentAnalysisId: null,
       );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
         loadingMessage: null,
+        currentAnalysisType: null,
+        currentAnalysisId: null,
       );
     }
   }
@@ -225,6 +245,8 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       isLoading: true,
       loadingMessage: '正在分析周期表现...',
       error: null,
+      currentAnalysisType: 'period',
+      currentAnalysisId: period,
     );
 
     try {
@@ -257,16 +279,24 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
         language,
       );
 
+      // 更新该周期的分析结果
+      final updatedPeriodResults = Map<String, AICoachResult>.from(state.periodResults);
+      updatedPeriodResults[period] = result;
+
       state = state.copyWith(
-        latestResult: result,
+        periodResults: updatedPeriodResults,
         isLoading: false,
         loadingMessage: null,
+        currentAnalysisType: null,
+        currentAnalysisId: null,
       );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
         loadingMessage: null,
+        currentAnalysisType: null,
+        currentAnalysisId: null,
       );
     }
   }
@@ -276,8 +306,22 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
     state = state.copyWith(error: null);
   }
 
-  /// 清除结果
-  void clearResult() {
+  /// 清除特定会话的分析结果
+  void clearSessionResult(String sessionId) {
+    final updatedResults = Map<String, AICoachResult>.from(state.sessionResults);
+    updatedResults.remove(sessionId);
+    state = state.copyWith(sessionResults: updatedResults);
+  }
+
+  /// 清除特定周期的分析结果
+  void clearPeriodResult(String period) {
+    final updatedResults = Map<String, AICoachResult>.from(state.periodResults);
+    updatedResults.remove(period);
+    state = state.copyWith(periodResults: updatedResults);
+  }
+
+  /// 清除所有结果
+  void clearAllResults() {
     state = const AICoachState();
   }
 

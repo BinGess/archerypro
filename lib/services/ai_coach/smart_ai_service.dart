@@ -67,7 +67,7 @@ class SmartAIService {
     List<TrainingSession> allSessions,
     String language,
   ) async {
-    _logger.log('SmartAIService: 开始分析周期表现', level: LogLevel.info);
+    _logger.log('SmartAIService: 开始分析周期表现 ($period)', level: LogLevel.info);
 
     // 检查网络状态
     final isOnline = await _networkService.isNetworkAvailable();
@@ -78,6 +78,7 @@ class SmartAIService {
         _logger.log('尝试使用 Coze AI 在线分析周期', level: LogLevel.info);
         final recentSessions = _getRecentSessions(allSessions, 10);
         final response = await _cozeService.analyzePeriod(
+          period, // 传递period参数
           stats,
           recentSessions,
           language,

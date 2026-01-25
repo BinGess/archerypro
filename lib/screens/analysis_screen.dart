@@ -522,6 +522,10 @@ class AnalysisScreen extends ConsumerWidget {
   Widget _buildAICoachSection(WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
     final aiCoachState = ref.watch(aiCoachProvider);
 
+    // 获取当前周期的分析结果
+    final periodResult = aiCoachState.getPeriodResult(selectedPeriod);
+    final isAnalyzing = aiCoachState.isAnalyzingPeriod(selectedPeriod);
+
     return ArcheryCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +551,7 @@ class AnalysisScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI 教练分析',
+                      'AI 教练周期分析',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -556,7 +560,7 @@ class AnalysisScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      '基于周期数据的专业建议',
+                      '基于最近10次训练的整体评估',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -566,7 +570,7 @@ class AnalysisScreen extends ConsumerWidget {
                 ),
               ),
               // Analyze button
-              if (!aiCoachState.isLoading && aiCoachState.latestResult == null)
+              if (!isAnalyzing && periodResult == null)
                 ElevatedButton.icon(
                   onPressed: () {
                     ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
@@ -591,17 +595,17 @@ class AnalysisScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Content area
-          if (aiCoachState.isLoading)
+          if (isAnalyzing)
             AILoadingWidget(message: aiCoachState.loadingMessage)
-          else if (aiCoachState.error != null)
-            _buildErrorState(ref, aiCoachState.error!)
-          else if (aiCoachState.latestResult != null)
+          else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'period')
+            _buildErrorState(ref, selectedPeriod, aiCoachState.error!)
+          else if (periodResult != null)
             Column(
               children: [
                 AIResultCard(
-                  result: aiCoachState.latestResult!,
+                  result: periodResult,
                   onDismiss: () {
-                    ref.read(aiCoachProvider.notifier).clearResult();
+                    ref.read(aiCoachProvider.notifier).clearPeriodResult(selectedPeriod);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -633,7 +637,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Error state widget
-  Widget _buildErrorState(WidgetRef ref, String error) {
+  Widget _buildErrorState(WidgetRef ref, String period, String error) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -649,7 +653,7 @@ class AnalysisScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '分析失败',
+                  '周期分析失败',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

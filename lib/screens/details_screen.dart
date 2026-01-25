@@ -517,7 +517,10 @@ class DetailsScreen extends ConsumerWidget {
   /// Build AI Coach deep analysis section
   Widget _buildAICoachDeepAnalysis(TrainingSession session, WidgetRef ref) {
     final aiCoachState = ref.watch(aiCoachProvider);
-    final sessionState = ref.watch(sessionProvider);
+
+    // 获取当前会话的分析结果
+    final sessionResult = aiCoachState.getSessionResult(session.id);
+    final isAnalyzing = aiCoachState.isAnalyzingSession(session.id);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -567,7 +570,7 @@ class DetailsScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      '获取更详细的专业建议和训练计划',
+                      '基于本次训练的专业建议',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -577,7 +580,7 @@ class DetailsScreen extends ConsumerWidget {
                 ),
               ),
               // Analyze button
-              if (!aiCoachState.isLoading && aiCoachState.latestResult == null)
+              if (!isAnalyzing && sessionResult == null)
                 ElevatedButton.icon(
                   onPressed: () {
                     ref.read(aiCoachProvider.notifier).analyzeSession(session);
@@ -602,17 +605,17 @@ class DetailsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Content area
-          if (aiCoachState.isLoading)
+          if (isAnalyzing)
             AILoadingWidget(message: aiCoachState.loadingMessage)
-          else if (aiCoachState.error != null)
-            _buildDeepAnalysisError(ref, aiCoachState.error!)
-          else if (aiCoachState.latestResult != null)
+          else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'session')
+            _buildDeepAnalysisError(ref, session.id, aiCoachState.error!)
+          else if (sessionResult != null)
             Column(
               children: [
                 AIResultCard(
-                  result: aiCoachState.latestResult!,
+                  result: sessionResult,
                   onDismiss: () {
-                    ref.read(aiCoachProvider.notifier).clearResult();
+                    ref.read(aiCoachProvider.notifier).clearSessionResult(session.id);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -644,7 +647,7 @@ class DetailsScreen extends ConsumerWidget {
   }
 
   /// Error state for deep analysis
-  Widget _buildDeepAnalysisError(WidgetRef ref, String error) {
+  Widget _buildDeepAnalysisError(WidgetRef ref, String sessionId, String error) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

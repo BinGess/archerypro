@@ -96,20 +96,25 @@ class CozeAIService {
 
   /// 分析周期表现
   Future<AICoachResult> analyzePeriod(
+    String period,
     dynamic stats,
     List<TrainingSession> recentSessions,
     String language,
   ) async {
-    _logger.log('开始分析周期表现', level: LogLevel.info);
+    _logger.log('开始分析周期表现: $period', level: LogLevel.info);
 
     // 检查 API 配置
     if (!AIConfig.isConfigured()) {
       throw CozeAPIException('API 配置未完成，请填写 API Token');
     }
 
-    final cacheKey = 'period_${DateTime.now().day}_$language';
+    // 使用period和语言作为缓存键，确保不同周期有独立缓存
+    final cacheKey = 'period_${period}_$language';
     final cached = await _cache.get<AICoachResult>(cacheKey);
-    if (cached != null) return cached;
+    if (cached != null) {
+      _logger.log('使用缓存的周期分析结果', level: LogLevel.info);
+      return cached;
+    }
 
     try {
       final promptText = _buildPeriodPrompt(stats, recentSessions, language);
