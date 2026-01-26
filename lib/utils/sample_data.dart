@@ -30,14 +30,14 @@ class SampleDataGenerator {
     final startDate = now.subtract(const Duration(days: 30));
     final sessions = <TrainingSession>[];
 
-    // Generate ~20 sessions over 30 days
-    for (int i = 0; i < 20; i++) {
+    // Generate ~10 sessions over 30 days
+    for (int i = 0; i < 10; i++) {
       // Calculate date: spread out over 30 days
-      final date = startDate.add(Duration(days: (i * 1.5).round()));
+      final date = startDate.add(Duration(days: (i * 3).round()));
       if (date.isAfter(now)) break;
 
       // Determine phase based on progress (0.0 to 1.0)
-      final progress = i / 19.0;
+      final progress = i / 9.0;
       
       // Phase characteristics
       late double avgScoreTarget;

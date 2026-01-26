@@ -85,8 +85,8 @@ class StorageService {
   }
 
   /// Get all sessions (limited to prevent OOM)
-  /// [limit] defaults to 50 to ensure app stability
-  Future<List<TrainingSession>> getAllSessions({int limit = 50}) async {
+  /// [limit] defaults to 10 to ensure app stability
+  Future<List<TrainingSession>> getAllSessions({int limit = 10}) async {
     _ensureInitialized();
     final sessions = <TrainingSession>[];
 

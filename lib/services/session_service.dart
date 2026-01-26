@@ -48,12 +48,12 @@ class SessionService {
   }
 
   /// Get all sessions
-  Future<List<TrainingSession>> getAllSessions({int limit = 50}) async {
+  Future<List<TrainingSession>> getAllSessions({int limit = 10}) async {
     return await _storageService.getAllSessions(limit: limit);
   }
 
   /// Get sessions sorted by date (newest first)
-  Future<List<TrainingSession>> getSessionsSortedByDate({int limit = 50}) async {
+  Future<List<TrainingSession>> getSessionsSortedByDate({int limit = 10}) async {
     final sessions = await getAllSessions(limit: limit);
     sessions.sort((a, b) => b.date.compareTo(a.date));
     return sessions;
