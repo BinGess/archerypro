@@ -72,6 +72,9 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   final StorageService _storageService;
   final Ref _ref;
 
+  // Cache for calculated statistics
+  final Map<String, _CachedStatistics> _cache = {};
+
   AnalyticsNotifier(this._analyticsService, this._storageService, this._ref)
       : super(const AnalyticsState()) {
     refreshAnalytics();
@@ -98,6 +101,20 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         return;
       }
 
+      // Generate cache key based on period and session data
+      final cacheKey = _generateCacheKey(period, sessions.length, sessions.first.id);
+
+      // Check if we have cached result
+      if (_cache.containsKey(cacheKey)) {
+        final cached = _cache[cacheKey]!;
+        state = state.copyWith(
+          statistics: cached.statistics,
+          insights: cached.insights,
+          isLoading: false,
+        );
+        return;
+      }
+
       // Get monthly goal
       final monthlyGoal = _storageService.getMonthlyGoal();
 
@@ -115,6 +132,19 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         recentSessions: recentSessions,
       );
 
+      // Cache the result
+      _cache[cacheKey] = _CachedStatistics(
+        statistics: statistics,
+        insights: insights,
+        timestamp: DateTime.now(),
+      );
+
+      // Keep cache size manageable (max 10 entries)
+      if (_cache.length > 10) {
+        final oldestKey = _cache.keys.first;
+        _cache.remove(oldestKey);
+      }
+
       state = state.copyWith(
         statistics: statistics,
         insights: insights,
@@ -123,6 +153,16 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  /// Generate cache key based on period and session data
+  String _generateCacheKey(String period, int sessionCount, String firstSessionId) {
+    return '$period-$sessionCount-$firstSessionId';
+  }
+
+  /// Clear cache (useful when sessions are modified)
+  void clearCache() {
+    _cache.clear();
   }
 
   /// Change period and refresh
@@ -135,4 +175,17 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   void clearError() {
     state = state.copyWith(error: null);
   }
+}
+
+/// Cache entry for statistics
+class _CachedStatistics {
+  final Statistics statistics;
+  final List<AIInsight> insights;
+  final DateTime timestamp;
+
+  const _CachedStatistics({
+    required this.statistics,
+    required this.insights,
+    required this.timestamp,
+  });
 }

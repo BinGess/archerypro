@@ -66,6 +66,16 @@ class StorageService {
     await _sessionsBox!.put(session.id, jsonString);
   }
 
+  /// Save multiple training sessions in batch
+  Future<void> saveSessions(List<TrainingSession> sessions) async {
+    _ensureInitialized();
+    final Map<String, String> entries = {};
+    for (final session in sessions) {
+      entries[session.id] = _sessionToJsonString(session);
+    }
+    await _sessionsBox!.putAll(entries);
+  }
+
   /// Get a specific session by ID
   Future<TrainingSession?> getSession(String id) async {
     _ensureInitialized();

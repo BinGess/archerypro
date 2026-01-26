@@ -223,13 +223,15 @@ class DashboardScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  height: 80,
-                  width: double.infinity,
-                  child: ScoreTrendChart(
-                    scores: stats.scoreTrendData.values.toList(),
-                    isCompact: true,
-                    color: AppColors.primary,
+                RepaintBoundary(
+                  child: SizedBox(
+                    height: 80,
+                    width: double.infinity,
+                    child: ScoreTrendChart(
+                      scores: stats.scoreTrendData.values.toList(),
+                      isCompact: true,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

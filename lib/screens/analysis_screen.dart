@@ -239,10 +239,12 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (stats.scoreTrendData.isNotEmpty)
-            GrowthMixedChart(
-              scoreTrendData: stats.scoreTrendData,
-              volumeData: volumeData,
-              height: 280,
+            RepaintBoundary(
+              child: GrowthMixedChart(
+                scoreTrendData: stats.scoreTrendData,
+                volumeData: volumeData,
+                height: 280,
+              ),
             )
           else
             Container(
@@ -301,10 +303,12 @@ class AnalysisScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          StabilityRadarChart(
-            currentMetrics: stats.radarMetrics,
-            previousMetrics: null, // TODO: Calculate previous period metrics
-            size: 260,
+          RepaintBoundary(
+            child: StabilityRadarChart(
+              currentMetrics: stats.radarMetrics,
+              previousMetrics: null, // TODO: Calculate previous period metrics
+              size: 260,
+            ),
           ),
         ],
       ),
@@ -343,7 +347,9 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (total > 0)
-            QuadrantRadarChartDetailed(quadrantDistribution: quadrantDist)
+            RepaintBoundary(
+              child: QuadrantRadarChartDetailed(quadrantDistribution: quadrantDist),
+            )
           else
             Container(
               height: 200,

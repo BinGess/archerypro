@@ -272,6 +272,7 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
     final logger = LoggerService();
 
     try {
+      // Phase 1: Critical synchronous initialization (Storage + Locale)
       logger.log('📦 Initializing storage...', level: LogLevel.info);
       final storageService = ref.read(storageServiceProvider);
       await storageService.initialize();
@@ -281,7 +282,35 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       await ref.read(localeProvider.notifier).initialize();
       logger.log('✅ Locale initialized', level: LogLevel.info);
 
-      logger.log('📂 Loading sessions...', level: LogLevel.info);
+      // Phase 2: Show UI immediately
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+
+      // Phase 3: Load sessions in background (non-blocking)
+      logger.log('📂 Loading sessions in background...', level: LogLevel.info);
+      _loadSessionsInBackground();
+
+    } catch (e, stack) {
+      logger.logError(
+        'Initialization error',
+        error: e,
+        stackTrace: stack,
+      );
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _loadSessionsInBackground() async {
+    final logger = LoggerService();
+
+    try {
       await ref.read(sessionProvider.notifier).loadSessions();
       logger.log('✅ Sessions loaded successfully', level: LogLevel.info);
 
@@ -290,9 +319,10 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       if (sessions.isNotEmpty) {
         logger.log('🔍 First session ID: ${sessions.first.id}, Date: ${sessions.first.date}', level: LogLevel.debug);
       }
-      
+
       await logger.forceFlush();
 
+      // Generate sample data if needed (also in background)
       if (sessions.isEmpty) {
         logger.log('🎲 No sessions found, generating sample data...', level: LogLevel.info);
         try {
@@ -314,21 +344,10 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       }
     } catch (e, stack) {
       logger.logError(
-        'Initialization error',
+        'Failed to load sessions in background',
         error: e,
         stackTrace: stack,
       );
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-        });
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _isInitialized = true;
-      });
     }
   }
 

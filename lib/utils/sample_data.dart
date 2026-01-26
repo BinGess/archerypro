@@ -78,10 +78,8 @@ class SampleDataGenerator {
       ));
     }
 
-    // Save all sessions
-    for (final session in sessions) {
-      await _sessionService.saveSession(session);
-    }
+    // Save all sessions in batch (much faster than individual saves)
+    await _sessionService.saveSessions(sessions);
   }
 
   TrainingSession _createSimulatedSession({

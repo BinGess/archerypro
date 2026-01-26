@@ -37,6 +37,11 @@ class SessionService {
     await _storageService.saveSession(session);
   }
 
+  /// Save multiple sessions to storage in batch
+  Future<void> saveSessions(List<TrainingSession> sessions) async {
+    await _storageService.saveSessions(sessions);
+  }
+
   /// Get a specific session by ID
   Future<TrainingSession?> getSession(String id) async {
     return await _storageService.getSession(id);
