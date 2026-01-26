@@ -49,6 +49,8 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // AI 图标动画
           FadeTransition(
@@ -60,7 +62,7 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
                 color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.psychology_outlined,
                 size: 36,
                 color: AppColors.primary,
@@ -82,7 +84,7 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
           const SizedBox(height: 8),
 
           // 进度指示器
-          SizedBox(
+          const SizedBox(
             width: 200,
             child: LinearProgressIndicator(
               backgroundColor: AppColors.borderLight,

@@ -170,14 +170,32 @@ class CozeAIService {
         if (responseData is ResponseBody) {
           final streamText = await utf8.decoder.bind(responseData.stream).join();
           final answer = _extractAnswerFromSse(streamText);
-          return answer.isNotEmpty ? answer : streamText;
+
+          // 如果无法提取answer，抛出异常而不是返回原始响应
+          if (answer.isEmpty) {
+            _logger.log('❌ 无法从SSE响应中提取有效内容', level: LogLevel.error);
+            throw CozeAPIException(
+              'AI 响应格式异常，无法解析内容',
+              code: 'INVALID_RESPONSE_FORMAT',
+            );
+          }
+
+          return answer;
         }
 
         if (responseData is Map) {
           final text = responseData['text'] ??
               responseData['content'] ??
               responseData['response'] ??
-              responseData.toString();
+              '';
+
+          if (text.isEmpty) {
+            throw CozeAPIException(
+              'AI 响应内容为空',
+              code: 'EMPTY_RESPONSE',
+            );
+          }
+
           return text;
         } else if (responseData is String) {
           return responseData;
@@ -505,22 +523,58 @@ Please return in JSON format.
         _logger.log('JSON格式错误: ${e.message}', level: LogLevel.debug);
       }
 
-      // 返回基于原始文本的结果
+      // 检查是否是原始SSE响应（包含event/data格式）
+      final isRawSseResponse = aiAdvice.contains('event:') &&
+          aiAdvice.contains('data:') &&
+          aiAdvice.contains('session_id');
+
+      // 如果是原始SSE响应，说明提取失败，应该抛出异常而不是显示原始内容
+      if (isRawSseResponse) {
+        _logger.log('⚠️ 检测到未处理的SSE原始响应，抛出异常', level: LogLevel.warning);
+        throw CozeAPIException(
+          'AI 响应解析失败，请稍后重试',
+          code: 'PARSE_ERROR',
+        );
+      }
+
+      // 对于其他情况，尝试提取可能的有用文本
+      String friendlyDiagnosis = 'AI 分析暂时无法完成，请稍后重试';
+
+      // 如果文本不太长且不包含大量JSON特征，可以展示
+      if (aiAdvice.length < 500 &&
+          !aiAdvice.contains('{') &&
+          !aiAdvice.contains('[')) {
+        friendlyDiagnosis = aiAdvice.trim();
+      } else if (aiAdvice.contains('诊断') || aiAdvice.contains('diagnosis')) {
+        // 尝试提取可能的文本描述
+        final lines = aiAdvice.split('\n');
+        for (var line in lines) {
+          if (line.trim().isNotEmpty &&
+              !line.trim().startsWith('{') &&
+              !line.trim().startsWith('[') &&
+              line.length < 200) {
+            friendlyDiagnosis = line.trim();
+            break;
+          }
+        }
+      }
+
+      // 返回友好的错误结果
       return AICoachResult(
-        diagnosis: aiAdvice.length > 200 ? aiAdvice.substring(0, 200) + '...' : aiAdvice,
+        diagnosis: friendlyDiagnosis,
         strengths: [],
         weaknesses: [],
         suggestions: [
           CoachingSuggestion(
             category: 'general',
-            title: 'AI 建议',
-            description: aiAdvice,
+            title: '温馨提示',
+            description: '本次AI分析未能成功解析响应内容，建议重新分析或稍后再试',
             priority: 3,
-            actionSteps: [],
+            actionSteps: ['点击"重新分析"按钮', '检查网络连接', '稍后再次尝试'],
           ),
         ],
         trainingPlan: null,
-        encouragement: null,
+        encouragement: '继续保持训练，数据积累后分析会更准确',
         source: 'coze',
         timestamp: DateTime.now(),
         rawResponse: aiAdvice,

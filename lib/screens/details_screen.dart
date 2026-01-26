@@ -604,22 +604,19 @@ class DetailsScreen extends ConsumerWidget {
         border: Border.all(color: Colors.red.shade200),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '分析失败',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red.shade700,
-                  ),
-                ),
-              ),
-            ],
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            '分析失败',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.red.shade700,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
@@ -628,6 +625,7 @@ class DetailsScreen extends ConsumerWidget {
               fontSize: 12,
               color: Colors.red.shade600,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           TextButton.icon(
