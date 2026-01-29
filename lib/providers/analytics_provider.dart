@@ -25,12 +25,14 @@ final analyticsProvider = StateNotifierProvider<AnalyticsNotifier, AnalyticsStat
 /// State for analytics
 class AnalyticsState {
   final Statistics statistics;
+  final Statistics allTimeStatistics;  // Added for dashboard - always shows all-time data
   final List<AIInsight> insights;
   final bool isLoading;
   final String? error;
 
   const AnalyticsState({
     Statistics? statistics,
+    Statistics? allTimeStatistics,
     this.insights = const [],
     this.isLoading = false,
     this.error,
@@ -49,16 +51,34 @@ class AnalyticsState {
     heatmapData: [],
     scoreTrendData: {},
     currentMonthArrows: 0,
+  ),
+  allTimeStatistics = allTimeStatistics ?? const Statistics(
+    period: kPeriodAll,
+    totalSessions: 0,
+    totalArrows: 0,
+    totalScore: 0,
+    maxPossibleScore: 0,
+    avgArrowScore: 0.0,
+    avgEndScore: 0.0,
+    bestScore: 0,
+    bestMaxScore: 0,
+    trend: 0.0,
+    avgConsistency: 0.0,
+    heatmapData: [],
+    scoreTrendData: {},
+    currentMonthArrows: 0,
   );
 
   AnalyticsState copyWith({
     Statistics? statistics,
+    Statistics? allTimeStatistics,
     List<AIInsight>? insights,
     bool? isLoading,
     String? error,
   }) {
     return AnalyticsState(
       statistics: statistics ?? this.statistics,
+      allTimeStatistics: allTimeStatistics ?? this.allTimeStatistics,
       insights: insights ?? this.insights,
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -95,6 +115,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
       if (sessions.isEmpty) {
         state = state.copyWith(
           statistics: Statistics.empty(period: period),
+          allTimeStatistics: Statistics.empty(period: kPeriodAll),
           insights: [],
           isLoading: false,
         );
@@ -109,6 +130,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         final cached = _cache[cacheKey]!;
         state = state.copyWith(
           statistics: cached.statistics,
+          allTimeStatistics: cached.allTimeStatistics,
           insights: cached.insights,
           isLoading: false,
         );
@@ -118,10 +140,17 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
       // Get monthly goal
       final monthlyGoal = _storageService.getMonthlyGoal();
 
-      // Calculate statistics
+      // Calculate statistics for current period
       final statistics = _analyticsService.calculateStatistics(
         sessions: sessions,
         period: period,
+        monthlyGoal: monthlyGoal,
+      );
+
+      // Calculate all-time statistics for dashboard
+      final allTimeStatistics = _analyticsService.calculateStatistics(
+        sessions: sessions,
+        period: kPeriodAll,
         monthlyGoal: monthlyGoal,
       );
 
@@ -135,6 +164,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
       // Cache the result
       _cache[cacheKey] = _CachedStatistics(
         statistics: statistics,
+        allTimeStatistics: allTimeStatistics,
         insights: insights,
         timestamp: DateTime.now(),
       );
@@ -147,6 +177,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
 
       state = state.copyWith(
         statistics: statistics,
+        allTimeStatistics: allTimeStatistics,
         insights: insights,
         isLoading: false,
       );
@@ -180,11 +211,13 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
 /// Cache entry for statistics
 class _CachedStatistics {
   final Statistics statistics;
+  final Statistics allTimeStatistics;
   final List<AIInsight> insights;
   final DateTime timestamp;
 
   const _CachedStatistics({
     required this.statistics,
+    required this.allTimeStatistics,
     required this.insights,
     required this.timestamp,
   });

@@ -60,6 +60,19 @@ class GrowthMixedChart extends StatelessWidget {
     final lineSpots = _prepareLineSpots(allDates);
     final maxVolume = _calculateMaxVolume();
 
+    // If no valid data for both charts, show message
+    if (lineSpots.isEmpty && barGroups.isEmpty) {
+      return SizedBox(
+        height: height,
+        child: Center(
+          child: Text(
+            '暂无有效的数据',
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
     // Define titles for LineChart (visible)
     final titlesData = FlTitlesData(
       leftTitles: AxisTitles(
@@ -241,31 +254,33 @@ class GrowthMixedChart extends StatelessWidget {
                 maxX: (allDates.length - 1).toDouble(),
                 minY: 0,
                 maxY: 10,
-                lineBarsData: [
-                  // Score trend line
-                  LineChartBarData(
-                    spots: lineSpots,
-                    isCurved: true,
-                    curveSmoothness: 0.35,
-                    color: AppColors.primary,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
+                lineBarsData: lineSpots.isEmpty
+                    ? []
+                    : [
+                        // Score trend line
+                        LineChartBarData(
+                          spots: lineSpots,
+                          isCurved: true,
+                          curveSmoothness: 0.35,
                           color: AppColors.primary,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: false,
-                    ),
-                  ),
-                ],
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(
+                            show: true,
+                            getDotPainter: (spot, percent, barData, index) {
+                              return FlDotCirclePainter(
+                                radius: 4,
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                                strokeColor: Colors.white,
+                              );
+                            },
+                          ),
+                          belowBarData: BarAreaData(
+                            show: false,
+                          ),
+                        ),
+                      ],
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
@@ -353,7 +368,8 @@ class GrowthMixedChart extends StatelessWidget {
     for (int i = 0; i < allDates.length; i++) {
       final date = allDates[i];
       final score = scoreTrendData[date];
-      if (score != null && score.isFinite) {
+      // Only add valid scores (not null, finite, and within valid range)
+      if (score != null && score.isFinite && !score.isNaN && score >= 0 && score <= 10) {
         spots.add(FlSpot(i.toDouble(), score));
       }
     }

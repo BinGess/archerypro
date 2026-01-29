@@ -16,10 +16,10 @@ class ScoreTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Filter valid scores
-    final validScores = scores.where((s) => s.isFinite).toList();
+    // Filter valid scores (finite and > 0)
+    final validScores = scores.where((s) => s.isFinite && !s.isNaN && s >= 0).toList();
 
-    if (validScores.isEmpty) {
+    if (validScores.isEmpty || scores.isEmpty) {
       return Center(
         child: Text(
           '暂无数据',

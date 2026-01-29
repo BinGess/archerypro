@@ -69,7 +69,7 @@ class DashboardScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        _buildSummaryCard(analyticsState.statistics, l10n),
+                        _buildSummaryCard(analyticsState.allTimeStatistics, l10n),
                         const SizedBox(height: 24),
 
                         // Display sessions from provider
