@@ -94,17 +94,21 @@ class ScoreTrendChart extends StatelessWidget {
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
-        maxX: (validScores.length > 1 ? validScores.length - 1 : 0).toDouble(),
+        maxX: (validScores.length > 1 ? validScores.length - 1 : 1).toDouble(),
         minY: minY,
         maxY: maxY,
         lineBarsData: [
           LineChartBarData(
-            spots: validScores.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-            isCurved: true,
+            spots: validScores.asMap().entries.map((e) {
+               // If only one point, center it or put at 0. 
+               // With maxX=1, putting it at 0 is fine.
+               return FlSpot(e.key.toDouble(), e.value);
+            }).toList(),
+            isCurved: validScores.length > 2, // Only curve if enough points
             color: lineColor,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: !isCompact),
+            dotData: FlDotData(show: !isCompact || validScores.length == 1), // Show dot if single point
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(

@@ -300,6 +300,14 @@ class AnalysisScreen extends ConsumerWidget {
                   Text(l10n.stabilityRadarSubtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
               ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.radar, color: Colors.orange, size: 20),
+              ),
             ],
           ),
           const SizedBox(height: 16),

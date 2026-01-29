@@ -353,7 +353,7 @@ class GrowthMixedChart extends StatelessWidget {
     for (int i = 0; i < allDates.length; i++) {
       final date = allDates[i];
       final score = scoreTrendData[date];
-      if (score != null) {
+      if (score != null && score.isFinite) {
         spots.add(FlSpot(i.toDouble(), score));
       }
     }
@@ -365,7 +365,7 @@ class GrowthMixedChart extends StatelessWidget {
   double _calculateMaxVolume() {
     if (volumeData.isEmpty) return 100.0;
     final maxVol = volumeData.values.reduce((a, b) => a > b ? a : b);
-    return (maxVol * 1.2).ceilToDouble(); // Add 20% padding
+    return maxVol > 0 ? (maxVol * 1.2).ceilToDouble() : 10.0; // Add 20% padding, min 10
   }
 }
 

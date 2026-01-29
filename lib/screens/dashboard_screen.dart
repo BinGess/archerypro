@@ -162,6 +162,13 @@ class DashboardScreen extends ConsumerWidget {
                 color: AppColors.primary.withOpacity(0.05),
                 borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(100)),
               ),
+              alignment: Alignment.topRight,
+              padding: const EdgeInsets.only(top: 20, right: 20),
+              child: Icon(
+                Icons.insights,
+                size: 80,
+                color: AppColors.primary.withOpacity(0.1),
+              ),
             ),
           ),
           Padding(
