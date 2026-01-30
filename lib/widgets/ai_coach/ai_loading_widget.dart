@@ -40,58 +40,61 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // AI 图标动画
-          FadeTransition(
-            opacity: _animation,
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
+    return RepaintBoundary(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // AI 图标动画
+            FadeTransition(
+              opacity: _animation,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.psychology_outlined,
+                  size: 36,
+                  color: AppColors.primary,
+                ),
               ),
-              child: const Icon(
-                Icons.psychology_outlined,
-                size: 36,
-                color: AppColors.primary,
+            ),
+            const SizedBox(height: 16),
+
+            // 加载文本
+            Text(
+              widget.message ?? 'AI 教练分析中...',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+
+            // 进度指示器
+            const SizedBox(
+              width: 200,
+              child: LinearProgressIndicator(
+                backgroundColor: AppColors.borderLight,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // 加载文本
-          Text(
-            widget.message ?? 'AI 教练分析中...',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-
-          // 进度指示器
-          const SizedBox(
-            width: 200,
-            child: LinearProgressIndicator(
-              backgroundColor: AppColors.borderLight,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

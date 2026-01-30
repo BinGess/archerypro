@@ -499,6 +499,15 @@ class AnalysisScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+              
+              // Close button
+              if (periodResult != null)
+                IconButton(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).clearPeriodResult(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                ),
             ],
           ),
 
@@ -506,7 +515,7 @@ class AnalysisScreen extends ConsumerWidget {
 
           // Content area
           if (isAnalyzing)
-            AILoadingWidget(message: aiCoachState.loadingMessage)
+            Center(child: AILoadingWidget(message: aiCoachState.loadingMessage))
           else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'period')
             _buildErrorState(ref, selectedPeriod, aiCoachState.error!)
           else if (periodResult != null)
@@ -514,9 +523,6 @@ class AnalysisScreen extends ConsumerWidget {
               children: [
                 AIResultCard(
                   result: periodResult,
-                  onDismiss: () {
-                    ref.read(aiCoachProvider.notifier).clearPeriodResult(selectedPeriod);
-                  },
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(

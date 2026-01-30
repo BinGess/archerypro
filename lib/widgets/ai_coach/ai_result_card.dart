@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
-import 'ai_source_badge.dart';
 import 'suggestion_card.dart';
 import 'training_plan_card.dart';
 
 /// AI 分析结果完整展示卡片
 class AIResultCard extends StatelessWidget {
   final AICoachResult result;
-  final VoidCallback? onDismiss;
 
   const AIResultCard({
     super.key,
     required this.result,
-    this.onDismiss,
   });
 
   @override
@@ -31,132 +28,41 @@ class AIResultCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 头部：标题和来源标识
-          _buildHeader(context),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 核心诊断
+            _buildDiagnosis(),
 
-          const Divider(height: 1),
+            const SizedBox(height: 20),
 
-          // 主体内容
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 核心诊断
-                _buildDiagnosis(),
+            // 优势和弱点
+            if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
+              _buildStrengthsWeaknesses(),
 
-                const SizedBox(height: 20),
+            if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
+              const SizedBox(height: 20),
 
-                // 优势和弱点
-                if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
-                  _buildStrengthsWeaknesses(),
+            // 改进建议
+            if (result.suggestions.isNotEmpty) ...[
+              _buildSuggestionsSection(),
+              const SizedBox(height: 20),
+            ],
 
-                if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
-                  const SizedBox(height: 20),
+            // 训练计划
+            if (result.trainingPlan != null) ...[
+              TrainingPlanCard(plan: result.trainingPlan!),
+              const SizedBox(height: 20),
+            ],
 
-                // 改进建议
-                if (result.suggestions.isNotEmpty) ...[
-                  _buildSuggestionsSection(),
-                  const SizedBox(height: 20),
-                ],
-
-                // 训练计划
-                if (result.trainingPlan != null) ...[
-                  TrainingPlanCard(plan: result.trainingPlan!),
-                  const SizedBox(height: 20),
-                ],
-
-                // 鼓励语
-                if (result.encouragement != null &&
-                    result.encouragement!.isNotEmpty)
-                  _buildEncouragement(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 头部
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.05),
-            Colors.white,
+            // 鼓励语
+            if (result.encouragement != null &&
+                result.encouragement!.isNotEmpty)
+              _buildEncouragement(),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      child: Row(
-        children: [
-          // AI 图标
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.psychology,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // 标题
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AI 教练分析',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '基于训练数据的专业建议',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 来源标识
-          AISourceBadge(source: result.source),
-
-          // 关闭按钮
-          if (onDismiss != null) ...[
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              onPressed: onDismiss,
-              color: AppColors.textSecondary,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        ],
       ),
     );
   }

@@ -547,6 +547,15 @@ class DetailsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+              
+              // Close button
+              if (sessionResult != null)
+                IconButton(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).clearSessionResult(session.id);
+                  },
+                  icon: const Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                ),
             ],
           ),
 
@@ -554,7 +563,7 @@ class DetailsScreen extends ConsumerWidget {
 
           // Content area
           if (isAnalyzing)
-            AILoadingWidget(message: aiCoachState.loadingMessage)
+            Center(child: AILoadingWidget(message: aiCoachState.loadingMessage))
           else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'session')
             _buildAnalysisError(ref, session.id, aiCoachState.error!)
           else if (sessionResult != null)
@@ -562,9 +571,6 @@ class DetailsScreen extends ConsumerWidget {
               children: [
                 AIResultCard(
                   result: sessionResult,
-                  onDismiss: () {
-                    ref.read(aiCoachProvider.notifier).clearSessionResult(session.id);
-                  },
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(

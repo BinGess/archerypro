@@ -15,6 +15,9 @@ final selectedPeriodProvider = StateProvider<String>((ref) => kPeriod1Month);
 
 // Analytics provider
 final analyticsProvider = StateNotifierProvider<AnalyticsNotifier, AnalyticsState>((ref) {
+  // Watch session provider to ensure analytics are updated when sessions change
+  ref.watch(sessionProvider);
+  
   return AnalyticsNotifier(
     ref.watch(analyticsServiceProvider),
     ref.watch(storageServiceProvider),
