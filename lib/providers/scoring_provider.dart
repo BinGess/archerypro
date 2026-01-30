@@ -28,6 +28,7 @@ class ScoringState {
   final End? currentEnd;
   final bool isTargetView;
   final bool isSaving;
+  final bool isEditing; // Whether we are editing an existing session
   final String? error;
   final int maxEnds; // 最大组数
   final int arrowsPerEnd; // 每组箭数
@@ -39,6 +40,7 @@ class ScoringState {
     this.currentEnd,
     this.isTargetView = false,
     this.isSaving = false,
+    this.isEditing = false,
     this.error,
     this.maxEnds = 10,
     this.arrowsPerEnd = 6,
@@ -72,6 +74,7 @@ class ScoringState {
     End? currentEnd,
     bool? isTargetView,
     bool? isSaving,
+    bool? isEditing,
     String? error,
     int? maxEnds,
     int? arrowsPerEnd,
@@ -83,6 +86,7 @@ class ScoringState {
       currentEnd: currentEnd ?? this.currentEnd,
       isTargetView: isTargetView ?? this.isTargetView,
       isSaving: isSaving ?? this.isSaving,
+      isEditing: isEditing ?? this.isEditing,
       error: error,
       maxEnds: maxEnds ?? this.maxEnds,
       arrowsPerEnd: arrowsPerEnd ?? this.arrowsPerEnd,
@@ -127,6 +131,37 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       maxEnds: maxEnds,
       arrowsPerEnd: arrowsPerEnd,
       isTargetView: isTargetMode,
+      isEditing: false,
+    );
+  }
+
+  /// Load an existing session for editing
+  void loadSession(TrainingSession session) {
+    // Infer arrows per end
+    // Default to 6 as it covers most standard cases (3 or 6 arrows)
+    // If we detect any end with more than 6 arrows, we scale up to support it.
+    int inferredArrowsPerEnd = 6;
+    if (session.ends.isNotEmpty) {
+      final maxArrows = session.ends.map((e) => e.arrows.length).fold(0, (prev, curr) => curr > prev ? curr : prev);
+      if (maxArrows > 6) inferredArrowsPerEnd = maxArrows;
+    }
+
+    // Infer max ends
+    // Set to current length so the progress shows "Completed/Total" as "X/X"
+    // User can always extend using "One More End" button
+    int inferredMaxEnds = session.ends.isEmpty ? 10 : session.ends.length;
+
+    state = state.copyWith(
+      currentSession: session,
+      currentEnd: null, 
+      // Focus on the end of the list (waiting for "One More End" or user to select an existing end)
+      focusedEndIndex: session.ends.length,
+      focusedArrowIndex: 0,
+      maxEnds: inferredMaxEnds,
+      arrowsPerEnd: inferredArrowsPerEnd,
+      isTargetView: false,
+      isEditing: true,
+      error: null,
     );
   }
 
@@ -270,7 +305,15 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     
     // Increase max ends by 1
     final newMaxEnds = state.maxEnds + 1;
-    state = state.copyWith(maxEnds: newMaxEnds);
+    
+    // Advance focus to the new end position (which is after the last existing end)
+    final newFocusIndex = state.currentSession!.ends.length;
+
+    state = state.copyWith(
+      maxEnds: newMaxEnds,
+      focusedEndIndex: newFocusIndex,
+      focusedArrowIndex: 0,
+    );
     
     // Start the new end
     _startNextEnd();
@@ -357,10 +400,23 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       }
 
       // Complete the session
-      final completedSession = _sessionService.completeSession(sessionToSave);
-
-      // Save to storage
-      await _sessionService.saveSession(completedSession);
+      // If editing an already completed session (has endTime), verify if we should update endTime.
+      // If we added new ends (more than original), maybe we should.
+      // But simpler logic: if it has endTime, keep it, unless explicitly we want to update it.
+      // For now, let's just use updateSession if editing, or completeSession if new.
+      
+      TrainingSession completedSession;
+      if (state.isEditing && sessionToSave.endTime != null) {
+         // It's an edit of a completed session.
+         // We might want to update stats but keep the original timestamp?
+         // Actually, if we changed scores, totalScore etc are getters, so they auto-update.
+         // We just need to persist the changes.
+         completedSession = sessionToSave;
+         await _sessionService.updateSession(completedSession);
+      } else {
+         completedSession = _sessionService.completeSession(sessionToSave);
+         await _sessionService.saveSession(completedSession);
+      }
 
       // Do NOT reset state here to prevent UI from flashing to empty state before navigation
       state = state.copyWith(isSaving: false, currentSession: completedSession);

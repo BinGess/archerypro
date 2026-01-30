@@ -308,7 +308,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                           : Border.all(color: Colors.transparent),
                     ),
                     child: Text(
-                      arrow != null ? '${arrow.pointValue == 11 ? 'X' : (arrow.pointValue == 0 ? 'M' : arrow.pointValue)}' : (isFuture ? '' : '${arrowIndex + 1}.'),
+                      arrow != null ? arrow.displayScore : (isFuture ? '' : '${arrowIndex + 1}.'),
                       style: TextStyle(
                         fontSize: arrow != null ? 18 : 12,
                         fontWeight: arrow != null ? FontWeight.w900 : FontWeight.normal,
@@ -639,7 +639,14 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
       // Navigate back to home immediately
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        final isEditing = ref.read(scoringProvider).isEditing;
+        if (isEditing) {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          }
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
       }
       
       // Reset state after navigation
@@ -678,23 +685,22 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     int score;
 
     if (useSixRingFace) {
-      // 40cm target: 6-ring face (only scores 6-10 + X)
-      // This represents the inner 60% of a full target (rings 6-10)
-      // Based on World Archery specs scaled proportionally
+      // 40cm target: 6-ring face (rings 6-10 only)
+      // Ratios matched to TargetFacePainter (0.2 step per ring, X is half of 10)
       if (distance > 1.0) {
         score = 0; // Miss - outside target
-      } else if (distance <= 0.08) {
-        score = 11; // X ring - innermost circle (half of 10-ring scaled)
-      } else if (distance <= 0.167) {
-        score = 10; // 10 ring - gold center
-      } else if (distance <= 0.333) {
-        score = 9; // 9 ring - outer gold
-      } else if (distance <= 0.500) {
-        score = 8; // 8 ring - inner red
-      } else if (distance <= 0.667) {
-        score = 7; // 7 ring - outer red
+      } else if (distance <= 0.1) {
+        score = 11; // X ring (Inner 10)
+      } else if (distance <= 0.2) {
+        score = 10; // 10 ring
+      } else if (distance <= 0.4) {
+        score = 9; // 9 ring
+      } else if (distance <= 0.6) {
+        score = 8; // 8 ring
+      } else if (distance <= 0.8) {
+        score = 7; // 7 ring
       } else {
-        score = 6; // 6 ring - blue area
+        score = 6; // 6 ring
       }
     } else {
       // Full 10-ring target (60cm, 80cm, 122cm)
@@ -736,6 +742,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 
   Future<void> _saveSession() async {
+    final isEditing = ref.read(scoringProvider).isEditing;
     await ref.read(scoringProvider.notifier).saveSession();
     await ref.read(sessionProvider.notifier).refresh();
 
@@ -747,12 +754,19 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         ),
       );
       // Exit after manual save
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (isEditing) {
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      } else {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
       ref.read(scoringProvider.notifier).resetSession();
     }
   }
 
   void _confirmExit(BuildContext context) {
+    final isEditing = ref.read(scoringProvider).isEditing;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -763,7 +777,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             onPressed: () {
               Navigator.pop(context); // Close dialog
               ref.read(scoringProvider.notifier).cancelSession();
-              Navigator.of(context).popUntil((route) => route.isFirst); // Return to home
+              if (isEditing) {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              } else {
+                Navigator.of(context).popUntil((route) => route.isFirst); // Return to home
+              }
             },
             child: const Text('丢弃', style: TextStyle(color: Colors.red)),
           ),
@@ -771,9 +791,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             onPressed: () async {
               Navigator.pop(context); // Close dialog
               await _saveSession();
-              if (mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst); // Return to home
-              }
             },
             child: const Text('保存'),
           ),

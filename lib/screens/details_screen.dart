@@ -10,7 +10,10 @@ import '../widgets/ai_coach/ai_loading_widget.dart';
 import '../widgets/ai_coach/ai_result_card.dart';
 import '../providers/session_provider.dart';
 import '../providers/ai_coach_provider.dart';
+import '../providers/scoring_provider.dart';
 import '../models/training_session.dart';
+import '../models/arrow.dart';
+import 'scoring_screen.dart';
 import '../models/equipment.dart';
 import '../services/session_analysis_service.dart';
 
@@ -189,10 +192,33 @@ class DetailsScreen extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          // TODO: Implement Edit
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('编辑功能开发中')),
-                          );
+                          // Load session into scoring provider for editing
+                          ref.read(scoringProvider.notifier).loadSession(session);
+                          
+                          // Navigate to scoring screen
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ScoringScreen(),
+                            ),
+                          ).then((_) {
+                            // When returning, refresh the session data if needed
+                            // Currently riverpod providers should handle updates if they watch the same source
+                            // But selectedSessionProvider might hold an old copy if it's not auto-updated
+                            // The sessionProvider list will be updated, but we might need to refresh the selected one
+                            // Actually, if we edited it, the ID is same.
+                            // We can re-fetch or let the provider update propagate.
+                            // Since DetailsScreen watches selectedSessionProvider, we need to ensure it updates.
+                            // But selectedSessionProvider is just a StateProvider<TrainingSession?>.
+                            // It holds a specific instance. If that instance is immutable, it won't change.
+                            // We need to find the updated session from sessionProvider and update selectedSessionProvider.
+                            
+                            final updatedSessions = ref.read(sessionProvider).sessions;
+                            final updatedSession = updatedSessions.firstWhere(
+                              (s) => s.id == session.id,
+                              orElse: () => session,
+                            );
+                            ref.read(selectedSessionProvider.notifier).state = updatedSession;
+                          });
                         },
                         icon: const Icon(Icons.edit, size: 18, color: Colors.white),
                         label: const Text('编辑', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -371,7 +397,7 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _endItem(String endNum, String total, List<int> scores) {
+  Widget _endItem(String endNum, String total, List<Arrow> arrows) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -390,21 +416,21 @@ class DetailsScreen extends ConsumerWidget {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: scores
-                  .map((s) => Container(
+              children: arrows
+                  .map((arrow) => Container(
                         width: 32,
                         height: 32,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: s >= 9 ? AppColors.backgroundLight : Colors.white,
+                          color: arrow.pointValue >= 9 ? AppColors.backgroundLight : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: s >= 9 ? Border.all(color: AppColors.primary.withOpacity(0.2)) : Border.all(color: Colors.grey.shade200),
+                          border: arrow.pointValue >= 9 ? Border.all(color: AppColors.primary.withOpacity(0.2)) : Border.all(color: Colors.grey.shade200),
                         ),
                         child: Text(
-                          '$s',
+                          arrow.displayScore,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: s >= 9 ? AppColors.primary : AppColors.textSlate500,
+                            color: arrow.pointValue >= 9 ? AppColors.primary : AppColors.textSlate500,
                           ),
                         ),
                       ))

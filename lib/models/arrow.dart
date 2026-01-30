@@ -67,7 +67,11 @@ class Arrow {
   }
 
   /// Get the actual point value (X counts as 10 points)
-  int get pointValue => isX ? 10 : score;
+  int get pointValue {
+    // Treat 11 as 10 points (standard archery rule for X ring)
+    if (score == 11 || isX) return 10;
+    return score;
+  }
 
   /// Copy with method for immutability
   Arrow copyWith({

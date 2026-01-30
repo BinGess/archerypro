@@ -18,14 +18,35 @@ class TargetFacePainter extends CustomPainter {
     // Render different target faces based on size
     if (targetFaceSize == 40 && useSixRingFace) {
       // 40cm target: 6-ring face (rings 6-10 only)
-      // Blue outer ring (6-7)
+      // The face is cut at the 6-ring boundary (20cm diameter).
+      // Ratios relative to this boundary (10cm radius):
+      // 10 ring (2cm rad) = 0.2
+      // 9 ring (4cm rad) = 0.4
+      // 8 ring (6cm rad) = 0.6
+      // 7 ring (8cm rad) = 0.8
+      // 6 ring (10cm rad) = 1.0
+      
+      // Blue ring (6)
       _drawRing(canvas, center, radius, AppColors.targetBlue);
-      // Red ring (8-9)
-      _drawRing(canvas, center, radius * 0.67, AppColors.targetRed);
-      // Yellow/Gold center (10-X)
-      _drawRing(canvas, center, radius * 0.33, AppColors.targetGold);
-      // X Ring
-      canvas.drawCircle(center, radius * 0.08, Paint()..color = Colors.black.withOpacity(0.15));
+      
+      // Red rings (7-8)
+      _drawRing(canvas, center, radius * 0.8, AppColors.targetRed);
+      _drawRing(canvas, center, radius * 0.6, AppColors.targetRed);
+      
+      // Gold rings (9-10)
+      _drawRing(canvas, center, radius * 0.4, AppColors.targetGold);
+      _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
+      
+      // X Ring (Inner 10 - 1cm rad = 0.1)
+      canvas.drawCircle(center, radius * 0.1, Paint()..color = Colors.black.withOpacity(0.15));
+      canvas.drawCircle(
+        center, 
+        radius * 0.1, 
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..color = Colors.black.withOpacity(0.2)
+          ..strokeWidth = 1.0
+      );
     } else {
       // 60cm, 80cm, 122cm: Full 10-ring target
       // White outer ring (1-2)
