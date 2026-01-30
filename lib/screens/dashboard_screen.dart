@@ -102,15 +102,29 @@ class DashboardScreen extends ConsumerWidget {
 
                         const SizedBox(height: 32),
                         if (sessionState.sessions.isEmpty)
-                          Opacity(
-                            opacity: 0.4,
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 48),
+                            alignment: Alignment.center,
                             child: Column(
                               children: [
-                                const Icon(Icons.history, size: 64, color: AppColors.textSlate500),
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.history_edu, size: 60, color: AppColors.textSlate300),
+                                ),
                                 const SizedBox(height: 16),
-                                Text(l10n.noRecords, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 8),
-                                Text(l10n.clickToAdd, style: const TextStyle(fontSize: 12)),
+                                const Text(
+                                  '暂无记录，快来记录吧',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSlate500,
+                                  ),
+                                ),
                               ],
                             ),
                           )
