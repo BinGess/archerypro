@@ -6,9 +6,71 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   google_fonts: ^6.1.0
   fl_chart: ^0.65.0
   cupertino_icons: ^1.0.2
 
+  # State Management
+  flutter_riverpod: ^2.4.0
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Serialization
+  json_annotation: ^4.9.0
+
+  # UUID Generation
+  uuid: ^4.2.1
+
+  # Date Handling
+  intl: ^0.20.2
+
+  # Preferences Storage
+  shared_preferences: ^2.2.2
+
+  # Path Provider for file storage
+  path_provider: ^2.1.1
+
+  # Network & API
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.0
+  flutter_dotenv: ^5.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+  # Code Generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  hive_generator: ^2.0.1
+
 flutter:
   uses-material-design: true
+  assets:
+    - .env
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "web/icons/Icon-512.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "web/icons/Icon-512.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
+  windows:
+    generate: true
+    image_path: "web/icons/Icon-512.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "web/icons/Icon-512.png"
+
+

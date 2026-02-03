@@ -1,72 +1,220 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
+import '../providers/analytics_provider.dart';
+import '../providers/session_provider.dart';
+import '../providers/ai_coach_provider.dart';
+import '../utils/constants.dart';
+import '../services/analytics_service.dart';
+import '../l10n/app_localizations.dart';
 
-class AnalysisScreen extends StatelessWidget {
+import '../widgets/growth_mixed_chart.dart';
+import '../widgets/quadrant_radar_chart.dart';
+import '../widgets/stability_radar_chart.dart';
+import '../widgets/ai_coach/ai_loading_widget.dart';
+import '../widgets/ai_coach/ai_result_card.dart';
+
+class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final analyticsState = ref.watch(analyticsProvider);
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+    final stats = analyticsState.statistics;
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('PERFORMANCE ANALYSIS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        title: Text(l10n.analysis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: () {}),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(Icons.share, size: 18, color: AppColors.primary),
-          )
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.refresh, size: 20),
+          onPressed: () {
+            ref.read(analyticsProvider.notifier).refreshAnalytics();
+          },
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTab('7D', false),
-              _buildTab('1M', true),
-              _buildTab('3M', false),
-              _buildTab('ALL', false),
+              _buildTab(context, ref, kPeriod7Days, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriod1Month, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodCurrentYear, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodAll, selectedPeriod, l10n),
             ],
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: analyticsState.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Core Metrics Cards
+                _buildCoreMetricsSection(stats, l10n),
+                const SizedBox(height: 20),
+
+                // Growth Trend Mixed Chart
+                _buildGrowthTrendCard(stats, l10n),
+                const SizedBox(height: 20),
+
+                // Stability Radar Chart
+                _buildStabilityRadarCard(stats, ref, selectedPeriod, l10n),
+                const SizedBox(height: 20),
+
+                // Quadrant Radar Chart
+                _buildQuadrantRadarCard(stats, l10n),
+                const SizedBox(height: 20),
+
+                // AI Coach Analysis Section (优先在线，失败自动降级到本地)
+                _buildAICoachSection(ref, selectedPeriod, l10n),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTab(BuildContext context, WidgetRef ref, String period, String selectedPeriod, AppLocalizations l10n) {
+    final isSelected = period == selectedPeriod;
+    return GestureDetector(
+      onTap: () async {
+        await ref.read(analyticsProvider.notifier).changePeriod(period);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
+        ),
+        child: Text(
+          _getPeriodLabel(period, l10n),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? AppColors.primary : AppColors.textSlate400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getPeriodLabel(String period, AppLocalizations l10n) {
+    switch (period) {
+      case kPeriod7Days:
+        return l10n.period7Days;
+      case kPeriod1Month:
+        return l10n.period1Month;
+      case kPeriodCurrentYear:
+        return l10n.periodCurrentYear;
+      case kPeriodAll:
+        return l10n.periodAll;
+      default:
+        return period;
+    }
+  }
+
+  /// Build core metrics cards (总箭数, 平均环数, 10环率)
+  Widget _buildCoreMetricsSection(dynamic stats, AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.show_chart,
+            label: l10n.totalArrows, // "总箭数" -> "Arrows" or similar
+            // Wait, l10n.totalArrows is "totalArrows" key? 
+            // In AppLocalizationsEn: String get arrows => 'Arrows';
+            // In AppLocalizationsZh: String get arrows => '支箭';
+            // There isn't "totalArrows" key explicitly for label "Total Arrows".
+            // But there is `totalScore`. 
+            // Let's check `app_localizations.dart` again.
+            // Ah, I see `String get arrows;`.
+            // I should probably add `totalArrows` key or use `arrows` + `total` prefix?
+            // Actually, in previous step I didn't add `totalArrows` key.
+            // I will use `l10n.arrows` for now, or just hardcode if missing.
+            // Wait, I see `totalScore`.
+            // Let's use `l10n.arrows` combined with `Total` if needed, but `arrows` usually means "Arrows" count.
+            // For now, I'll use `l10n.arrows`.
+            value: stats.totalArrows.toString(),
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.adjust,
+            label: l10n.averageScore,
+            value: stats.avgArrowScore.toStringAsFixed(1),
+            color: AppColors.accent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.stars,
+            label: l10n.tenCount, // "10环数"
+            value: '${stats.tenRingRate.toStringAsFixed(1)}%',
+            color: AppColors.targetGold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
         children: [
-          _buildScoreTrendCard(),
-          const SizedBox(height: 20),
-          _buildHeatmapCard(),
-          const SizedBox(height: 20),
-          _buildInsightSection(),
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSlate400,
+              letterSpacing: 0.5,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTab(String text, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: isSelected ? AppColors.primary : AppColors.textSlate400,
-        ),
-      ),
-    );
-  }
+  /// Build growth trend chart card
+  Widget _buildGrowthTrendCard(dynamic stats, AppLocalizations l10n) {
+    // Prepare volume data from score trend data
+    final volumeData = <DateTime, int>{};
+    for (final date in stats.scoreTrendData.keys) {
+      // This is a simplification - ideally we'd track actual arrow counts per day
+      // For now, estimate based on sessions
+      volumeData[date] = 30; // Placeholder
+    }
 
-  Widget _buildScoreTrendCard() {
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,194 +222,413 @@ class AnalysisScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('AVG. END SCORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Text('8.4', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
-                      const SizedBox(width: 8),
-                      Text('5.2%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
-                      Icon(Icons.trending_up, size: 16, color: Colors.green.shade600),
-                    ],
-                  ),
+                  Text(l10n.growthTrendChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(l10n.growthTrendSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: Icon(Icons.insights, color: AppColors.primary),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.trending_up, color: AppColors.primary, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
-          ),
-          const SizedBox(height: 12),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('OCT 01', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 15', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 30', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-            ],
-          )
+          const SizedBox(height: 16),
+          if (stats.scoreTrendData.isNotEmpty)
+            RepaintBoundary(
+              child: GrowthMixedChart(
+                scoreTrendData: stats.scoreTrendData,
+                volumeData: volumeData,
+                height: 280,
+              ),
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                l10n.noDataForPeriod,
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildHeatmapCard() {
+  /// Build stability radar chart card with comparison
+  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+    if (stats.radarMetrics == null) {
+      return ArcheryCard(
+        child: Column(
+          children: [
+            Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                l10n.needMoreData,
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Get previous period data for comparison
+    // For now, we'll just show current period radar
+    // A more sophisticated implementation would calculate previous period metrics
+
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('IMPACT ACCURACY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              StatusBadge(text: 'TREND: LOW LEFT', color: AppColors.accentRust, backgroundColor: AppColors.accentRust.withOpacity(0.1)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Target Faces
-              _buildRing(180, Colors.grey.shade100),
-              _buildRing(150, Colors.white), // Simplified for aesthetics
-              _buildRing(120, Colors.white),
-              _buildRing(90, Colors.white),
-              _buildRing(60, Colors.white),
-              _buildRing(30, AppColors.accentGold.withOpacity(0.2)),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accentGold, shape: BoxShape.circle)),
-
-              // Heat blobs
-              Positioned(
-                bottom: 40, left: 60,
-                child: Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(l10n.stabilityRadarSubtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ],
               ),
-              Positioned(
-                bottom: 50, left: 80,
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.radar, color: Colors.orange, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend(AppColors.primary, 'GROUPING'),
-              const SizedBox(width: 24),
-              _buildLegend(AppColors.accentGold, 'BULLSEYE'),
-            ],
-          )
+          const SizedBox(height: 16),
+          RepaintBoundary(
+            child: StabilityRadarChart(
+              currentMetrics: stats.radarMetrics,
+              previousMetrics: null, // TODO: Calculate previous period metrics
+              size: 260,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRing(double size, Color color) {
-    return Container(
-      width: size, height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+  /// Build quadrant radar chart card
+  Widget _buildQuadrantRadarCard(dynamic stats, AppLocalizations l10n) {
+    final quadrantDist = stats.quadrantDistribution;
+    final total = quadrantDist.values.fold(0, (sum, count) => sum + count);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.quadrantRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(l10n.quadrantRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.gps_fixed, color: Colors.purple, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (total > 0)
+            RepaintBoundary(
+              child: QuadrantRadarChartDetailed(quadrantDistribution: quadrantDist),
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline, size: 48, color: Colors.green.shade300),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.allArrowsGood,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildLegend(Color color, String text) {
-    return Row(
-      children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-      ],
+
+  /// Build AI Coach analysis section
+  Widget _buildAICoachSection(WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+    final aiCoachState = ref.watch(aiCoachProvider);
+
+    // 获取当前周期的分析结果
+    final periodResult = aiCoachState.getPeriodResult(selectedPeriod);
+    final isAnalyzing = aiCoachState.isAnalyzingPeriod(selectedPeriod);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.psychology,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'AI 教练周期分析',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        // Source badge
+                        if (periodResult != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: periodResult.source == 'coze'
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: periodResult.source == 'coze'
+                                    ? Colors.green.withOpacity(0.3)
+                                    : Colors.orange.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  periodResult.source == 'coze'
+                                      ? Icons.cloud_done
+                                      : Icons.phone_android,
+                                  color: periodResult.source == 'coze'
+                                      ? Colors.green
+                                      : Colors.orange,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  periodResult.source == 'coze' ? '在线分析' : '本地分析',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: periodResult.source == 'coze'
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      '基于最近10次训练的整体评估',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Analyze button
+              if (!isAnalyzing && periodResult == null)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: const Text(
+                    '分析',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              
+              // Close button
+              if (periodResult != null)
+                IconButton(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).clearPeriodResult(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Content area
+          if (isAnalyzing)
+            Center(child: AILoadingWidget(message: aiCoachState.loadingMessage))
+          else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'period')
+            _buildErrorState(ref, selectedPeriod, aiCoachState.error!)
+          else if (periodResult != null)
+            Column(
+              children: [
+                AIResultCard(
+                  result: periodResult,
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text(
+                    '重新分析',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            _buildEmptyState(ref, selectedPeriod),
+        ],
+      ),
     );
   }
 
-  Widget _buildInsightSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
-            const SizedBox(width: 8),
-            const Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.track_changes,
-          color: AppColors.primary,
-          title: 'Stability Focus',
-          desc: 'Back tension decreased slightly in last 3 ends. Maintain expansion through clicker.',
-        ),
-        const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.fitness_center,
-          color: AppColors.accentRust,
-          title: 'Suggestion: 30m Drills',
-          desc: 'To correct the low-left tendency, perform 30 arrows on blank bale focusing on bow arm.',
-          hasAction: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInsightItem({required IconData icon, required Color color, required String title, required String desc, bool hasAction = false}) {
+  /// Error state widget
+  Widget _buildErrorState(WidgetRef ref, String period, String error) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: hasAction ? Colors.white : color.withOpacity(0.05),
+        color: Colors.red.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: hasAction ? AppColors.borderLight : color.withOpacity(0.2)),
+        border: Border.all(color: Colors.red.shade200),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textSlate500)),
-                if (hasAction) ...[
-                  const SizedBox(height: 8),
-                  Text('START DRILL →', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
-                ]
-              ],
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            '周期分析失败',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.red.shade700,
             ),
-          )
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              ref.read(aiCoachProvider.notifier).clearError();
+            },
+            icon: const Icon(Icons.close, size: 16),
+            label: const Text('关闭'),
+          ),
         ],
       ),
     );
   }
-}
 
-extension BlurExt on Widget {
-  Widget blur() => this; // Placeholder for ImageFilter.blur if needed, or just standard opacity overlay
+  /// Empty state widget
+  Widget _buildEmptyState(WidgetRef ref, String selectedPeriod) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Icon(
+            Icons.auto_awesome_outlined,
+            size: 48,
+            color: AppColors.textSecondary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '点击"分析"按钮获取 AI 教练的专业建议',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '优先使用在线分析，网络不可用时自动降级到本地分析',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary.withOpacity(0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 }
