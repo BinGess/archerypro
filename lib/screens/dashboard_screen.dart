@@ -32,10 +32,7 @@ class DashboardScreen extends ConsumerWidget {
                     floating: true,
                     pinned: true,
                     backgroundColor: AppColors.backgroundLight.withOpacity(0.95),
-                    title: Text(
-                      l10n.navHome, // "首页" / "Home"
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
-                    ),
+                    title: Text(l10n.navHome),
                     actions: [
                       IconButton(
                         icon: const Icon(Icons.refresh),
@@ -56,8 +53,8 @@ class DashboardScreen extends ConsumerWidget {
                           margin: const EdgeInsets.only(right: 16),
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surfaceSubtle,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.tune, color: AppColors.primary, size: 20),
@@ -110,8 +107,8 @@ class DashboardScreen extends ConsumerWidget {
                                 Container(
                                   width: 120,
                                   height: 120,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.surfaceSubtle,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.history_edu, size: 60, color: AppColors.textSlate300),
@@ -252,7 +249,7 @@ class DashboardScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(l10n.monthlyGoalMessage('${stats.monthlyGoal ?? 3000}'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                    Text(l10n.monthlyGoalMessage('${stats.monthlyGoal ?? 3000}'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSlate500)),
                     Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
                   ],
                 ),
@@ -262,7 +259,7 @@ class DashboardScreen extends ConsumerWidget {
                   child: LinearProgressIndicator(
                     value: (stats.monthlyGoalProgress / 100).clamp(0.0, 1.0),
                     minHeight: 8,
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: AppColors.surfaceSubtle,
                     valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                   ),
                 ),
@@ -403,7 +400,7 @@ class DashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(type, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500)),
                   const SizedBox(height: 2),
-                  Text('$arrowCount ${l10n.unitArrows}', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+                  Text('$arrowCount ${l10n.unitArrows}', style: const TextStyle(fontSize: 10, color: AppColors.textSlate400)),
                 ],
               ),
             ),
@@ -417,7 +414,7 @@ class DashboardScreen extends ConsumerWidget {
                 children: [
                   CircularProgressIndicator(
                     value: (percentage.isNaN || percentage.isInfinite) ? 0 : (percentage / 100).clamp(0.0, 1.0),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: AppColors.surfaceSubtle,
                     color: _getPercentageColor(percentage),
                     strokeWidth: 4,
                   ),
@@ -429,7 +426,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.chevron_right, color: Colors.grey.shade300),
+            const Icon(Icons.chevron_right, color: AppColors.surfaceIcon),
           ],
         ),
       ),

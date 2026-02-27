@@ -110,10 +110,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight, // Use light background for card contrast
       appBar: AppBar(
-        title: const Text('训练设置', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('训练设置'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -132,7 +129,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 _isTargetMode = false;
               });
             },
-            child: const Text('重置', style: TextStyle(color: AppColors.primary)),
+            child: const Text('重置'),
           ),
         ],
       ),
@@ -320,7 +317,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
             onPressed: _startTraining,
             backgroundColor: AppColors.primary,
             elevation: 4,
-            label: const Text('开始训练', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            label: const Text('开始训练', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
             icon: const Icon(Icons.play_arrow, color: Colors.white),
           ),
         ),
@@ -339,7 +336,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
             children: [
               Icon(icon, size: 18, color: AppColors.textSlate500),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textSlate500)),
+              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSlate500, letterSpacing: 0.4)),
             ],
           ),
         ),
@@ -392,22 +389,115 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   }
 
   Widget _buildDropdownItem({required String label, required String value, required List<String> items, required Function(String?) onChanged}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500, fontWeight: FontWeight.w500)),
-          DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            underline: const SizedBox(),
-            icon: const Icon(Icons.arrow_drop_down, color: AppColors.textSlate400),
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)))).toList(),
-            onChanged: onChanged,
-          ),
-        ],
+    return InkWell(
+      onTap: () => _showSelectionPicker(
+        context,
+        title: '选择$label',
+        currentValue: value,
+        items: items,
+        onSelected: (val) => onChanged(val),
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textSlate900)),
+                const Icon(Icons.keyboard_arrow_down, color: AppColors.textSlate400, size: 20),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSelectionPicker(BuildContext context, {
+    required String title,
+    required String currentValue,
+    required List<String> items,
+    required Function(String) onSelected,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSlate900,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 20, endIndent: 20),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final isSelected = item == currentValue;
+                    return InkWell(
+                      onTap: () {
+                        onSelected(item);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              item,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: isSelected ? AppColors.primary : AppColors.textSlate900,
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 

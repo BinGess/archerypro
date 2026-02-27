@@ -30,16 +30,16 @@ class DetailsScreen extends ConsumerWidget {
 
     if (session == null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundLight,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.list_alt, size: 64, color: Colors.grey.shade300),
+              const Icon(Icons.list_alt, size: 64, color: AppColors.textSlate300),
               const SizedBox(height: 16),
-              const Text('暂无训练记录', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('暂无训练记录', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textSlate900)),
               const SizedBox(height: 8),
-              Text('完成一次训练后可在此查看详情', style: TextStyle(color: Colors.grey.shade600)),
+              const Text('完成一次训练后可在此查看详情', style: TextStyle(fontSize: 14, color: AppColors.textSlate500)),
             ],
           ),
         ),
@@ -47,9 +47,9 @@ class DetailsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('训练详情', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text('训练详情'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -109,7 +109,7 @@ class DetailsScreen extends ConsumerWidget {
                     const Text('总分', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: AppColors.textSlate400)),
                   ],
                 ),
-                Container(height: 50, width: 1, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 32)),
+                Container(height: 50, width: 1, color: AppColors.borderLight, margin: const EdgeInsets.symmetric(horizontal: 32)),
                 Column(
                   children: [
                     Text('${session.consistency.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppColors.textSlate900)),
@@ -140,7 +140,7 @@ class DetailsScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('各组成绩', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('各组成绩', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
                         StatusBadge(
                           text: '共 ${session.ends.length} 组',
                           color: AppColors.textSlate500,
@@ -252,8 +252,8 @@ class DetailsScreen extends ConsumerWidget {
           const Text(
             '数据可视化',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
               color: AppColors.textSlate900,
             ),
           ),
@@ -334,17 +334,17 @@ class DetailsScreen extends ConsumerWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textSlate900,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: AppColors.textSlate500,
                       ),
                     ),
                   ],
@@ -424,7 +424,7 @@ class DetailsScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: arrow.pointValue >= 9 ? AppColors.backgroundLight : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: arrow.pointValue >= 9 ? Border.all(color: AppColors.primary.withOpacity(0.2)) : Border.all(color: Colors.grey.shade200),
+                          border: arrow.pointValue >= 9 ? Border.all(color: AppColors.primary.withOpacity(0.2)) : Border.all(color: AppColors.borderLight),
                         ),
                         child: Text(
                           arrow.displayScore,

@@ -28,10 +28,9 @@ class AnalysisScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: Text(l10n.analysis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-        centerTitle: true,
+        title: Text(l10n.analysis),
         leading: IconButton(
-          icon: const Icon(Icons.refresh, size: 20),
+          icon: const Icon(Icons.refresh, size: 22),
           onPressed: () {
             ref.read(analyticsProvider.notifier).refreshAnalytics();
           },
@@ -91,8 +90,8 @@ class AnalysisScreen extends ConsumerWidget {
         child: Text(
           _getPeriodLabel(period, l10n),
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
             color: isSelected ? AppColors.primary : AppColors.textSlate400,
           ),
         ),
@@ -222,7 +221,7 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.growthTrendChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(l10n.growthTrendChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
                   Text(l10n.growthTrendSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
                 ],
@@ -252,7 +251,7 @@ class AnalysisScreen extends ConsumerWidget {
               alignment: Alignment.center,
               child: Text(
                 l10n.noDataForPeriod,
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                style: const TextStyle(color: AppColors.textSlate400, fontSize: 13),
               ),
             ),
         ],
@@ -273,7 +272,7 @@ class AnalysisScreen extends ConsumerWidget {
               alignment: Alignment.center,
               child: Text(
                 l10n.needMoreData,
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                style: const TextStyle(color: AppColors.textSlate400, fontSize: 13),
               ),
             ),
           ],
@@ -295,18 +294,18 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
-                  Text(l10n.stabilityRadarSubtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  Text(l10n.stabilityRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate500)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: AppColors.accentGold.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.radar, color: Colors.orange, size: 20),
+                child: const Icon(Icons.radar, color: AppColors.accentGold, size: 20),
               ),
             ],
           ),
@@ -338,7 +337,7 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.quadrantRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(l10n.quadrantRadarChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
                   Text(l10n.quadrantRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
                 ],
@@ -346,10 +345,10 @@ class AnalysisScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: AppColors.accentRust.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.gps_fixed, color: Colors.purple, size: 20),
+                child: const Icon(Icons.gps_fixed, color: AppColors.accentRust, size: 20),
               ),
             ],
           ),
@@ -365,11 +364,11 @@ class AnalysisScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 48, color: Colors.green.shade300),
+                  const Icon(Icons.check_circle_outline, size: 48, color: AppColors.primary),
                   const SizedBox(height: 8),
                   Text(
                     l10n.allArrowsGood,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: const TextStyle(color: AppColors.textSlate500, fontSize: 13),
                   ),
                 ],
               ),
@@ -429,13 +428,13 @@ class AnalysisScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: periodResult.source == 'coze'
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.orange.withOpacity(0.1),
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : AppColors.accentGold.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: periodResult.source == 'coze'
-                                    ? Colors.green.withOpacity(0.3)
-                                    : Colors.orange.withOpacity(0.3),
+                                    ? AppColors.primary.withOpacity(0.3)
+                                    : AppColors.accentGold.withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
@@ -447,8 +446,8 @@ class AnalysisScreen extends ConsumerWidget {
                                       ? Icons.cloud_done
                                       : Icons.phone_android,
                                   color: periodResult.source == 'coze'
-                                      ? Colors.green
-                                      : Colors.orange,
+                                      ? AppColors.primary
+                                      : AppColors.accentGold,
                                   size: 12,
                                 ),
                                 const SizedBox(width: 4),
@@ -458,8 +457,8 @@ class AnalysisScreen extends ConsumerWidget {
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: periodResult.source == 'coze'
-                                        ? Colors.green.shade700
-                                        : Colors.orange.shade700,
+                                        ? AppColors.primary
+                                        : AppColors.accentGold,
                                   ),
                                 ),
                               ],
@@ -486,17 +485,10 @@ class AnalysisScreen extends ConsumerWidget {
                     ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
                   },
                   icon: const Icon(Icons.auto_awesome, size: 16),
-                  label: const Text(
-                    '分析',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
+                  label: const Text('分析'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               
@@ -530,17 +522,10 @@ class AnalysisScreen extends ConsumerWidget {
                     ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
                   },
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text(
-                    '重新分析',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
+                  label: const Text('重新分析'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ],

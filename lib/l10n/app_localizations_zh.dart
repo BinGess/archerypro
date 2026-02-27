@@ -216,6 +216,15 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get termsOfService => '服务条款';
 
+  @override
+  String get debugSection => '调试';
+
+  @override
+  String get viewLogs => '查看日志';
+
+  @override
+  String get viewLogsSubtitle => '查看应用日志和崩溃报告';
+
   // Messages
   @override
   String get loading => '加载中...';
@@ -288,23 +297,28 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get insightVolumeWarningTitle => '训练量下降预警';
   @override
-  String insightVolumeWarningMessage(String decline) => '本周期训练量较上周期下降$decline%，建议增加训练频次或进行恢复性训练。';
+  String insightVolumeWarningMessage(String decline) =>
+      '本周期训练量较上周期下降$decline%，建议增加训练频次或进行恢复性训练。';
   @override
   String get insightAdvancementTitle => '进阶建议';
   @override
-  String insightAdvancementMessage(String rate) => '10环率达到$rate%且稳定性优秀，建议尝试增加射击距离或提高难度。';
+  String insightAdvancementMessage(String rate) =>
+      '10环率达到$rate%且稳定性优秀，建议尝试增加射击距离或提高难度。';
   @override
   String get insightChronicBiasTitle => '顽固偏差诊断';
   @override
-  String insightChronicBiasMessage(String percent, String direction) => '脱靶箭支$percent%偏向$direction，建议针对性调整动作或器材。';
+  String insightChronicBiasMessage(String percent, String direction) =>
+      '脱靶箭支$percent%偏向$direction，建议针对性调整动作或器材。';
   @override
   String get insightExcellenceTitle => '稳定性优秀';
   @override
-  String insightExcellenceMessage(String consistency) => '稳定性达到$consistency%，动作一致性表现优异！';
+  String insightExcellenceMessage(String consistency) =>
+      '稳定性达到$consistency%，动作一致性表现优异！';
   @override
   String insightGroupingTitle(String tendency) => '分组倾向：$tendency';
   @override
-  String insightGroupingMessage(String tendency) => '你的箭组倾向于靶心$tendency方。请练习光靶，专注于对齐和撒放。';
+  String insightGroupingMessage(String tendency) =>
+      '你的箭组倾向于靶心$tendency方。请练习光靶，专注于对齐和撒放。';
 
   // Directions
   @override
@@ -367,7 +381,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clickToAdd => '点击"添加"开始第一次训练';
   @override
   String showingRecentMessage(String count) => '显示最近 $count 次训练';
-  
+
   @override
   String get totalArrows => '总箭数';
 
@@ -380,7 +394,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bowBarebow => '光弓';
   @override
   String get bowLongbow => '长弓';
-  
+
   // Units
   @override
   String get unitArrows => '支箭';

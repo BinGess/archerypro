@@ -70,7 +70,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('记录成绩', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        title: const Text('记录成绩'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -129,7 +129,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           children: [
             const Icon(Icons.add_circle_outline, size: 64, color: AppColors.primary),
             const SizedBox(height: 24),
-            const Text('暂无训练', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('暂无训练', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textSlate900)),
             const SizedBox(height: 8),
             const Text('点击下方开始计分', style: TextStyle(color: AppColors.textSlate500)),
             const SizedBox(height: 32),
@@ -261,8 +261,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
               Text(
                 '第 $endNumber 组', 
                 style: TextStyle(
-                  fontSize: 14, 
-                  fontWeight: FontWeight.bold, 
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   color: isFuture ? AppColors.textSlate300 : AppColors.textSlate900
                 )
               ),
@@ -806,7 +806,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(0, 2))],
       ),
       child: Material(
@@ -827,7 +827,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return Container(
       height: 54,
       margin: const EdgeInsets.all(0),
-      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(color: AppColors.surfaceSubtle, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight)),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -896,13 +896,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     );
   }
 
-  Widget _scoreBoxSmallEmpty() => Container(width: 32, height: 32, decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid), borderRadius: BorderRadius.circular(6)));
+  Widget _scoreBoxSmallEmpty() => Container(width: 32, height: 32, decoration: BoxDecoration(border: Border.all(color: AppColors.borderLight, style: BorderStyle.solid), borderRadius: BorderRadius.circular(6)));
 
   Widget _emptyScoreBox() {
     return Container(
       width: 48,
       height: 48,
-      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200, width: 2)),
+      decoration: BoxDecoration(color: AppColors.surfaceSubtle, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.borderLight, width: 2)),
     );
   }
 
@@ -924,7 +924,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                       width: 40,
                       height: 28,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.borderLight), borderRadius: BorderRadius.circular(4)),
                       child: Text('$s', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSlate500)),
                     ))
                 .toList(),

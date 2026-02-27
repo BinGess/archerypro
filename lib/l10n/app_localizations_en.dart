@@ -216,6 +216,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get termsOfService => 'Terms of Service';
 
+  @override
+  String get debugSection => 'Debug';
+
+  @override
+  String get viewLogs => 'View Logs';
+
+  @override
+  String get viewLogsSubtitle => 'View app logs and crash reports';
+
   // Messages
   @override
   String get loading => 'Loading...';
@@ -284,27 +293,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insightPlateauTitle => 'Plateau Detected';
   @override
-  String get insightPlateauMessage => 'Performance has plateaued. Try new drills or technique adjustments.';
+  String get insightPlateauMessage =>
+      'Performance has plateaued. Try new drills or technique adjustments.';
   @override
   String get insightVolumeWarningTitle => 'Volume Decline';
   @override
-  String insightVolumeWarningMessage(String decline) => 'Training volume dropped by $decline% compared to last period.';
+  String insightVolumeWarningMessage(String decline) =>
+      'Training volume dropped by $decline% compared to last period.';
   @override
   String get insightAdvancementTitle => 'Ready to Advance';
   @override
-  String insightAdvancementMessage(String rate) => '10-ring rate is $rate% with great stability. Try increasing distance.';
+  String insightAdvancementMessage(String rate) =>
+      '10-ring rate is $rate% with great stability. Try increasing distance.';
   @override
   String get insightChronicBiasTitle => 'Chronic Bias';
   @override
-  String insightChronicBiasMessage(String percent, String direction) => '$percent% of misses are bias to $direction. Check form or tuning.';
+  String insightChronicBiasMessage(String percent, String direction) =>
+      '$percent% of misses are bias to $direction. Check form or tuning.';
   @override
   String get insightExcellenceTitle => 'Excellent Stability';
   @override
-  String insightExcellenceMessage(String consistency) => 'Consistency reached $consistency%. Outstanding form!';
+  String insightExcellenceMessage(String consistency) =>
+      'Consistency reached $consistency%. Outstanding form!';
   @override
   String insightGroupingTitle(String tendency) => 'Grouping: $tendency';
   @override
-  String insightGroupingMessage(String tendency) => 'Your group tends to be $tendency. Focus on alignment.';
+  String insightGroupingMessage(String tendency) =>
+      'Your group tends to be $tendency. Focus on alignment.';
 
   // Directions
   @override
@@ -344,7 +359,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteRecordTitle => 'Delete Record';
   @override
-  String get deleteRecordMessage => 'Are you sure you want to delete this record? This cannot be undone.';
+  String get deleteRecordMessage =>
+      'Are you sure you want to delete this record? This cannot be undone.';
   @override
   String get recordDeleted => 'Record deleted';
   @override
@@ -380,7 +396,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bowBarebow => 'Barebow';
   @override
   String get bowLongbow => 'Longbow';
-  
+
   // Units
   @override
   String get unitArrows => 'arrows';
@@ -395,7 +411,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiCoachBasedOnData => 'Professional advice based on training data';
   @override
-  String get aiCoachGetProfessionalAdvice => 'Get detailed professional advice and training plans';
+  String get aiCoachGetProfessionalAdvice =>
+      'Get detailed professional advice and training plans';
   @override
   String get aiCoachAnalyzeButton => 'Analyze';
   @override
@@ -411,11 +428,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiCoachAnalysisFailed => 'Analysis Failed';
   @override
-  String get aiCoachNetworkError => 'Network connection failed, please check and retry';
+  String get aiCoachNetworkError =>
+      'Network connection failed, please check and retry';
   @override
-  String get aiCoachClickToAnalyze => 'Click "Analyze" to get AI coach professional advice';
+  String get aiCoachClickToAnalyze =>
+      'Click "Analyze" to get AI coach professional advice';
   @override
-  String get aiCoachClickForDeepAnalysis => 'Click "Deep Analysis" to get comprehensive advice and training plans';
+  String get aiCoachClickForDeepAnalysis =>
+      'Click "Deep Analysis" to get comprehensive advice and training plans';
   @override
   String get aiCoachDismiss => 'Dismiss';
   @override

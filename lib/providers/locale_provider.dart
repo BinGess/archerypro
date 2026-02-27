@@ -4,11 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// State for locale management
 class LocaleState {
-  final Locale? locale;
+  final Locale locale;
   final bool isSystemDefault;
 
   const LocaleState({
-    this.locale,
+    required this.locale,
     this.isSystemDefault = true,
   });
 
@@ -22,58 +22,58 @@ class LocaleState {
     );
   }
 
-  String get languageCode {
-    return locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode;
-  }
+  String get languageCode => locale.languageCode;
 }
 
 /// Notifier for locale management with persistence
 class LocaleNotifier extends StateNotifier<LocaleState> {
   static const String _localeKey = 'app_locale';
   static const String _systemDefaultKey = 'use_system_locale';
+  static const Locale zhLocale = Locale('zh', 'CN');
+  static const Locale enLocale = Locale('en', 'US');
+  final Locale Function() _systemLocaleGetter;
+  static Locale _platformLocale() => PlatformDispatcher.instance.locale;
 
-  LocaleNotifier() : super(const LocaleState());
+  LocaleNotifier({Locale Function()? systemLocaleGetter})
+      : _systemLocaleGetter = systemLocaleGetter ?? _platformLocale,
+        super(
+          LocaleState(
+            locale: resolveSupportedLocale(
+                (systemLocaleGetter ?? _platformLocale)()),
+            isSystemDefault: true,
+          ),
+        );
 
   /// Initialize locale from saved preferences
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
 
     final useSystemDefault = prefs.getBool(_systemDefaultKey) ?? true;
+    final savedLanguageCode = prefs.getString(_localeKey);
 
-    if (useSystemDefault) {
-      // Use system locale
-      final systemLocale = PlatformDispatcher.instance.locale;
+    if (!useSystemDefault && savedLanguageCode != null) {
       state = LocaleState(
-        locale: _getSupportedLocale(systemLocale),
-        isSystemDefault: true,
+        locale: resolveSupportedLocale(Locale(savedLanguageCode)),
+        isSystemDefault: false,
       );
-    } else {
-      // Use saved locale
-      final savedLanguageCode = prefs.getString(_localeKey);
-      if (savedLanguageCode != null) {
-        state = LocaleState(
-          locale: Locale(savedLanguageCode),
-          isSystemDefault: false,
-        );
-      } else {
-        // Fallback to system locale
-        final systemLocale = PlatformDispatcher.instance.locale;
-        state = LocaleState(
-          locale: _getSupportedLocale(systemLocale),
-          isSystemDefault: true,
-        );
-      }
+      return;
     }
+
+    state = LocaleState(
+      locale: resolveSupportedLocale(_systemLocaleGetter()),
+      isSystemDefault: true,
+    );
   }
 
   /// Set locale manually (user selection)
   Future<void> setLocale(Locale locale) async {
+    final resolvedLocale = resolveSupportedLocale(locale);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, locale.languageCode);
+    await prefs.setString(_localeKey, resolvedLocale.languageCode);
     await prefs.setBool(_systemDefaultKey, false);
 
     state = LocaleState(
-      locale: locale,
+      locale: resolvedLocale,
       isSystemDefault: false,
     );
   }
@@ -84,24 +84,40 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
     await prefs.setBool(_systemDefaultKey, true);
     await prefs.remove(_localeKey);
 
-    final systemLocale = PlatformDispatcher.instance.locale;
     state = LocaleState(
-      locale: _getSupportedLocale(systemLocale),
+      locale: resolveSupportedLocale(_systemLocaleGetter()),
       isSystemDefault: true,
     );
   }
 
-  /// Get supported locale from system locale
-  Locale _getSupportedLocale(Locale systemLocale) {
-    // Supported language codes
-    const supportedLanguages = ['zh', 'en'];
-
-    if (supportedLanguages.contains(systemLocale.languageCode)) {
-      return Locale(systemLocale.languageCode);
+  /// Refresh locale when following system language.
+  void refreshSystemLocale() {
+    if (!state.isSystemDefault) {
+      return;
     }
 
-    // Default to Chinese
-    return const Locale('zh');
+    final resolvedLocale = resolveSupportedLocale(_systemLocaleGetter());
+    if (state.locale.languageCode == resolvedLocale.languageCode &&
+        state.locale.countryCode == resolvedLocale.countryCode) {
+      return;
+    }
+
+    state = state.copyWith(locale: resolvedLocale);
+  }
+
+  /// Normalize locale to supported locales (zh/en only).
+  static Locale resolveSupportedLocale(Locale systemLocale) {
+    final languageCode = systemLocale.languageCode.toLowerCase();
+
+    if (languageCode == 'zh') {
+      return zhLocale;
+    }
+    if (languageCode == 'en') {
+      return enLocale;
+    }
+
+    // Default fallback for unsupported system locales.
+    return enLocale;
   }
 
   /// Clear saved preferences
@@ -110,11 +126,15 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
     await prefs.remove(_localeKey);
     await prefs.remove(_systemDefaultKey);
 
-    state = const LocaleState();
+    state = LocaleState(
+      locale: resolveSupportedLocale(_systemLocaleGetter()),
+      isSystemDefault: true,
+    );
   }
 }
 
 /// Provider for locale management
-final localeProvider = StateNotifierProvider<LocaleNotifier, LocaleState>((ref) {
+final localeProvider =
+    StateNotifierProvider<LocaleNotifier, LocaleState>((ref) {
   return LocaleNotifier();
 });

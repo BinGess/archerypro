@@ -32,14 +32,17 @@ void main() async {
       logger.log('✅ Environment variables loaded', level: LogLevel.info);
     } catch (e) {
       logger.log('⚠️ Failed to load .env file: $e', level: LogLevel.warning);
-      logger.log('💡 AI Coach features may not work without API token', level: LogLevel.warning);
+      logger.log('💡 AI Coach features may not work without API token',
+          level: LogLevel.warning);
     }
 
     // Log startup attempt with timestamp
     final startTime = DateTime.now();
     logger.log('🚀 App starting...', level: LogLevel.info);
-    logger.log('📅 Startup time: ${startTime.toIso8601String()}', level: LogLevel.info);
-    logger.log('🔢 Process attempt ID: ${startTime.millisecondsSinceEpoch}', level: LogLevel.info);
+    logger.log('📅 Startup time: ${startTime.toIso8601String()}',
+        level: LogLevel.info);
+    logger.log('🔢 Process attempt ID: ${startTime.millisecondsSinceEpoch}',
+        level: LogLevel.info);
 
     // Force flush immediately to ensure these logs are persisted
     await logger.forceFlush();
@@ -120,20 +123,93 @@ class ArcheryApp extends ConsumerWidget {
         // Supported locales
         supportedLocales: AppLocalizations.supportedLocales,
 
-        // Current locale
-        locale: localeState.locale,
+        // Current locale:
+        // - manual mode: use user-selected locale
+        // - system mode: let Flutter follow platform locale automatically
+        locale: localeState.isSystemDefault ? null : localeState.locale,
+        localeResolutionCallback: (deviceLocale, supportedLocales) {
+          if (!localeState.isSystemDefault) {
+            return localeState.locale;
+          }
+          return LocaleNotifier.resolveSupportedLocale(
+            deviceLocale ?? PlatformDispatcher.instance.locale,
+          );
+        },
 
         theme: ThemeData(
           scaffoldBackgroundColor: AppColors.backgroundLight,
           primaryColor: AppColors.primary,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            surface: AppColors.backgroundLight,
+          ),
           useMaterial3: true,
-          // fontFamily: GoogleFonts.manrope().fontFamily,
-          // textTheme: GoogleFonts.manropeTextTheme(Theme.of(context).textTheme),
+          // ── AppBar ─────────────────────────────────────────────────────────
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+              letterSpacing: 0,
+            ),
+            iconTheme: IconThemeData(
+              color: AppColors.textSlate900,
+              size: 22,
+            ),
+          ),
+          // ── Divider ────────────────────────────────────────────────────────
+          dividerTheme: const DividerThemeData(
+            color: AppColors.borderLight,
+            thickness: 1,
+            space: 1,
+          ),
+          // ── Bottom Navigation ──────────────────────────────────────────────
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textSlate400,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
+            selectedLabelStyle:
+                TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+            unselectedLabelStyle:
+                TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+          ),
+          // ── Cards ──────────────────────────────────────────────────────────
+          cardTheme: const CardThemeData(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
+              side: BorderSide(color: AppColors.borderLight),
+            ),
+          ),
+          // ── Elevated Button ────────────────────────────────────────────────
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              textStyle:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
+          ),
+          // ── Text Button ────────────────────────────────────────────────────
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              textStyle:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
           ),
         ),
         home: const InitializationWrapper(),
@@ -152,24 +228,28 @@ class ArcheryApp extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
                       const SizedBox(height: 16),
                       const Text(
                         'Something went wrong',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         details.exception.toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () {
                           // Try to restart the app
                           Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (_) => const MainContainer()),
+                            MaterialPageRoute(
+                                builder: (_) => const MainContainer()),
                             (route) => false,
                           );
                         },
@@ -226,10 +306,12 @@ class InitializationWrapper extends ConsumerStatefulWidget {
   const InitializationWrapper({super.key});
 
   @override
-  ConsumerState<InitializationWrapper> createState() => _InitializationWrapperState();
+  ConsumerState<InitializationWrapper> createState() =>
+      _InitializationWrapperState();
 }
 
-class _InitializationWrapperState extends ConsumerState<InitializationWrapper> with WidgetsBindingObserver {
+class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
+    with WidgetsBindingObserver {
   bool _isInitialized = false;
   bool _isRecovering = false;
   String? _error;
@@ -249,9 +331,15 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _flushData();
     }
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    ref.read(localeProvider.notifier).refreshSystemLocale();
   }
 
   Future<void> _flushData() async {
@@ -259,7 +347,7 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       final storageService = ref.read(storageServiceProvider);
       // Compact to ensure data is written and log file is clean
       await storageService.compact();
-      
+
       final logger = LoggerService();
       logger.logLifecycle('App paused/detached, storage compacted');
       await logger.forceFlush();
@@ -292,7 +380,6 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       // Phase 3: Load sessions in background (non-blocking)
       logger.log('📂 Loading sessions in background...', level: LogLevel.info);
       _loadSessionsInBackground();
-
     } catch (e, stack) {
       logger.logError(
         'Initialization error',
@@ -315,16 +402,20 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper> w
       logger.log('✅ Sessions loaded successfully', level: LogLevel.info);
 
       final sessions = ref.read(sessionProvider).sessions;
-      logger.log('Found ${sessions.length} existing sessions', level: LogLevel.info);
+      logger.log('Found ${sessions.length} existing sessions',
+          level: LogLevel.info);
       if (sessions.isNotEmpty) {
-        logger.log('🔍 First session ID: ${sessions.first.id}, Date: ${sessions.first.date}', level: LogLevel.debug);
+        logger.log(
+            '🔍 First session ID: ${sessions.first.id}, Date: ${sessions.first.date}',
+            level: LogLevel.debug);
       }
 
       await logger.forceFlush();
 
       // Generate sample data if needed (also in background)
       if (sessions.isEmpty) {
-        logger.log('🎲 No sessions found, generating sample data...', level: LogLevel.info);
+        logger.log('🎲 No sessions found, generating sample data...',
+            level: LogLevel.info);
         try {
           final sessionService = ref.read(sessionServiceProvider);
           final scoringService = ref.read(scoringServiceProvider);
@@ -465,7 +556,7 @@ class _MainContainerState extends ConsumerState<MainContainer> {
         children: _screens,
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.borderLight)),
           color: Colors.white,
         ),
@@ -483,22 +574,16 @@ class _MainContainerState extends ConsumerState<MainContainer> {
               setState(() => _currentIndex = index);
             }
           },
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSlate400,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-          elevation: 0,
           items: [
-            BottomNavigationBarItem(icon: const Icon(Icons.history), label: l10n.navHome),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.history), label: l10n.navHome),
             BottomNavigationBarItem(
               icon: const SizedBox(
                 width: 44,
                 height: 44,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                      color: AppColors.primary, shape: BoxShape.circle),
                   child: Icon(Icons.add, color: Colors.white),
                 ),
               ),
@@ -506,13 +591,16 @@ class _MainContainerState extends ConsumerState<MainContainer> {
                 width: 44,
                 height: 44,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                      color: AppColors.primary, shape: BoxShape.circle),
                   child: Icon(Icons.add, color: Colors.white),
                 ),
               ),
               label: l10n.navAdd,
             ),
-            BottomNavigationBarItem(icon: const Icon(Icons.analytics_outlined), label: l10n.navStatistics),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.analytics_outlined),
+                label: l10n.navStatistics),
           ],
         ),
       ),

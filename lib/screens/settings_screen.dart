@@ -15,19 +15,11 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textSlate900),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          l10n.settingsTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: AppColors.textSlate900,
-          ),
-        ),
+        title: Text(l10n.settingsTitle),
       ),
       body: ListView(
         children: [
@@ -35,8 +27,8 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, l10n.languageSettings),
           _buildLanguageSection(context, ref, l10n),
           const SizedBox(height: 24),
-          _buildSectionHeader(context, 'Debug'),
-          _buildDebugSection(context),
+          _buildSectionHeader(context, l10n.debugSection),
+          _buildDebugSection(context, l10n),
           const SizedBox(height: 24),
           _buildSectionHeader(context, l10n.about),
           _buildInfoSection(context, l10n),
@@ -60,7 +52,8 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLanguageSection(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+  Widget _buildLanguageSection(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     final localeState = ref.watch(localeProvider);
 
     return Container(
@@ -70,7 +63,7 @@ class SettingsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -95,9 +88,12 @@ class SettingsScreen extends ConsumerWidget {
             ref: ref,
             title: l10n.chinese,
             subtitle: '简体中文',
-            isSelected: !localeState.isSystemDefault && localeState.locale?.languageCode == 'zh',
+            isSelected: !localeState.isSystemDefault &&
+                localeState.locale.languageCode == 'zh',
             onTap: () async {
-              await ref.read(localeProvider.notifier).setLocale(const Locale('zh'));
+              await ref
+                  .read(localeProvider.notifier)
+                  .setLocale(const Locale('zh'));
             },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
@@ -106,9 +102,12 @@ class SettingsScreen extends ConsumerWidget {
             ref: ref,
             title: l10n.english,
             subtitle: 'English',
-            isSelected: !localeState.isSystemDefault && localeState.locale?.languageCode == 'en',
+            isSelected: !localeState.isSystemDefault &&
+                localeState.locale.languageCode == 'en',
             onTap: () async {
-              await ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+              await ref
+                  .read(localeProvider.notifier)
+                  .setLocale(const Locale('en'));
             },
             isLast: true,
           ),
@@ -184,7 +183,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDebugSection(BuildContext context) {
+  Widget _buildDebugSection(BuildContext context, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -192,7 +191,7 @@ class SettingsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -215,7 +214,7 @@ class SettingsScreen extends ConsumerWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: AppColors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -229,9 +228,9 @@ class SettingsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'View Logs',
-                      style: TextStyle(
+                    Text(
+                      l10n.viewLogs,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSlate900,
@@ -239,8 +238,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'View app logs and crash reports',
-                      style: TextStyle(
+                      l10n.viewLogsSubtitle,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSlate500,
                       ),
@@ -267,7 +266,7 @@ class SettingsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -329,14 +328,16 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   String _getSystemLanguageName(BuildContext context) {
-    final systemLocale = View.of(context).platformDispatcher.locale;
-    switch (systemLocale.languageCode) {
+    final resolvedLocale = LocaleNotifier.resolveSupportedLocale(
+      View.of(context).platformDispatcher.locale,
+    );
+    switch (resolvedLocale.languageCode) {
       case 'zh':
         return '简体中文';
       case 'en':
         return 'English';
       default:
-        return '简体中文';
+        return 'English';
     }
   }
 }

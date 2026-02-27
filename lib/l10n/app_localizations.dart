@@ -89,6 +89,9 @@ abstract class AppLocalizations {
   String get version;
   String get privacyPolicy;
   String get termsOfService;
+  String get debugSection;
+  String get viewLogs;
+  String get viewLogsSubtitle;
 
   // Messages
   String get loading;
@@ -127,7 +130,7 @@ abstract class AppLocalizations {
   String get aiCoachAdvice;
   String get keepTrainingForInsights;
   String get actionableTip;
-  
+
   // Insight Messages
   String get insightPlateauTitle;
   String get insightPlateauMessage;
@@ -141,7 +144,7 @@ abstract class AppLocalizations {
   String insightExcellenceMessage(String consistency);
   String insightGroupingTitle(String tendency);
   String insightGroupingMessage(String tendency);
-  
+
   // Directions
   String get directionTopLeft;
   String get directionTopRight;
@@ -160,7 +163,7 @@ abstract class AppLocalizations {
   String get endTrendSubtitle;
   String get scoreDistTitle;
   String get scoreDistSubtitle;
-  
+
   // Dialogs
   String get deleteRecordTitle;
   String get deleteRecordMessage;
@@ -183,7 +186,7 @@ abstract class AppLocalizations {
   String get bowRecurve;
   String get bowBarebow;
   String get bowLongbow;
-  
+
   // Units
   String get unitArrows; // "支箭" / "arrows"
 
@@ -227,7 +230,8 @@ abstract class AppLocalizations {
   String get aiCoachPhase;
   String get aiCoachSuggestionsCount;
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   static const List<Locale> supportedLocales = [
     Locale('zh', 'CN'),
@@ -235,7 +239,8 @@ abstract class AppLocalizations {
   ];
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override

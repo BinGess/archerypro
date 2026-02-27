@@ -24,4 +24,16 @@ class AppColors {
   static const Color targetWhite = Color(0xFFF8F8F8);
   
   static const Color borderLight = Color(0xFFE2E8F0);
+
+  // Semantic surface colors
+  /// White card surface
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  /// Slightly elevated row / input background (replaces Colors.grey.shade100)
+  static const Color surfaceSubtle = Color(0xFFF1F5F9);
+  /// Divider / progress track (replaces Colors.grey.shade200)
+  static const Color surfaceMid = Color(0xFFE2E8F0);
+  /// Very light icon / placeholder (replaces Colors.grey.shade300)
+  static const Color surfaceIcon = Color(0xFFCBD5E1);
+  /// Muted body text alternative (replaces Colors.grey.shade600)
+  static const Color textMuted = textSlate500;
 }
