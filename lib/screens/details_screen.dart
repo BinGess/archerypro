@@ -312,8 +312,10 @@ class DetailsScreen extends ConsumerWidget {
   /// Build visualization section with three charts
   Widget _buildVisualizationSection(
       TrainingSession session, AppLocalizations l10n) {
-    final useSixRingFace = session.targetFaceSize == 40 &&
-        session.equipment.bowType == BowType.compound;
+    // WA rule: triple face = 40 cm target + non-compound bow
+    final isTripleFace = session.targetFaceSize == 40 &&
+        session.equipment.bowType != BowType.compound;
+    final isCompoundIndoor = session.equipment.bowType == BowType.compound;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -338,7 +340,8 @@ class DetailsScreen extends ConsumerWidget {
               arrowPositions: session.heatmapPositions,
               geometricCenter: session.geometricCenter,
               targetFaceSize: session.targetFaceSize,
-              useSixRingFace: useSixRingFace,
+              isTripleFace: isTripleFace,
+              isCompoundIndoor: isCompoundIndoor,
               size: 280,
             ),
           ),

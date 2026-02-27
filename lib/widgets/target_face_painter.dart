@@ -1,86 +1,147 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
+/// Paints a WA (World Archery) compliant target face.
+///
+/// Coordinate system: r = distance from center / max_display_radius (0.0–1.0)
+/// • Full face (isTripleFace=false): r=1.0 is the outer edge of ring 1.
+/// • Triple face (isTripleFace=true): r=1.0 is the outer edge of ring 6.
+///   Rings 1-5 are not shown. Display is 2× zoomed relative to full target.
+///   (display_r = full_target_r * 2)
 class TargetFacePainter extends CustomPainter {
-  final int targetFaceSize;
-  final bool useSixRingFace;
+  final bool isTripleFace;
+  final bool isCompoundIndoor;
 
-  TargetFacePainter({
-    required this.targetFaceSize,
-    bool? useSixRingFace,
-  }) : useSixRingFace = useSixRingFace ?? targetFaceSize == 40;
+  const TargetFacePainter({
+    required this.isTripleFace,
+    this.isCompoundIndoor = false,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Render different target faces based on size
-    if (targetFaceSize == 40 && useSixRingFace) {
-      // 40cm target: 6-ring face (rings 6-10 only)
-      // The face is cut at the 6-ring boundary (20cm diameter).
-      // Ratios relative to this boundary (10cm radius):
-      // 10 ring (2cm rad) = 0.2
-      // 9 ring (4cm rad) = 0.4
-      // 8 ring (6cm rad) = 0.6
-      // 7 ring (8cm rad) = 0.8
-      // 6 ring (10cm rad) = 1.0
-      
-      // Blue ring (6)
-      _drawRing(canvas, center, radius, AppColors.targetBlue);
-      
-      // Red rings (7-8)
-      _drawRing(canvas, center, radius * 0.8, AppColors.targetRed);
-      _drawRing(canvas, center, radius * 0.6, AppColors.targetRed);
-      
-      // Gold rings (9-10)
-      _drawRing(canvas, center, radius * 0.4, AppColors.targetGold);
-      _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
-      
-      // X Ring (Inner 10 - 1cm rad = 0.1)
-      canvas.drawCircle(center, radius * 0.1, Paint()..color = Colors.black.withOpacity(0.15));
-      canvas.drawCircle(
-        center, 
-        radius * 0.1, 
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..color = Colors.black.withOpacity(0.2)
-          ..strokeWidth = 1.0
-      );
+    if (isTripleFace) {
+      _paintTripleFace(canvas, center, radius);
     } else {
-      // 60cm, 80cm, 122cm: Full 10-ring target
-      // White outer ring (1-2)
-      _drawRing(canvas, center, radius, AppColors.targetWhite);
-      // Black ring (3-4)
-      _drawRing(canvas, center, radius * 0.8, AppColors.targetBlack);
-      // Blue ring (5-6)
-      _drawRing(canvas, center, radius * 0.6, AppColors.targetBlue);
-      // Red ring (7-8)
-      _drawRing(canvas, center, radius * 0.4, AppColors.targetRed);
-      // Yellow/Gold center (9-10)
-      _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
-      // X Ring
-      canvas.drawCircle(center, radius * 0.05, Paint()..color = Colors.black.withOpacity(0.15));
+      _paintFullFace(canvas, center, radius);
     }
   }
 
-  void _drawRing(Canvas canvas, Offset center, double radius, Color color) {
-    final paint = Paint()..color = color;
-    canvas.drawCircle(center, radius, paint);
-    // Divider line
+  /// Full 10-ring face.
+  /// Color zones (r = fraction of full target radius):
+  ///   rings 1–2  → white  (0.80–1.00)
+  ///   rings 3–4  → black  (0.60–0.80)
+  ///   rings 5–6  → blue   (0.40–0.60)
+  ///   rings 7–8  → red    (0.20–0.40)
+  ///   rings 9–10 → gold   (0.00–0.20)
+  ///   X indicator → 0.05
+  void _paintFullFace(Canvas canvas, Offset center, double radius) {
+    // Color zones — draw outside → inside so each fills over the previous
+    _fillCircle(canvas, center, radius,             AppColors.targetWhite); // rings 1–2
+    _fillCircle(canvas, center, radius * 0.80,  AppColors.targetBlack); // rings 3–4
+    _fillCircle(canvas, center, radius * 0.60,  AppColors.targetBlue);  // rings 5–6
+    _fillCircle(canvas, center, radius * 0.40,  AppColors.targetRed);   // rings 7–8
+    _fillCircle(canvas, center, radius * 0.20,  AppColors.targetGold);  // rings 9–10
+
+    // Crosshair
+    _drawCrosshair(canvas, center, radius);
+
+    // Ring dividers at every 0.1R step
+    // Zone boundaries (0.20, 0.40, 0.60, 0.80, 1.00) are slightly bolder
+    for (int i = 1; i <= 10; i++) {
+      final frac = i * 0.10;
+      final isZoneBoundary = (i % 2 == 0); // 0.20, 0.40, 0.60, 0.80, 1.00
+      _strokeCircle(
+        canvas,
+        center,
+        radius * frac,
+        isZoneBoundary
+            ? Colors.black.withOpacity(0.28)
+            : Colors.black.withOpacity(0.16),
+        isZoneBoundary ? 1.2 : 0.7,
+      );
+    }
+
+    // X ring indicator at 0.05R (subtle)
+    _strokeCircle(
+        canvas, center, radius * 0.05, Colors.black.withOpacity(0.35), 0.7);
+
+    // Compound indoor inner-10 boundary highlight at 0.10R
+    if (isCompoundIndoor) {
+      _strokeCircle(
+          canvas, center, radius * 0.10, AppColors.primary.withOpacity(0.80), 2.0);
+    }
+  }
+
+  /// Triple (6-ring) face.
+  /// Display maps the inner 50% of the full target (rings 6–10 only).
+  /// Display fractions relative to triple display radius:
+  ///   ring 6  → 0.80–1.00 → blue
+  ///   ring 7  → 0.60–0.80 → red
+  ///   ring 8  → 0.40–0.60 → red
+  ///   ring 9  → 0.20–0.40 → gold
+  ///   ring 10 → 0.10–0.20 → gold
+  ///   X       → 0.00–0.10 → (gold + indicator)
+  void _paintTripleFace(Canvas canvas, Offset center, double radius) {
+    // Color zones — draw outside → inside
+    _fillCircle(canvas, center, radius,             AppColors.targetBlue);  // ring 6
+    _fillCircle(canvas, center, radius * 0.80,  AppColors.targetRed);   // rings 7–8
+    _fillCircle(canvas, center, radius * 0.40,  AppColors.targetGold);  // rings 9–10 + X
+
+    // Crosshair
+    _drawCrosshair(canvas, center, radius);
+
+    // Ring dividers
+    // Outer edge (ring 6 boundary)
+    _strokeCircle(canvas, center, radius,             Colors.black.withOpacity(0.28), 1.2);
+    // ring 7–6 boundary (zone boundary → bold)
+    _strokeCircle(canvas, center, radius * 0.80,  Colors.black.withOpacity(0.28), 1.2);
+    // ring 8–7 boundary (within red zone → thin)
+    _strokeCircle(canvas, center, radius * 0.60,  Colors.black.withOpacity(0.16), 0.7);
+    // ring 9–8 boundary (zone boundary → bold)
+    _strokeCircle(canvas, center, radius * 0.40,  Colors.black.withOpacity(0.28), 1.2);
+    // ring 10–9 boundary (within gold zone → thin)
+    _strokeCircle(canvas, center, radius * 0.20,  Colors.black.withOpacity(0.16), 0.7);
+    // X boundary
+    _strokeCircle(canvas, center, radius * 0.10,  Colors.black.withOpacity(0.35), 0.7);
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  void _fillCircle(Canvas canvas, Offset center, double radius, Color color) {
+    canvas.drawCircle(center, radius, Paint()..color = color);
+  }
+
+  void _strokeCircle(
+      Canvas canvas, Offset center, double radius, Color color, double width) {
     canvas.drawCircle(
       center,
       radius,
       Paint()
         ..style = PaintingStyle.stroke
-        ..color = Colors.black.withOpacity(0.2)
-        ..strokeWidth = 1.5,
+        ..color = color
+        ..strokeWidth = width,
     );
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is TargetFacePainter &&
-        (oldDelegate.targetFaceSize != targetFaceSize || oldDelegate.useSixRingFace != useSixRingFace);
+  void _drawCrosshair(Canvas canvas, Offset center, double radius) {
+    final paint = Paint()
+      ..color = Colors.black.withOpacity(0.12)
+      ..strokeWidth = 0.7;
+    canvas.drawLine(
+        Offset(center.dx - radius, center.dy),
+        Offset(center.dx + radius, center.dy),
+        paint);
+    canvas.drawLine(
+        Offset(center.dx, center.dy - radius),
+        Offset(center.dx, center.dy + radius),
+        paint);
   }
+
+  @override
+  bool shouldRepaint(covariant TargetFacePainter oldDelegate) =>
+      oldDelegate.isTripleFace != isTripleFace ||
+      oldDelegate.isCompoundIndoor != isCompoundIndoor;
 }
