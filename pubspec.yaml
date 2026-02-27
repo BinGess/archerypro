@@ -36,7 +36,6 @@ dependencies:
 
   # Network & API
   dio: ^5.4.0
-  connectivity_plus: ^5.0.0
   flutter_dotenv: ^5.1.0
   url_launcher: ^6.3.1
 
@@ -74,4 +73,3 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "web/icons/Icon-512.png"
-

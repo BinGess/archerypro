@@ -128,18 +128,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "connectivity_plus",
-      "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/connectivity_plus-5.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "connectivity_plus_platform_interface",
-      "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/connectivity_plus_platform_interface-1.2.4",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "convert",
       "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/convert-3.1.2",
       "packageUri": "lib/",
@@ -162,12 +150,6 @@
       "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/dart_style-2.3.6",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "dbus",
-      "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/dbus-0.7.11",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
     },
     {
       "name": "dio",
@@ -426,12 +408,6 @@
       "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/native_toolchain_c-0.17.2",
       "packageUri": "lib/",
       "languageVersion": "3.9"
-    },
-    {
-      "name": "nm",
-      "rootUri": "file:///Users/bytedance/.pub-cache/hosted/pub.dev/nm-0.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "objective_c",

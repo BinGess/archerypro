@@ -12,7 +12,6 @@ import 'package:url_launcher_android/url_launcher_android.dart' as url_launcher_
 import 'package:path_provider_foundation/path_provider_foundation.dart' as path_provider_foundation;
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart' as shared_preferences_foundation;
 import 'package:url_launcher_ios/url_launcher_ios.dart' as url_launcher_ios;
-import 'package:connectivity_plus/connectivity_plus.dart' as connectivity_plus;
 import 'package:path_provider_linux/path_provider_linux.dart' as path_provider_linux;
 import 'package:shared_preferences_linux/shared_preferences_linux.dart' as shared_preferences_linux;
 import 'package:url_launcher_linux/url_launcher_linux.dart' as url_launcher_linux;
@@ -85,15 +84,6 @@ class _PluginRegistrant {
       }
 
     } else if (Platform.isLinux) {
-      try {
-        connectivity_plus.ConnectivityPlusLinuxPlugin.registerWith();
-      } catch (err) {
-        print(
-          '`connectivity_plus` threw an error: $err. '
-          'The app may not function as expected until you remove this plugin from pubspec.yaml'
-        );
-      }
-
       try {
         path_provider_linux.PathProviderLinux.registerWith();
       } catch (err) {
