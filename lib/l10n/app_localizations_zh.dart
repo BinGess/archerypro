@@ -256,6 +256,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageSettings => '语言设置';
 
   @override
+  String get monthlyGoalSettings => '月度目标';
+
+  @override
+  String get monthlyGoalSettingsSubtitle => '设置本月目标箭数并查看完成度';
+
+  @override
+  String get monthlyGoalCurrentProgress => '本月进度';
+
+  @override
+  String get monthlyGoalCompletion => '完成度';
+
+  @override
+  String get monthlyGoalSetTitle => '设置月度目标';
+
+  @override
+  String get monthlyGoalInputHint => '请输入本月目标箭数';
+
+  @override
+  String get monthlyGoalInputLabel => '目标箭数';
+
+  @override
+  String get monthlyGoalSaveSuccess => '月度目标已更新';
+
+  @override
+  String get monthlyGoalInvalidValue => '请输入大于 0 的有效数字';
+
+  @override
   String get selectLanguage => '选择语言';
 
   @override
@@ -522,7 +549,7 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get clickToAdd => '点击"添加"开始第一次训练';
   @override
-  String showingRecentMessage(String count) => '显示最近 $count 次训练';
+  String showingRecentMessage(String count) => '显示 $count 次训练';
 
   @override
   String get totalArrows => '总箭数';

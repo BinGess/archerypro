@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../models/statistics.dart';
+import '../providers/analytics_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/scoring_provider.dart';
 import 'logs_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -11,6 +15,10 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final analyticsState = ref.watch(analyticsProvider);
+    final stats = analyticsState.allTimeStatistics;
+    final storedGoal = ref.read(storageServiceProvider).getMonthlyGoal();
+    final currentGoal = stats.monthlyGoal ?? storedGoal;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -26,6 +34,15 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           _buildSectionHeader(context, l10n.languageSettings),
           _buildLanguageSection(context, ref, l10n),
+          const SizedBox(height: 24),
+          _buildSectionHeader(context, l10n.monthlyGoalSettings),
+          _buildMonthlyGoalSection(
+            context,
+            ref,
+            l10n,
+            stats: stats,
+            currentGoal: currentGoal,
+          ),
           const SizedBox(height: 24),
           _buildSectionHeader(context, l10n.debugSection),
           _buildDebugSection(context, l10n),
@@ -48,6 +65,236 @@ class SettingsScreen extends ConsumerWidget {
           color: AppColors.textSlate500,
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyGoalSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n, {
+    required Statistics stats,
+    required int currentGoal,
+  }) {
+    final currentMonthArrows = stats.currentMonthArrows;
+    final progressPercent = stats.monthlyGoalProgress.clamp(0.0, 999.0);
+    final progressValue = (stats.monthlyGoalProgress / 100).clamp(0.0, 1.0);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () =>
+                _showMonthlyGoalDialog(context, ref, l10n, currentGoal),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSubtle,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.track_changes_outlined,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.monthlyGoalMessage(currentGoal.toString()),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSlate900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.monthlyGoalSettingsSubtitle,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSlate500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.edit_outlined,
+                    color: AppColors.textSlate400,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      l10n.monthlyGoalCurrentProgress,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '$currentMonthArrows ${l10n.unitArrows}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      l10n.monthlyGoalCompletion,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${progressPercent.toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    minHeight: 8,
+                    backgroundColor: AppColors.surfaceSubtle,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showMonthlyGoalDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    int currentGoal,
+  ) async {
+    final controller = TextEditingController(text: currentGoal.toString());
+    String? validationError;
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(l10n.monthlyGoalSetTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.monthlyGoalInputHint,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSlate500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.monthlyGoalInputLabel,
+                      errorText: validationError,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(l10n.cancel),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final value = int.tryParse(controller.text.trim());
+                    if (value == null || value <= 0) {
+                      setDialogState(() {
+                        validationError = l10n.monthlyGoalInvalidValue;
+                      });
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(value);
+                  },
+                  child: Text(l10n.save),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (result == null) return;
+
+    await ref.read(storageServiceProvider).setMonthlyGoal(result);
+    final analyticsNotifier = ref.read(analyticsProvider.notifier);
+    analyticsNotifier.clearCache();
+    await analyticsNotifier.refreshAnalytics();
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.monthlyGoalSaveSuccess),
+        backgroundColor: Colors.green,
       ),
     );
   }

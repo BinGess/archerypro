@@ -258,6 +258,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSettings => 'Language Settings';
 
   @override
+  String get monthlyGoalSettings => 'Monthly Goal';
+
+  @override
+  String get monthlyGoalSettingsSubtitle =>
+      'Set your monthly arrow target and track completion';
+
+  @override
+  String get monthlyGoalCurrentProgress => 'This month';
+
+  @override
+  String get monthlyGoalCompletion => 'Completion';
+
+  @override
+  String get monthlyGoalSetTitle => 'Set Monthly Goal';
+
+  @override
+  String get monthlyGoalInputHint => 'Enter monthly target arrows';
+
+  @override
+  String get monthlyGoalInputLabel => 'Target Arrows';
+
+  @override
+  String get monthlyGoalSaveSuccess => 'Monthly goal updated';
+
+  @override
+  String get monthlyGoalInvalidValue =>
+      'Please enter a valid number greater than 0';
+
+  @override
   String get selectLanguage => 'Select Language';
 
   @override
@@ -528,7 +557,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clickToAdd => 'Tap "+" to start your first session';
   @override
-  String showingRecentMessage(String count) => 'Showing recent $count sessions';
+  String showingRecentMessage(String count) => 'Showing $count sessions';
 
   @override
   String get totalArrows => 'Total Arrows';

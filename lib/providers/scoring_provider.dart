@@ -12,10 +12,12 @@ import '../utils/constants.dart';
 // Service providers
 final scoringServiceProvider = Provider((ref) => ScoringService());
 final storageServiceProvider = Provider((ref) => StorageService());
-final sessionServiceProvider = Provider((ref) => SessionService(ref.watch(storageServiceProvider)));
+final sessionServiceProvider =
+    Provider((ref) => SessionService(ref.watch(storageServiceProvider)));
 
 // Scoring state provider
-final scoringProvider = StateNotifierProvider<ScoringNotifier, ScoringState>((ref) {
+final scoringProvider =
+    StateNotifierProvider<ScoringNotifier, ScoringState>((ref) {
   return ScoringNotifier(
     ref.watch(scoringServiceProvider),
     ref.watch(sessionServiceProvider),
@@ -67,7 +69,8 @@ class ScoringState {
   bool get isSessionComplete => completedEndsCount >= maxEnds;
 
   /// Whether current end is complete
-  bool get isCurrentEndComplete => (currentEnd?.arrows.length ?? 0) >= arrowsPerEnd;
+  bool get isCurrentEndComplete =>
+      (currentEnd?.arrows.length ?? 0) >= arrowsPerEnd;
 
   ScoringState copyWith({
     TrainingSession? currentSession,
@@ -101,7 +104,8 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
   final ScoringService _scoringService;
   final SessionService _sessionService;
 
-  ScoringNotifier(this._scoringService, this._sessionService) : super(const ScoringState());
+  ScoringNotifier(this._scoringService, this._sessionService)
+      : super(const ScoringState());
 
   /// Start a new session
   void startNewSession({
@@ -142,7 +146,9 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     // If we detect any end with more than 6 arrows, we scale up to support it.
     int inferredArrowsPerEnd = 6;
     if (session.ends.isNotEmpty) {
-      final maxArrows = session.ends.map((e) => e.arrows.length).fold(0, (prev, curr) => curr > prev ? curr : prev);
+      final maxArrows = session.ends
+          .map((e) => e.arrows.length)
+          .fold(0, (prev, curr) => curr > prev ? curr : prev);
       if (maxArrows > 6) inferredArrowsPerEnd = maxArrows;
     }
 
@@ -153,7 +159,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
 
     state = state.copyWith(
       currentSession: session,
-      currentEnd: null, 
+      currentEnd: null,
       // Focus on the end of the list (waiting for "One More End" or user to select an existing end)
       focusedEndIndex: session.ends.length,
       focusedArrowIndex: 0,
@@ -169,7 +175,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
   void setFocus(int endIdx, int arrowIdx) {
     // Ensure indices are within bounds
     if (endIdx < 0 || arrowIdx < 0 || arrowIdx >= state.arrowsPerEnd) return;
-    
+
     // Auto-create ends if focusing on a future end (e.g. via auto-advance)
     // But typically setFocus is user-initiated.
     // If user clicks a future end placeholder, we should probably allow it only if previous ends are done?
@@ -195,12 +201,13 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       // If focusedEndIndex exceeds current ends length, we need to create a new end
       List<End> currentEnds = [...state.currentSession!.ends];
       End? targetEnd;
-      
+
       if (state.focusedEndIndex < currentEnds.length) {
         targetEnd = currentEnds[state.focusedEndIndex];
       } else if (state.focusedEndIndex == currentEnds.length) {
         // Create new end
-        targetEnd = _scoringService.createEnd(state.focusedEndIndex + 1, maxArrows: state.arrowsPerEnd);
+        targetEnd = _scoringService.createEnd(state.focusedEndIndex + 1,
+            maxArrows: state.arrowsPerEnd);
         currentEnds.add(targetEnd);
       } else {
         // Gap in ends (shouldn't happen with sequential logic), but handle gracefully
@@ -220,7 +227,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       } else {
         // Gap in arrows, fill with 0s? Or prevent input.
         // For simplicity, we only allow input if previous arrows exist or we are at the next slot.
-        // But the user might want to edit "Arrow 3" before "Arrow 2". 
+        // But the user might want to edit "Arrow 3" before "Arrow 2".
         // Let's assume we fill gaps with Miss (0) if needed, OR just append.
         // Given the requirement "insert into green box", the UI will guide sequential input usually.
         // Let's just append if index is too high to be safe.
@@ -230,7 +237,8 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       // 3. Update End
       final updatedEnd = targetEnd.copyWith(arrows: arrows);
       if (state.focusedEndIndex < currentEnds.length) {
-        currentEnds[state.focusedEndIndex] = updatedEnd; // Replace if existed before this function call (logic above modified currentEnds list)
+        currentEnds[state.focusedEndIndex] =
+            updatedEnd; // Replace if existed before this function call (logic above modified currentEnds list)
         // Actually, logic above added to list if new.
         // Let's rely on index.
         currentEnds[state.focusedEndIndex] = updatedEnd;
@@ -238,21 +246,30 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
 
       // 4. Update Session
       final updatedSession = state.currentSession!.copyWith(ends: currentEnds);
-      
+
       // 5. Calculate Next Focus
       int nextEndIdx = state.focusedEndIndex;
       int nextArrowIdx = state.focusedArrowIndex + 1;
 
       if (nextArrowIdx >= state.arrowsPerEnd) {
-        // End completed, move to next end
-        nextEndIdx++;
-        nextArrowIdx = 0;
+        final hasNextEnd = state.focusedEndIndex + 1 < state.maxEnds;
+        if (hasNextEnd) {
+          // End completed, move to next end
+          nextEndIdx++;
+          nextArrowIdx = 0;
+        } else {
+          // Keep focus on the terminal arrow to avoid overflowing into
+          // a non-existent end (e.g. showing 4/3 when max is 3/3).
+          nextEndIdx = state.focusedEndIndex;
+          nextArrowIdx = state.arrowsPerEnd - 1;
+        }
       }
 
       // 6. Update State
       state = state.copyWith(
         currentSession: updatedSession,
-        currentEnd: updatedEnd, // Keep currentEnd pointing to the one just modified
+        currentEnd:
+            updatedEnd, // Keep currentEnd pointing to the one just modified
         focusedEndIndex: nextEndIdx,
         focusedArrowIndex: nextArrowIdx,
         error: null,
@@ -266,7 +283,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       // But let's leave it to lazy creation in the next addArrow call or manual tap.
       // Actually, for better UX, if we auto-advanced focus, the green box should appear on the next empty slot.
       // If that slot is in a non-existent end, we might want to make sure UI handles it.
-      
+
       return false; // Never auto-complete/save
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -278,9 +295,11 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
   Future<void> _completeCurrentEnd() async {
     if (state.currentEnd == null || state.currentSession == null) return;
 
-    final completedEnd = state.currentEnd!.copyWith(completedAt: DateTime.now());
+    final completedEnd =
+        state.currentEnd!.copyWith(completedAt: DateTime.now());
     final updatedEnds = [...state.currentSession!.ends];
-    final existingIndex = updatedEnds.indexWhere((e) => e.id == completedEnd.id);
+    final existingIndex =
+        updatedEnds.indexWhere((e) => e.id == completedEnd.id);
     if (existingIndex >= 0) {
       updatedEnds[existingIndex] = completedEnd;
     } else {
@@ -295,17 +314,18 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
   void _startNextEnd() {
     final nextEndNumber = state.completedEndsCount + 1;
     // Removed strict check against maxEnds to allow "one more end" functionality
-    final nextEnd = _scoringService.createEnd(nextEndNumber, maxArrows: state.arrowsPerEnd);
+    final nextEnd =
+        _scoringService.createEnd(nextEndNumber, maxArrows: state.arrowsPerEnd);
     state = state.copyWith(currentEnd: nextEnd);
   }
 
   /// Manually add an extra end
   void addOneMoreEnd() {
     if (state.currentSession == null) return;
-    
+
     // Increase max ends by 1
     final newMaxEnds = state.maxEnds + 1;
-    
+
     // Advance focus to the new end position (which is after the last existing end)
     final newFocusIndex = state.currentSession!.ends.length;
 
@@ -314,7 +334,7 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       focusedEndIndex: newFocusIndex,
       focusedArrowIndex: 0,
     );
-    
+
     // Start the new end
     _startNextEnd();
   }
@@ -332,13 +352,16 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     }
 
     try {
-      final updatedEnd = _scoringService.removeLastArrowFromEnd(state.currentEnd!);
+      final updatedEnd =
+          _scoringService.removeLastArrowFromEnd(state.currentEnd!);
 
       // Update session
       TrainingSession? updatedSession = state.currentSession;
       if (updatedSession != null) {
-        final filteredEnds = updatedSession.ends.where((e) => e.id != updatedEnd.id).toList();
-        updatedSession = updatedSession.copyWith(ends: [...filteredEnds, updatedEnd]);
+        final filteredEnds =
+            updatedSession.ends.where((e) => e.id != updatedEnd.id).toList();
+        updatedSession =
+            updatedSession.copyWith(ends: [...filteredEnds, updatedEnd]);
       }
 
       state = state.copyWith(
@@ -360,8 +383,10 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     // Update session with completed end
     TrainingSession? updatedSession = state.currentSession;
     if (updatedSession != null) {
-      final filteredEnds = updatedSession.ends.where((e) => e.id != completedEnd.id).toList();
-      updatedSession = updatedSession.copyWith(ends: [...filteredEnds, completedEnd]);
+      final filteredEnds =
+          updatedSession.ends.where((e) => e.id != completedEnd.id).toList();
+      updatedSession =
+          updatedSession.copyWith(ends: [...filteredEnds, completedEnd]);
     }
 
     // Create new end
@@ -395,8 +420,10 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
 
       if (state.currentEnd != null && state.currentEnd!.arrows.isNotEmpty) {
         final completedEnd = _scoringService.completeEnd(state.currentEnd!);
-        final filteredEnds = sessionToSave.ends.where((e) => e.id != completedEnd.id).toList();
-        sessionToSave = sessionToSave.copyWith(ends: [...filteredEnds, completedEnd]);
+        final filteredEnds =
+            sessionToSave.ends.where((e) => e.id != completedEnd.id).toList();
+        sessionToSave =
+            sessionToSave.copyWith(ends: [...filteredEnds, completedEnd]);
       }
 
       // Complete the session
@@ -404,18 +431,18 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
       // If we added new ends (more than original), maybe we should.
       // But simpler logic: if it has endTime, keep it, unless explicitly we want to update it.
       // For now, let's just use updateSession if editing, or completeSession if new.
-      
+
       TrainingSession completedSession;
       if (state.isEditing && sessionToSave.endTime != null) {
-         // It's an edit of a completed session.
-         // We might want to update stats but keep the original timestamp?
-         // Actually, if we changed scores, totalScore etc are getters, so they auto-update.
-         // We just need to persist the changes.
-         completedSession = sessionToSave;
-         await _sessionService.updateSession(completedSession);
+        // It's an edit of a completed session.
+        // We might want to update stats but keep the original timestamp?
+        // Actually, if we changed scores, totalScore etc are getters, so they auto-update.
+        // We just need to persist the changes.
+        completedSession = sessionToSave;
+        await _sessionService.updateSession(completedSession);
       } else {
-         completedSession = _sessionService.completeSession(sessionToSave);
-         await _sessionService.saveSession(completedSession);
+        completedSession = _sessionService.completeSession(sessionToSave);
+        await _sessionService.saveSession(completedSession);
       }
 
       // Do NOT reset state here to prevent UI from flashing to empty state before navigation

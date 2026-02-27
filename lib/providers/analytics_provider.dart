@@ -14,10 +14,11 @@ final analyticsServiceProvider = Provider((ref) => AnalyticsService());
 final selectedPeriodProvider = StateProvider<String>((ref) => kPeriod1Month);
 
 // Analytics provider
-final analyticsProvider = StateNotifierProvider<AnalyticsNotifier, AnalyticsState>((ref) {
+final analyticsProvider =
+    StateNotifierProvider<AnalyticsNotifier, AnalyticsState>((ref) {
   // Watch session provider to ensure analytics are updated when sessions change
   ref.watch(sessionProvider);
-  
+
   return AnalyticsNotifier(
     ref.watch(analyticsServiceProvider),
     ref.watch(storageServiceProvider),
@@ -28,7 +29,8 @@ final analyticsProvider = StateNotifierProvider<AnalyticsNotifier, AnalyticsStat
 /// State for analytics
 class AnalyticsState {
   final Statistics statistics;
-  final Statistics allTimeStatistics;  // Added for dashboard - always shows all-time data
+  final Statistics
+      allTimeStatistics; // Added for dashboard - always shows all-time data
   final List<AIInsight> insights;
   final bool isLoading;
   final String? error;
@@ -39,38 +41,40 @@ class AnalyticsState {
     this.insights = const [],
     this.isLoading = false,
     this.error,
-  }) : statistics = statistics ?? const Statistics(
-    period: kPeriod1Month,
-    totalSessions: 0,
-    totalArrows: 0,
-    totalScore: 0,
-    maxPossibleScore: 0,
-    avgArrowScore: 0.0,
-    avgEndScore: 0.0,
-    bestScore: 0,
-    bestMaxScore: 0,
-    trend: 0.0,
-    avgConsistency: 0.0,
-    heatmapData: [],
-    scoreTrendData: {},
-    currentMonthArrows: 0,
-  ),
-  allTimeStatistics = allTimeStatistics ?? const Statistics(
-    period: kPeriodAll,
-    totalSessions: 0,
-    totalArrows: 0,
-    totalScore: 0,
-    maxPossibleScore: 0,
-    avgArrowScore: 0.0,
-    avgEndScore: 0.0,
-    bestScore: 0,
-    bestMaxScore: 0,
-    trend: 0.0,
-    avgConsistency: 0.0,
-    heatmapData: [],
-    scoreTrendData: {},
-    currentMonthArrows: 0,
-  );
+  })  : statistics = statistics ??
+            const Statistics(
+              period: kPeriod1Month,
+              totalSessions: 0,
+              totalArrows: 0,
+              totalScore: 0,
+              maxPossibleScore: 0,
+              avgArrowScore: 0.0,
+              avgEndScore: 0.0,
+              bestScore: 0,
+              bestMaxScore: 0,
+              trend: 0.0,
+              avgConsistency: 0.0,
+              heatmapData: [],
+              scoreTrendData: {},
+              currentMonthArrows: 0,
+            ),
+        allTimeStatistics = allTimeStatistics ??
+            const Statistics(
+              period: kPeriodAll,
+              totalSessions: 0,
+              totalArrows: 0,
+              totalScore: 0,
+              maxPossibleScore: 0,
+              avgArrowScore: 0.0,
+              avgEndScore: 0.0,
+              bestScore: 0,
+              bestMaxScore: 0,
+              trend: 0.0,
+              avgConsistency: 0.0,
+              heatmapData: [],
+              scoreTrendData: {},
+              currentMonthArrows: 0,
+            );
 
   AnalyticsState copyWith({
     Statistics? statistics,
@@ -114,11 +118,18 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
       // Get sessions from session provider
       final sessionState = _ref.read(sessionProvider);
       final sessions = sessionState.sessions;
+      final monthlyGoal = _storageService.getMonthlyGoal();
 
       if (sessions.isEmpty) {
         state = state.copyWith(
-          statistics: Statistics.empty(period: period),
-          allTimeStatistics: Statistics.empty(period: kPeriodAll),
+          statistics: Statistics.empty(period: period).copyWith(
+            monthlyGoal: monthlyGoal,
+            currentMonthArrows: 0,
+          ),
+          allTimeStatistics: Statistics.empty(period: kPeriodAll).copyWith(
+            monthlyGoal: monthlyGoal,
+            currentMonthArrows: 0,
+          ),
           insights: [],
           isLoading: false,
         );
@@ -126,7 +137,12 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
       }
 
       // Generate cache key based on period and session data
-      final cacheKey = _generateCacheKey(period, sessions.length, sessions.first.id);
+      final cacheKey = _generateCacheKey(
+        period,
+        sessions.length,
+        sessions.first.id,
+        monthlyGoal,
+      );
 
       // Check if we have cached result
       if (_cache.containsKey(cacheKey)) {
@@ -139,9 +155,6 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         );
         return;
       }
-
-      // Get monthly goal
-      final monthlyGoal = _storageService.getMonthlyGoal();
 
       // Calculate statistics for current period
       final statistics = _analyticsService.calculateStatistics(
@@ -190,8 +203,13 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   }
 
   /// Generate cache key based on period and session data
-  String _generateCacheKey(String period, int sessionCount, String firstSessionId) {
-    return '$period-$sessionCount-$firstSessionId';
+  String _generateCacheKey(
+    String period,
+    int sessionCount,
+    String firstSessionId,
+    int monthlyGoal,
+  ) {
+    return '$period-$sessionCount-$firstSessionId-$monthlyGoal';
   }
 
   /// Clear cache (useful when sessions are modified)

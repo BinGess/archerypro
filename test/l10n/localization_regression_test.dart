@@ -14,6 +14,8 @@ void main() {
     expect(en.myBowName(en.bowCompound), 'My Compound');
     expect(en.aiCoachBasedOnCurrentSession,
         'Professional advice based on this session');
+    expect(en.monthlyGoalSetTitle, 'Set Monthly Goal');
+    expect(en.monthlyGoalSaveSuccess, 'Monthly goal updated');
   });
 
   test('new localization keys return expected Chinese copy', () {
@@ -25,5 +27,7 @@ void main() {
     expect(zh.sessionSetupSelectLabel('距离'), '选择距离');
     expect(zh.myBowName(zh.bowCompound), '我的复合弓');
     expect(zh.aiCoachBasedOnCurrentSession, '基于本次训练的专业建议');
+    expect(zh.monthlyGoalSetTitle, '设置月度目标');
+    expect(zh.monthlyGoalSaveSuccess, '月度目标已更新');
   });
 }

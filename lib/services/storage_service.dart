@@ -53,7 +53,8 @@ class StorageService {
   /// Ensure the service is initialized
   void _ensureInitialized() {
     if (!_isInitialized) {
-      throw StateError('StorageService not initialized. Call initialize() first.');
+      throw StateError(
+          'StorageService not initialized. Call initialize() first.');
     }
   }
 
@@ -84,19 +85,24 @@ class StorageService {
     return _sessionFromJsonString(jsonString);
   }
 
-  /// Get all sessions (limited to prevent OOM)
-  /// [limit] defaults to 10 to ensure app stability
-  Future<List<TrainingSession>> getAllSessions({int limit = 10}) async {
+  /// Get all sessions.
+  /// When [limit] is provided, only the most recent [limit] inserted records
+  /// are loaded.
+  Future<List<TrainingSession>> getAllSessions({int? limit}) async {
     _ensureInitialized();
     final sessions = <TrainingSession>[];
 
     // Get all keys
     final keys = _sessionsBox!.keys.toList();
-    
-    // Load only the last [limit] sessions (assuming insertion order)
-    // This prevents loading thousands of sessions into memory
-    final startIndex = (keys.length > limit) ? keys.length - limit : 0;
-    final keysToLoad = keys.skip(startIndex);
+
+    final Iterable<dynamic> keysToLoad;
+    if (limit == null || limit <= 0) {
+      keysToLoad = keys;
+    } else {
+      // Load only the last [limit] sessions (assuming insertion order)
+      final startIndex = (keys.length > limit) ? keys.length - limit : 0;
+      keysToLoad = keys.skip(startIndex);
+    }
 
     for (final key in keysToLoad) {
       try {
@@ -116,10 +122,11 @@ class StorageService {
 
   /// Get sessions for a specific date range
   /// Iterates through all data but only keeps matching sessions in memory
-  Future<List<TrainingSession>> getSessionsInRange(DateTime start, DateTime end) async {
+  Future<List<TrainingSession>> getSessionsInRange(
+      DateTime start, DateTime end) async {
     _ensureInitialized();
     final sessions = <TrainingSession>[];
-    
+
     // Iterate all keys to find matches
     // This is slower but ensures we find all historical data without loading everything into memory
     for (final key in _sessionsBox!.keys) {
@@ -137,7 +144,7 @@ class StorageService {
         print('Error loading session during range query: $e');
       }
     }
-    
+
     return sessions;
   }
 
@@ -186,7 +193,9 @@ class StorageService {
 
   /// Get monthly goal
   int getMonthlyGoal() {
-    return getSetting<int>(kMonthlyGoalKey, defaultValue: kDefaultMonthlyGoal) ?? kDefaultMonthlyGoal;
+    return getSetting<int>(kMonthlyGoalKey,
+            defaultValue: kDefaultMonthlyGoal) ??
+        kDefaultMonthlyGoal;
   }
 
   /// Set monthly goal

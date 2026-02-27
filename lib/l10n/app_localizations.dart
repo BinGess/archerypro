@@ -102,6 +102,15 @@ abstract class AppLocalizations {
   // Settings
   String get settingsTitle;
   String get languageSettings;
+  String get monthlyGoalSettings;
+  String get monthlyGoalSettingsSubtitle;
+  String get monthlyGoalCurrentProgress;
+  String get monthlyGoalCompletion;
+  String get monthlyGoalSetTitle;
+  String get monthlyGoalInputHint;
+  String get monthlyGoalInputLabel;
+  String get monthlyGoalSaveSuccess;
+  String get monthlyGoalInvalidValue;
   String get selectLanguage;
   String get chinese;
   String get english;

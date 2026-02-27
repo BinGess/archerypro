@@ -4,7 +4,8 @@ import '../services/session_service.dart';
 import 'scoring_provider.dart';
 
 // Session list provider
-final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>((ref) {
+final sessionProvider =
+    StateNotifierProvider<SessionNotifier, SessionState>((ref) {
   return SessionNotifier(ref.watch(sessionServiceProvider));
 });
 
@@ -39,11 +40,11 @@ class SessionState {
     });
   }
 
-  /// Get recent sessions (last 10)
+  /// Get sessions sorted by date (newest first)
   List<TrainingSession> get recentSessions {
     final sorted = List<TrainingSession>.from(sessions)
       ..sort((a, b) => b.date.compareTo(a.date));
-    return sorted.take(10).toList();
+    return sorted;
   }
 
   SessionState copyWith({
