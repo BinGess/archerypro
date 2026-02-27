@@ -2,6 +2,7 @@ import '../../models/training_session.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
 import '../logger_service.dart';
 import 'coze_ai_service.dart';
+import 'coze_api_exception.dart';
 import 'local_ai_service.dart';
 import 'network_service.dart';
 
@@ -43,6 +44,22 @@ class SmartAIService {
         final response = await _cozeService.analyzeSession(session, language);
         _logger.log('Coze AI 分析成功', level: LogLevel.info);
         return response;
+      } on CozeAPIException catch (e) {
+        if (!e.isRecoverable) {
+          _logger.log(
+            'Coze AI 不可恢复错误，停止降级并上抛',
+            level: LogLevel.error,
+            error: e,
+          );
+          rethrow;
+        }
+        // 在线分析失败，降级到本地
+        _logger.log(
+          'Coze AI 分析失败，降级到本地 AI',
+          level: LogLevel.warning,
+          error: e,
+        );
+        return await _analyzeSessionLocally(session, historicalSessions);
       } catch (e) {
         // 在线分析失败，降级到本地
         _logger.log(
@@ -85,6 +102,22 @@ class SmartAIService {
         );
         _logger.log('Coze AI 周期分析成功', level: LogLevel.info);
         return response;
+      } on CozeAPIException catch (e) {
+        if (!e.isRecoverable) {
+          _logger.log(
+            'Coze AI 周期分析出现不可恢复错误，停止降级并上抛',
+            level: LogLevel.error,
+            error: e,
+          );
+          rethrow;
+        }
+        // 在线分析失败，降级到本地
+        _logger.log(
+          'Coze AI 周期分析失败，降级到本地 AI',
+          level: LogLevel.warning,
+          error: e,
+        );
+        return await _analyzePeriodLocally(period, allSessions);
       } catch (e) {
         // 在线分析失败，降级到本地
         _logger.log(
