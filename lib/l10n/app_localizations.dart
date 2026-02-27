@@ -233,6 +233,7 @@ abstract class AppLocalizations {
   String get trend;
   String monthlyGoalMessage(String count);
   String get noRecords;
+  String get homeEmptyPrompt;
   String get clickToAdd;
   String showingRecentMessage(String count);
   String get totalArrows; // New key added for fix

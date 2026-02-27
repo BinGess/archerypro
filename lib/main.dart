@@ -14,7 +14,6 @@ import 'providers/scoring_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/locale_provider.dart';
 import 'l10n/app_localizations.dart';
-import 'utils/sample_data.dart';
 
 void main() async {
   // Run everything in a guarded zone
@@ -109,7 +108,8 @@ class ArcheryApp extends ConsumerWidget {
       final localeState = ref.watch(localeProvider);
 
       return MaterialApp(
-        title: 'Archery Tracker',
+        onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+        title: '射箭记录专业版',
         debugShowCheckedModeBanner: false,
 
         // Localization delegates
@@ -428,27 +428,7 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
 
       await logger.forceFlush();
 
-      // Generate sample data if needed (also in background)
-      if (sessions.isEmpty) {
-        logger.log('🎲 No sessions found, generating sample data...',
-            level: LogLevel.info);
-        try {
-          final sessionService = ref.read(sessionServiceProvider);
-          final scoringService = ref.read(scoringServiceProvider);
-          final generator = SampleDataGenerator(sessionService, scoringService);
-
-          await generator.generateSampleSessions();
-          logger.log('✅ Sample data generated', level: LogLevel.info);
-
-          await ref.read(sessionProvider.notifier).loadSessions();
-        } catch (e, stack) {
-          logger.logError(
-            'Failed to generate sample data',
-            error: e,
-            stackTrace: stack,
-          );
-        }
-      }
+      // Keep first-launch state empty; do not auto-generate sample sessions.
     } catch (e, stack) {
       logger.logError(
         'Failed to load sessions in background',

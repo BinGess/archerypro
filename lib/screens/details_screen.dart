@@ -19,6 +19,8 @@ import '../l10n/app_localizations.dart';
 import '../widgets/ai_coach/ai_source_badge.dart';
 
 class DetailsScreen extends ConsumerWidget {
+  static const bool _showAICoachSection = false;
+
   const DetailsScreen({super.key});
 
   @override
@@ -172,12 +174,12 @@ class DetailsScreen extends ConsumerWidget {
             // Visualization Section
             _buildVisualizationSection(session, l10n),
 
-            const SizedBox(height: 32),
-
-            // AI Coach Analysis (优先在线，失败降级到本地)
-            _buildAICoachAnalysis(session, ref, l10n),
-
-            const SizedBox(height: 20),
+            if (_showAICoachSection) ...[
+              const SizedBox(height: 32),
+              // AI Coach Analysis (优先在线，失败降级到本地)
+              _buildAICoachAnalysis(session, ref, l10n),
+              const SizedBox(height: 20),
+            ],
 
             // Ends List
             if (session.ends.isNotEmpty)

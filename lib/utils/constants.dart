@@ -3,7 +3,8 @@
 // Scoring Constants
 const int kMinScore = 0; // Miss
 const int kMaxScore = 10;
-const int kXRingScore = 11; // X represented as 11 internally, counts as 10 points
+const int kXRingScore =
+    11; // X represented as 11 internally, counts as 10 points
 
 // Arrow Counts
 const int kDefaultArrowsPerEnd = 6;
@@ -12,6 +13,10 @@ const int kAlternateArrowsPerEnd = 3;
 // Target Face Sizes (in cm)
 const List<int> kTargetFaceSizes = [40, 60, 80, 122];
 const int kDefaultTargetSize = 40;
+
+// Standard scoring boundaries in full-target normalized radius (0.0-1.0).
+const double kTargetXRingBoundary = 0.05;
+const double kTargetTenRingBoundary = 0.10;
 
 // Common Shooting Distances (in meters)
 const List<double> kIndoorDistances = [18.0, 25.0];
@@ -76,7 +81,8 @@ const String kDateFormatFull = 'yyyy-MM-dd HH:mm'; // 2023-10-24 14:30
 const int kDefaultSessionDurationMinutes = 90;
 
 // AI Insight Generation Thresholds
-const int kMinSessionsForInsights = 3; // Minimum sessions needed to generate insights
+const int kMinSessionsForInsights =
+    3; // Minimum sessions needed to generate insights
 const int kMinArrowsForHeatmap = 12; // Minimum arrows needed for heatmap
 
 // UI Constants

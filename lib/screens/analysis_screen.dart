@@ -15,6 +15,8 @@ import '../widgets/ai_coach/ai_result_card.dart';
 import '../widgets/ai_coach/ai_source_badge.dart';
 
 class AnalysisScreen extends ConsumerWidget {
+  static const bool _showAICoachSection = false;
+
   const AnalysisScreen({super.key});
 
   @override
@@ -66,10 +68,11 @@ class AnalysisScreen extends ConsumerWidget {
 
                 // Quadrant Radar Chart
                 _buildQuadrantRadarCard(stats, l10n),
-                const SizedBox(height: 20),
-
-                // AI Coach Analysis Section
-                _buildAICoachSection(ref, selectedPeriod, l10n),
+                if (_showAICoachSection) ...[
+                  const SizedBox(height: 20),
+                  // AI Coach Analysis Section
+                  _buildAICoachSection(ref, selectedPeriod, l10n),
+                ],
               ],
             ),
     );

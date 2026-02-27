@@ -1,6 +1,6 @@
 {
-    "name": "archery_tracker",
-    "short_name": "archery_tracker",
+    "name": "射箭记录专业版",
+    "short_name": "射箭记录专业版",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",

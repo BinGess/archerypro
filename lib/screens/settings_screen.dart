@@ -7,6 +7,7 @@ import '../models/statistics.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/scoring_provider.dart';
+import 'about_screen.dart';
 import 'logs_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -219,69 +220,13 @@ class SettingsScreen extends ConsumerWidget {
     AppLocalizations l10n,
     int currentGoal,
   ) async {
-    final controller = TextEditingController(text: currentGoal.toString());
-    String? validationError;
-
     final result = await showDialog<int>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(l10n.monthlyGoalSetTitle),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.monthlyGoalInputHint,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSlate500,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: controller,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.monthlyGoalInputLabel,
-                      errorText: validationError,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(l10n.cancel),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final value = int.tryParse(controller.text.trim());
-                    if (value == null || value <= 0) {
-                      setDialogState(() {
-                        validationError = l10n.monthlyGoalInvalidValue;
-                      });
-                      return;
-                    }
-                    Navigator.of(dialogContext).pop(value);
-                  },
-                  child: Text(l10n.save),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => _MonthlyGoalDialog(
+        initialGoal: currentGoal,
+        l10n: l10n,
+      ),
     );
-
-    controller.dispose();
 
     if (result == null) return;
 
@@ -519,57 +464,63 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          _buildInfoRow(
-            title: l10n.version,
-            value: '1.0.0',
-            isFirst: true,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const AboutScreen(),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.about,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '反馈&隐私协议',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: AppColors.textSlate400,
+              ),
+            ],
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildInfoRow(
-            title: l10n.appName,
-            value: 'Archery Tracker',
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow({
-    required String title,
-    required String value,
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(
-          top: isFirst ? const Radius.circular(12) : Radius.zero,
-          bottom: isLast ? const Radius.circular(12) : Radius.zero,
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSlate900,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              color: AppColors.textSlate500,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -586,5 +537,91 @@ class SettingsScreen extends ConsumerWidget {
       default:
         return 'English';
     }
+  }
+}
+
+class _MonthlyGoalDialog extends StatefulWidget {
+  const _MonthlyGoalDialog({
+    required this.initialGoal,
+    required this.l10n,
+  });
+
+  final int initialGoal;
+  final AppLocalizations l10n;
+
+  @override
+  State<_MonthlyGoalDialog> createState() => _MonthlyGoalDialogState();
+}
+
+class _MonthlyGoalDialogState extends State<_MonthlyGoalDialog> {
+  late final TextEditingController _controller;
+  String? _validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialGoal.toString());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSave() {
+    final value = int.tryParse(_controller.text.trim());
+    if (value == null || value <= 0) {
+      setState(() {
+        _validationError = widget.l10n.monthlyGoalInvalidValue;
+      });
+      return;
+    }
+
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.l10n.monthlyGoalSetTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.l10n.monthlyGoalInputHint,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSlate500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: widget.l10n.monthlyGoalInputLabel,
+              errorText: _validationError,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(widget.l10n.cancel),
+        ),
+        TextButton(
+          onPressed: _handleSave,
+          child: Text(widget.l10n.save),
+        ),
+      ],
+    );
   }
 }

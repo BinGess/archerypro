@@ -32,7 +32,7 @@ class DashboardScreen extends ConsumerWidget {
                     floating: true,
                     pinned: true,
                     backgroundColor:
-                        AppColors.backgroundLight.withOpacity(0.95),
+                        AppColors.backgroundLight.withValues(alpha: 0.95),
                     title: Text(l10n.navHome),
                     actions: [
                       IconButton(
@@ -108,33 +108,7 @@ class DashboardScreen extends ConsumerWidget {
 
                         const SizedBox(height: 32),
                         if (sessionState.sessions.isEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 48),
-                            alignment: Alignment.center,
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.surfaceSubtle,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.history_edu,
-                                      size: 60, color: AppColors.textSlate300),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  l10n.noRecords,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textSlate500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                          _buildEmptyState(l10n)
                         else
                           Opacity(
                             opacity: 0.4,
@@ -187,7 +161,7 @@ class DashboardScreen extends ConsumerWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 borderRadius:
                     const BorderRadius.only(bottomLeft: Radius.circular(100)),
               ),
@@ -330,6 +304,61 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildEmptyState(AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 124,
+            height: 124,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildTargetRing(
+                    112, AppColors.textSlate300.withValues(alpha: 0.45)),
+                _buildTargetRing(
+                    78, AppColors.primary.withValues(alpha: 0.18)),
+                _buildTargetRing(
+                    44, AppColors.accentGold.withValues(alpha: 0.35)),
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.homeEmptyPrompt,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSlate500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTargetRing(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 2),
+      ),
+    );
+  }
+
   Widget _buildHistoryItem({
     required BuildContext context,
     required bool isHighRecord,
@@ -371,7 +400,7 @@ class DashboardScreen extends ConsumerWidget {
                     color: (isHighRecord
                             ? AppColors.accentGold
                             : AppColors.primary)
-                        .withOpacity(0.25),
+                        .withValues(alpha: 0.25),
                   ),
                 ),
                 child: Stack(
@@ -384,7 +413,7 @@ class DashboardScreen extends ConsumerWidget {
                           color: (isHighRecord
                                   ? AppColors.accentGold
                                   : AppColors.primary)
-                              .withOpacity(0.08),
+                              .withValues(alpha: 0.08),
                           size: 44,
                         ),
                       ),
@@ -397,7 +426,7 @@ class DashboardScreen extends ConsumerWidget {
                             color: (isHighRecord
                                     ? AppColors.accentGold
                                     : AppColors.primary)
-                                .withOpacity(0.95),
+                                .withValues(alpha: 0.95),
                             borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(9)),
                           ),

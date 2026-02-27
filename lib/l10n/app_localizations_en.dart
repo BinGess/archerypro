@@ -5,7 +5,7 @@ import 'app_localizations.dart';
 class AppLocalizationsEn extends AppLocalizations {
   // Common
   @override
-  String get appName => 'Archery Tracker';
+  String get appName => '射箭记录专业版';
 
   @override
   String get ok => 'OK';
@@ -554,6 +554,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String monthlyGoalMessage(String count) => 'Monthly Goal: $count arrows';
   @override
   String get noRecords => 'No training records';
+  @override
+  String get homeEmptyPrompt => 'No shots yet. Time to hit the range.';
   @override
   String get clickToAdd => 'Tap "+" to start your first session';
   @override

@@ -5,7 +5,7 @@ import 'app_localizations.dart';
 class AppLocalizationsZh extends AppLocalizations {
   // Common
   @override
-  String get appName => '射箭追踪器';
+  String get appName => '射箭记录专业版';
 
   @override
   String get ok => '确定';
@@ -546,6 +546,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String monthlyGoalMessage(String count) => '月度目标：$count 支箭';
   @override
   String get noRecords => '暂无训练记录';
+  @override
+  String get homeEmptyPrompt => '还没有记录，赶紧去射箭吧';
   @override
   String get clickToAdd => '点击"添加"开始第一次训练';
   @override

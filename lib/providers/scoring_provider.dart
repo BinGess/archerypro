@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as math;
 import '../models/training_session.dart';
 import '../models/end.dart';
 import '../models/arrow.dart';
@@ -141,28 +142,48 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
 
   /// Load an existing session for editing
   void loadSession(TrainingSession session) {
-    // Infer arrows per end
-    // Default to 6 as it covers most standard cases (3 or 6 arrows)
-    // If we detect any end with more than 6 arrows, we scale up to support it.
+    final sortedEnds = [...session.ends]
+      ..sort((a, b) => a.endNumber.compareTo(b.endNumber));
+    final normalizedSession = session.copyWith(ends: sortedEnds);
+
+    // Infer arrows per end from historical record data first (maxArrows),
+    // with arrows.length as a fallback for legacy data.
     int inferredArrowsPerEnd = 6;
-    if (session.ends.isNotEmpty) {
-      final maxArrows = session.ends
-          .map((e) => e.arrows.length)
+    if (sortedEnds.isNotEmpty) {
+      inferredArrowsPerEnd = sortedEnds
+          .map((e) => math.max(e.maxArrows, e.arrows.length))
           .fold(0, (prev, curr) => curr > prev ? curr : prev);
-      if (maxArrows > 6) inferredArrowsPerEnd = maxArrows;
+      if (inferredArrowsPerEnd <= 0) {
+        inferredArrowsPerEnd = 6;
+      }
     }
 
-    // Infer max ends
-    // Set to current length so the progress shows "Completed/Total" as "X/X"
-    // User can always extend using "One More End" button
-    int inferredMaxEnds = session.ends.isEmpty ? 10 : session.ends.length;
+    // Infer total ends from actual record data.
+    final inferredMaxEnds = sortedEnds.isEmpty
+        ? 1
+        : sortedEnds
+            .map((e) => e.endNumber)
+            .fold(1, (prev, curr) => curr > prev ? curr : prev);
+
+    // Default focus to the last recorded end.
+    final initialFocusedEndIndex =
+        sortedEnds.isEmpty ? 0 : sortedEnds.length - 1;
+    final initialCurrentEnd =
+        sortedEnds.isEmpty ? null : sortedEnds[initialFocusedEndIndex];
+
+    int initialFocusedArrowIndex = 0;
+    if (initialCurrentEnd != null) {
+      final nextEditableIndex = initialCurrentEnd.arrows.length;
+      initialFocusedArrowIndex = nextEditableIndex >= inferredArrowsPerEnd
+          ? inferredArrowsPerEnd - 1
+          : nextEditableIndex;
+    }
 
     state = state.copyWith(
-      currentSession: session,
-      currentEnd: null,
-      // Focus on the end of the list (waiting for "One More End" or user to select an existing end)
-      focusedEndIndex: session.ends.length,
-      focusedArrowIndex: 0,
+      currentSession: normalizedSession,
+      currentEnd: initialCurrentEnd,
+      focusedEndIndex: initialFocusedEndIndex,
+      focusedArrowIndex: initialFocusedArrowIndex,
       maxEnds: inferredMaxEnds,
       arrowsPerEnd: inferredArrowsPerEnd,
       isTargetView: false,
@@ -176,13 +197,13 @@ class ScoringNotifier extends StateNotifier<ScoringState> {
     // Ensure indices are within bounds
     if (endIdx < 0 || arrowIdx < 0 || arrowIdx >= state.arrowsPerEnd) return;
 
-    // Auto-create ends if focusing on a future end (e.g. via auto-advance)
-    // But typically setFocus is user-initiated.
-    // If user clicks a future end placeholder, we should probably allow it only if previous ends are done?
-    // For now, let's just update the state.
+    final ends = state.currentSession?.ends ?? const <End>[];
+    final focusedEnd = endIdx < ends.length ? ends[endIdx] : null;
+
     state = state.copyWith(
       focusedEndIndex: endIdx,
       focusedArrowIndex: arrowIdx,
+      currentEnd: focusedEnd,
     );
   }
 

@@ -11,6 +11,7 @@ import '../models/end.dart';
 import '../models/arrow.dart';
 import '../widgets/target_face_painter.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/constants.dart';
 
 class ScoringScreen extends ConsumerStatefulWidget {
   const ScoringScreen({super.key});
@@ -20,6 +21,13 @@ class ScoringScreen extends ConsumerStatefulWidget {
 }
 
 class _ScoringScreenState extends ConsumerState<ScoringScreen> {
+  static const double _targetCanvasMinSize = 260.0;
+  static const double _targetCanvasMaxSize = 360.0;
+  static const double _targetPanelExtraHeight = 120.0;
+  static const double _arrowMarkerSize = 14.0;
+  static const double _ringLineTolerance = 0.0;
+  static const double _xRingLineTolerance = 0.0;
+
   // List of temporary ripple effects
   final List<RippleModel> _ripples = [];
 
@@ -53,6 +61,18 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         });
       }
     });
+  }
+
+  double _resolveTargetCanvasSize(BuildContext context) {
+    final availableWidth = MediaQuery.sizeOf(context).width - 32.0;
+    return availableWidth.clamp(_targetCanvasMinSize, _targetCanvasMaxSize);
+  }
+
+  Offset _clampToTargetCanvas(Offset position, double canvasSize) {
+    return Offset(
+      position.dx.clamp(0.0, canvasSize),
+      position.dy.clamp(0.0, canvasSize),
+    );
   }
 
   void _startNewSession() {
@@ -375,25 +395,26 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final l10n = AppLocalizations.of(context);
     final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
     final bowType = scoringState.currentSession?.equipment.bowType;
+    final targetCanvasSize = _resolveTargetCanvasSize(context);
+    final targetRadius = targetCanvasSize / 2;
+    final targetPanelHeight = targetCanvasSize + _targetPanelExtraHeight;
 
     // WA rule: triple face = 40cm target + non-compound bow (recurve/barebow/longbow)
     // Compound ALWAYS uses full single face, regardless of target size
-    final isTripleFace =
-        targetFaceSize == 40 && bowType != BowType.compound;
+    final isTripleFace = targetFaceSize == 40 && bowType != BowType.compound;
 
     // Compound bow always uses inner-10 scoring (X ring only scores 10)
     final isCompoundIndoor = bowType == BowType.compound;
 
-    // For triple face, arrow positions (full-target coords -1 to 1) need 2x scale
-    // to map back to the 2x-zoomed display.
-    // Full face: center + pos * 140    (140 keeps markers within bounds)
-    // Triple face: center + pos * 280  (280 = 140 * 2.0)
-    const double baseMarkerRadius = 140.0;
+    // Keep marker rendering on the exact same coordinate system as score
+    // calculation to avoid "tap location vs recorded value" drift.
+    // Full face uses display radius, triple face maps 2x.
+    final double baseMarkerRadius = targetRadius;
     final double markerDisplayRadius =
         isTripleFace ? baseMarkerRadius * 2.0 : baseMarkerRadius;
 
     return Container(
-      height: 380, // Fixed height for target panel
+      height: targetPanelHeight,
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -413,34 +434,44 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             child: Center(
               child: Listener(
                 onPointerDown: (event) {
+                  final clamped = _clampToTargetCanvas(
+                      event.localPosition, targetCanvasSize);
                   setState(() {
-                    _magnifierPosition = event.localPosition;
+                    _magnifierPosition = clamped;
                     _showMagnifier = true;
                   });
                 },
                 onPointerMove: (event) {
+                  final clamped = _clampToTargetCanvas(
+                      event.localPosition, targetCanvasSize);
                   setState(() {
-                    _magnifierPosition = event.localPosition;
+                    _magnifierPosition = clamped;
                   });
                 },
                 onPointerUp: (event) {
-                  if (_magnifierPosition != null) {
-                    _handleTargetTap(_magnifierPosition!);
-                  }
+                  // Prefer the tracked press/move coordinate to avoid lift-off jitter.
+                  final rawTapPosition =
+                      _magnifierPosition ?? event.localPosition;
+                  final tapPosition =
+                      _clampToTargetCanvas(rawTapPosition, targetCanvasSize);
+                  _handleTargetTap(
+                    tapPosition,
+                    targetRadius: targetRadius,
+                  );
                   setState(() {
                     _showMagnifier = false;
                     _magnifierPosition = null;
                   });
                 },
                 child: SizedBox(
-                  width: 300,
-                  height: 300,
+                  width: targetCanvasSize,
+                  height: targetCanvasSize,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       // Target face
                       CustomPaint(
-                        size: const Size(300, 300),
+                        size: Size(targetCanvasSize, targetCanvasSize),
                         painter: TargetFacePainter(
                           isTripleFace: isTripleFace,
                           isCompoundIndoor: isCompoundIndoor,
@@ -457,10 +488,12 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                           final pos = arrow.position!;
                           // pos is stored in full-target normalized coords
                           // map to display: center(150) + pos * markerDisplayRadius
-                          final double left =
-                              150.0 + pos.dx * markerDisplayRadius - 6;
-                          final double top =
-                              150.0 + pos.dy * markerDisplayRadius - 6;
+                          final double left = targetRadius +
+                              pos.dx * markerDisplayRadius -
+                              (_arrowMarkerSize / 2);
+                          final double top = targetRadius +
+                              pos.dy * markerDisplayRadius -
+                              (_arrowMarkerSize / 2);
                           return _arrowMarker(top, left, arrow.displayScore);
                         }).toList(),
 
@@ -478,6 +511,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                           _magnifierPosition!,
                           isTripleFace: isTripleFace,
                           isCompoundIndoor: isCompoundIndoor,
+                          targetCanvasSize: targetCanvasSize,
                         ),
                     ],
                   ),
@@ -533,8 +567,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       top: top,
       left: left,
       child: Container(
-        width: 14,
-        height: 14,
+        width: _arrowMarkerSize,
+        height: _arrowMarkerSize,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
@@ -560,21 +594,22 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     Offset fingerPos, {
     required bool isTripleFace,
     required bool isCompoundIndoor,
+    required double targetCanvasSize,
   }) {
     const double magnifierSize = 120.0;
     const double halfSize = magnifierSize / 2;
     const double scale = 2.0;
 
-    // Translate so that fingerPos on the 300×300 target appears at (60,60)
+    // Translate so that fingerPos on the target appears at (60,60)
     // in the magnifier (the clipped circle center).
     final double tx = halfSize - scale * fingerPos.dx;
     final double ty = halfSize - scale * fingerPos.dy;
 
-    // Keep magnifier inside the 300×300 Stack vertically
+    // Keep magnifier inside the target stack.
     final double topOffset = (fingerPos.dy - magnifierSize - 50)
-        .clamp(0.0, 300.0 - magnifierSize);
+        .clamp(0.0, targetCanvasSize - magnifierSize);
     final double leftOffset =
-        (fingerPos.dx - halfSize).clamp(0.0, 300.0 - magnifierSize);
+        (fingerPos.dx - halfSize).clamp(0.0, targetCanvasSize - magnifierSize);
 
     return Positioned(
       left: leftOffset,
@@ -600,11 +635,12 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                 ..translate(tx, ty)
                 ..scale(scale),
               child: OverflowBox(
-                minWidth: 300.0,
-                maxWidth: 300.0,
-                minHeight: 300.0,
-                maxHeight: 300.0,
+                minWidth: targetCanvasSize,
+                maxWidth: targetCanvasSize,
+                minHeight: targetCanvasSize,
+                maxHeight: targetCanvasSize,
                 child: CustomPaint(
+                  size: Size(targetCanvasSize, targetCanvasSize),
                   painter: TargetFacePainter(
                     isTripleFace: isTripleFace,
                     isCompoundIndoor: isCompoundIndoor,
@@ -769,7 +805,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Future<void> _addScore(int score) async {
     final l10n = AppLocalizations.of(context);
     final scoringState = ref.read(scoringProvider);
-    if (scoringState.currentEnd == null) return;
+    if (!scoringState.hasActiveSession) return;
 
     // Prevent auto-creating new ends via keypad if we reached maxEnds
     // Only allow input if we are editing an existing valid end or if focused index is within bounds
@@ -855,47 +891,46 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
   /// Calculate score from normalized full-target radius [r] (0.0–1.0).
   ///
-  /// Uses WA ring boundaries with a 0.01R line tolerance (rounds UP to
-  /// higher score at boundaries).
+  /// Uses ring boundaries with optional line tolerance.
   ///
   /// [r]              Distance from center in full-target coordinates.
   ///                  r=1.0 = outer edge of ring 1.
   /// [isTripleFace]   When true, r > 0.50 (outside ring 6) = Miss.
-  /// [isCompoundIndoor] When true, the 10-ring zone (0.05–0.10) scores 9,
-  ///                  not 10. Only X ring (r ≤ 0.05) scores 10 points.
-  int _calcScore(double r, bool isTripleFace, bool isCompoundIndoor) {
-    const double tol = 0.01; // line tolerance in full-target coords
-
+  int _calcScore(double r, bool isTripleFace) {
     // Miss check
     final double maxR = isTripleFace ? 0.50 : 1.00;
-    if (r > maxR + tol) return 0; // Miss
+    if (r > maxR + _ringLineTolerance) return 0; // Miss
 
-    // X ring (r ≤ 0.05 + tolerance)
-    if (r <= 0.05 + tol) return 11; // stored as 11, displayed as 'X'
+    // Use a tighter tolerance for X/10 split to reduce ambiguity near center.
+    if (r <= kTargetXRingBoundary + _xRingLineTolerance) {
+      return 11; // stored as 11, displayed as 'X'
+    }
 
-    // 10-ring zone (0.05–0.10)
-    if (r <= 0.10 + tol) {
-      // Compound indoor: 10-ring scores as 9 (only X ring counts as 10)
-      return isCompoundIndoor ? 9 : 10;
+    // 10-ring zone
+    if (r <= kTargetTenRingBoundary + _ringLineTolerance) {
+      return 10;
     }
 
     // Remaining rings use the same boundaries for all face types
-    if (r <= 0.20 + tol) return 9;
-    if (r <= 0.30 + tol) return 8;
-    if (r <= 0.40 + tol) return 7;
-    if (r <= 0.50 + tol) return 6;
-    if (r <= 0.60 + tol) return 5;
-    if (r <= 0.70 + tol) return 4;
-    if (r <= 0.80 + tol) return 3;
-    if (r <= 0.90 + tol) return 2;
-    if (r <= 1.00 + tol) return 1;
+    if (r <= 0.20 + _ringLineTolerance) return 9;
+    if (r <= 0.30 + _ringLineTolerance) return 8;
+    if (r <= 0.40 + _ringLineTolerance) return 7;
+    if (r <= 0.50 + _ringLineTolerance) return 6;
+    if (r <= 0.60 + _ringLineTolerance) return 5;
+    if (r <= 0.70 + _ringLineTolerance) return 4;
+    if (r <= 0.80 + _ringLineTolerance) return 3;
+    if (r <= 0.90 + _ringLineTolerance) return 2;
+    if (r <= 1.00 + _ringLineTolerance) return 1;
     return 0; // Miss
   }
 
   /// Handle tap / release on target face to record an arrow score.
-  void _handleTargetTap(Offset localPosition) async {
+  void _handleTargetTap(
+    Offset localPosition, {
+    required double targetRadius,
+  }) async {
     final scoringState = ref.read(scoringProvider);
-    if (scoringState.currentEnd == null) return;
+    if (!scoringState.hasActiveSession) return;
     if (scoringState.focusedEndIndex >= scoringState.maxEnds) return;
 
     // Add ripple effect at tap position
@@ -908,12 +943,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     // WA rule: triple face = 40 cm + non-compound
     final bool isTripleFace =
         targetFaceSize == 40 && bowType != BowType.compound;
-    // Compound bow always uses inner-10 scoring
-    final bool isCompoundIndoor = bowType == BowType.compound;
 
-    // Target widget is always 300×300 px; center at (150, 150)
-    const double targetRadius = 150.0;
-    const double targetCenter = targetRadius; // 150
+    final double targetCenter = targetRadius;
 
     // Pixel offset from center
     final double dx = localPosition.dx - targetCenter;
@@ -928,7 +959,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final double rFull = isTripleFace ? rDisplay * 0.5 : rDisplay;
 
     // Score using full-target coordinates
-    final int score = _calcScore(rFull, isTripleFace, isCompoundIndoor);
+    final int score = _calcScore(rFull, isTripleFace);
 
     // Store position in FULL-TARGET normalized coordinates (-1 to 1).
     // Triple face: dx / 150 gives display-norm; multiply by 0.5 → full-target norm.
