@@ -14,6 +14,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
+  String get close => '关闭';
+
+  @override
   String get save => '保存';
 
   @override
@@ -21,6 +24,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get edit => '编辑';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get discard => '丢弃';
 
   @override
   String get confirm => '确认';
@@ -92,6 +101,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get removeScore => '移除成绩';
 
   @override
+  String get currentEnd => '当前组';
+
+  @override
   String get completeSession => '完成成绩';
 
   @override
@@ -102,6 +114,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sessionCompleted => '训练完成！';
+
+  @override
+  String get noActiveTraining => '暂无训练';
+
+  @override
+  String get clickStartScoring => '点击下方开始计分';
+
+  @override
+  String get oneMoreEnd => '再来一组';
+
+  @override
+  String get removeShort => '移除';
+
+  @override
+  String get scoringExitTitle => '退出计分？';
+
+  @override
+  String get scoringExitMessage => '当前记录将丢失。是否保存后退出？';
+
+  @override
+  String endLabel(String number) => '第 $number 组';
+
+  @override
+  String endCompletedLabel(String number) => '第 $number 组完成';
+
+  @override
+  String scoreLabel(String score) => '得分: $score';
+
+  @override
+  String totalScoreLabel(String total) => '总分: $total';
 
   // Session Setup
   @override
@@ -169,6 +211,18 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get precision => '精准度';
 
+  @override
+  String get tenRingRate => '10环率';
+
+  @override
+  String get groupingDensity => '分组密度';
+
+  @override
+  String get endurance => '耐力';
+
+  @override
+  String get centerPrecision => '中心精度';
+
   // Details
   @override
   String get sessionDetails => '训练详情';
@@ -184,6 +238,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get endBreakdown => '分组详情';
+
+  @override
+  String get noSessionDetailsHint => '完成一次训练后可在此查看详情';
+
+  @override
+  String get endsScoreTitle => '各组成绩';
+
+  @override
+  String totalEndsLabel(String count) => '共 $count 组';
 
   // Settings
   @override
@@ -225,6 +288,39 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get viewLogsSubtitle => '查看应用日志和崩溃报告';
 
+  @override
+  String get logsTitle => '应用日志';
+
+  @override
+  String logsFailedToLoad(String error) => '日志加载失败：$error';
+
+  @override
+  String get logsCopied => '日志已复制到剪贴板';
+
+  @override
+  String get clearLogsTitle => '清空日志';
+
+  @override
+  String get clearLogsMessage => '确定要删除所有日志吗？该操作不可撤销。';
+
+  @override
+  String get refreshLogsTooltip => '刷新';
+
+  @override
+  String get copyLogsTooltip => '复制到剪贴板';
+
+  @override
+  String get clearLogsTooltip => '清空日志';
+
+  @override
+  String get logsLocalOnlyHint => '日志仅存储在本地，不会上传到服务器';
+
+  @override
+  String get noLogsAvailable => '暂无日志';
+
+  @override
+  String get logsCleared => '日志已清空';
+
   // Messages
   @override
   String get loading => '加载中...';
@@ -233,10 +329,56 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noData => '暂无数据';
 
   @override
+  String get noValidData => '暂无有效的数据';
+
+  @override
+  String get ringNumber => '环数';
+
+  @override
+  String get noBiasData => '无偏差数据';
+
+  @override
+  String get missDistribution => '脱靶分布';
+
+  @override
+  String get currentPeriod => '当前周期';
+
+  @override
+  String get previousPeriod => '上一周期';
+
+  @override
+  String get overallScore => '综合得分';
+
+  @override
+  String strengthLabel(String strongest) => '优势: $strongest';
+
+  @override
+  String weaknessLabel(String weakest) => '短板: $weakest';
+
+  @override
+  String quadrantDominanceMessage(String direction, String percent) =>
+      '$direction 偏差占 $percent%';
+
+  @override
   String get error => '错误';
 
   @override
   String get success => '成功';
+
+  @override
+  String get initializationFailed => '初始化失败';
+
+  @override
+  String get resetDataAndRetry => '重置数据并重试';
+
+  @override
+  String get somethingWentWrong => '出现异常';
+
+  @override
+  String get restartApp => '重启应用';
+
+  @override
+  String get failedToStartApp => '应用启动失败';
 
   // Date Formats
   @override
@@ -409,6 +551,8 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get aiCoachBasedOnData => '基于训练数据的专业建议';
   @override
+  String get aiCoachBasedOnCurrentSession => '基于本次训练的专业建议';
+  @override
   String get aiCoachGetProfessionalAdvice => '获取更详细的专业建议和训练计划';
   @override
   String get aiCoachAnalyzeButton => '分析';
@@ -430,6 +574,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiCoachClickToAnalyze => '点击"分析"按钮获取 AI 教练的专业建议';
   @override
   String get aiCoachClickForDeepAnalysis => '点击"深度分析"获取 AI 教练的全面建议和训练计划';
+  @override
+  String get aiCoachPreferOnlineFallbackToLocal => '优先使用在线分析，网络不可用时自动降级到本地分析';
+  @override
+  String get aiCoachPreferOnlineFallbackToOffline => '优先使用在线分析，离线时自动切换本地分析';
   @override
   String get aiCoachDismiss => '关闭';
   @override
@@ -476,4 +624,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiCoachPhase => '阶段';
   @override
   String get aiCoachSuggestionsCount => '条';
+
+  // Session setup
+  @override
+  String get environment => '环境';
+  @override
+  String get indoor => '室内';
+  @override
+  String get outdoor => '室外';
+  @override
+  String get sessionSetupEquipment => '器材设置';
+  @override
+  String get sessionSetupVenue => '场地环境';
+  @override
+  String get sessionSetupRules => '训练规则';
+  @override
+  String get sessionSetupDisplayMode => '显示与模式';
+  @override
+  String get scoringView => '计分视图';
+  @override
+  String get listView => '列表';
+  @override
+  String get targetView => '靶面';
+  @override
+  String get competitionMode => '比赛模式';
+  @override
+  String get estimatedTotalArrows => '预计总箭数';
+  @override
+  String get centimeters => '厘米';
+  @override
+  String sessionSetupSelectLabel(String label) => '选择$label';
+  @override
+  String myBowName(String bowName) => '我的$bowName';
 }

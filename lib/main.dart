@@ -214,6 +214,7 @@ class ArcheryApp extends ConsumerWidget {
         ),
         home: const InitializationWrapper(),
         builder: (context, child) {
+          final l10n = AppLocalizations.of(context);
           // Error boundary for the entire app
           ErrorWidget.builder = (FlutterErrorDetails details) {
             logger.logError(
@@ -231,9 +232,9 @@ class ArcheryApp extends ConsumerWidget {
                       const Icon(Icons.error_outline,
                           size: 64, color: Colors.red),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Something went wrong',
-                        style: TextStyle(
+                      Text(
+                        l10n.somethingWentWrong,
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
@@ -253,7 +254,7 @@ class ArcheryApp extends ConsumerWidget {
                             (route) => false,
                           );
                         },
-                        child: const Text('Restart App'),
+                        child: Text(l10n.restartApp),
                       ),
                     ],
                   ),
@@ -273,29 +274,44 @@ class ArcheryApp extends ConsumerWidget {
 
       // Return a minimal error screen
       return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Failed to start app',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) {
+            final l10n = AppLocalizations.of(context);
+            return Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.failedToStartApp,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        e.toString(),
+                        textAlign: TextAlign.center,
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    e.toString(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       );
     }
@@ -444,6 +460,7 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_error != null) {
       return Scaffold(
         body: Center(
@@ -455,9 +472,10 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
                 children: [
                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  const Text(
-                    '初始化失败',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.initializationFailed,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -474,7 +492,7 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('重置数据并重试'),
+                          child: Text(l10n.resetDataAndRetry),
                         ),
                 ],
               ),
@@ -485,14 +503,14 @@ class _InitializationWrapperState extends ConsumerState<InitializationWrapper>
     }
 
     if (!_isInitialized) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('加载中...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(l10n.loading),
             ],
           ),
         ),

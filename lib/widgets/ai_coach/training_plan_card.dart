@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
+import '../../l10n/app_localizations.dart';
 
 /// 训练计划卡片组件
 class TrainingPlanCard extends StatefulWidget {
@@ -20,6 +21,7 @@ class _TrainingPlanCardState extends State<TrainingPlanCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -27,7 +29,7 @@ class _TrainingPlanCardState extends State<TrainingPlanCard> {
         border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -42,8 +44,8 @@ class _TrainingPlanCardState extends State<TrainingPlanCard> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.1),
-                  AppColors.primary.withOpacity(0.05),
+                  AppColors.primary.withValues(alpha: 0.1),
+                  AppColors.primary.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -59,7 +61,7 @@ class _TrainingPlanCardState extends State<TrainingPlanCard> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -122,17 +124,16 @@ class _TrainingPlanCardState extends State<TrainingPlanCard> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
-                                : AppColors.primary.withOpacity(0.1),
+                                : AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '阶段 ${index + 1}',
+                            '${l10n.aiCoachPhase} ${index + 1}',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.primary,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
                             ),
                           ),
                         ),
@@ -171,6 +172,7 @@ class _PhaseDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,11 +182,11 @@ class _PhaseDetail extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.accentRust.withOpacity(0.1),
+                color: AppColors.accentRust.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                '${phase.durationDays} 天',
+                '${phase.durationDays} ${l10n.aiCoachDays}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -212,10 +214,10 @@ class _PhaseDetail extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -226,9 +228,9 @@ class _PhaseDetail extends StatelessWidget {
                 color: AppColors.primary,
               ),
               const SizedBox(width: 8),
-              const Text(
-                '训练重点：',
-                style: TextStyle(
+              Text(
+                '${l10n.aiCoachPhaseFocus}：',
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -250,9 +252,9 @@ class _PhaseDetail extends StatelessWidget {
         const SizedBox(height: 16),
 
         // 训练项目列表
-        const Text(
-          '训练项目',
-          style: TextStyle(
+        Text(
+          l10n.aiCoachDrills,
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -283,6 +285,7 @@ class _DrillItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -301,7 +304,7 @@ class _DrillItem extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: AppColors.accentGold.withOpacity(0.1),
+                  color: AppColors.accentGold.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -333,7 +336,7 @@ class _DrillItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -346,7 +349,7 @@ class _DrillItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${drill.arrows}支',
+                      '${drill.arrows}${l10n.aiCoachArrowsUnit}',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

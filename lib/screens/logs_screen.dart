@@ -33,41 +33,44 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      final l10n = AppLocalizations.of(context);
       setState(() {
-        _logContent = 'Failed to load logs: $e';
+        _logContent = l10n.logsFailedToLoad(e.toString());
         _isLoading = false;
       });
     }
   }
 
   Future<void> _copyLogsToClipboard() async {
+    final l10n = AppLocalizations.of(context);
     await Clipboard.setData(ClipboardData(text: _logContent));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logs copied to clipboard'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.logsCopied),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
   }
 
   Future<void> _clearLogs() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Logs'),
-        content: const Text('Are you sure you want to delete all logs? This action cannot be undone.'),
+        title: Text(l10n.clearLogsTitle),
+        content: Text(l10n.clearLogsMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -79,9 +82,9 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logs cleared'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.logsCleared),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -98,31 +101,25 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textSlate900),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'App Logs',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: AppColors.textSlate900,
-          ),
-        ),
+        title: Text(l10n.logsTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadLogs,
-            tooltip: 'Refresh',
+            tooltip: l10n.refreshLogsTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.copy),
             onPressed: _copyLogsToClipboard,
-            tooltip: 'Copy to clipboard',
+            tooltip: l10n.copyLogsTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: _clearLogs,
-            tooltip: 'Clear logs',
+            tooltip: l10n.clearLogsTooltip,
           ),
         ],
       ),
@@ -135,11 +132,12 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                   color: Colors.amber.shade50,
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 20, color: Colors.amber),
+                      const Icon(Icons.info_outline,
+                          size: 20, color: Colors.amber),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Logs are stored locally and never sent to servers',
+                          l10n.logsLocalOnlyHint,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.amber.shade900,
@@ -151,10 +149,10 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                 ),
                 Expanded(
                   child: _logContent.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
-                            'No logs available',
-                            style: TextStyle(
+                            l10n.noLogsAvailable,
+                            style: const TextStyle(
                               fontSize: 16,
                               color: AppColors.textSlate500,
                             ),

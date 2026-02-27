@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
+import '../../l10n/app_localizations.dart';
 import 'suggestion_card.dart';
 import 'training_plan_card.dart';
 
@@ -15,6 +16,7 @@ class AIResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -22,7 +24,7 @@ class AIResultCard extends StatelessWidget {
         border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -34,20 +36,20 @@ class AIResultCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 核心诊断
-            _buildDiagnosis(),
+            _buildDiagnosis(l10n),
 
             const SizedBox(height: 20),
 
             // 优势和弱点
             if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
-              _buildStrengthsWeaknesses(),
+              _buildStrengthsWeaknesses(l10n),
 
             if (result.strengths.isNotEmpty || result.weaknesses.isNotEmpty)
               const SizedBox(height: 20),
 
             // 改进建议
             if (result.suggestions.isNotEmpty) ...[
-              _buildSuggestionsSection(),
+              _buildSuggestionsSection(l10n),
               const SizedBox(height: 20),
             ],
 
@@ -68,14 +70,14 @@ class AIResultCard extends StatelessWidget {
   }
 
   /// 核心诊断
-  Widget _buildDiagnosis() {
+  Widget _buildDiagnosis(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           width: 1.5,
         ),
       ),
@@ -87,7 +89,7 @@ class AIResultCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -97,9 +99,9 @@ class AIResultCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                '核心诊断',
-                style: TextStyle(
+              Text(
+                l10n.aiCoachDiagnosis,
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -122,7 +124,7 @@ class AIResultCard extends StatelessWidget {
   }
 
   /// 优势和弱点
-  Widget _buildStrengthsWeaknesses() {
+  Widget _buildStrengthsWeaknesses(AppLocalizations l10n) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,7 +132,7 @@ class AIResultCard extends StatelessWidget {
         if (result.strengths.isNotEmpty)
           Expanded(
             child: _buildInfoBox(
-              title: '优势',
+              title: l10n.aiCoachStrengths,
               icon: Icons.thumb_up_outlined,
               color: const Color(0xFF10B981),
               items: result.strengths,
@@ -144,7 +146,7 @@ class AIResultCard extends StatelessWidget {
         if (result.weaknesses.isNotEmpty)
           Expanded(
             child: _buildInfoBox(
-              title: '待改进',
+              title: l10n.aiCoachWeaknesses,
               icon: Icons.flag_outlined,
               color: AppColors.accentRust,
               items: result.weaknesses,
@@ -164,10 +166,10 @@ class AIResultCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -224,7 +226,7 @@ class AIResultCard extends StatelessWidget {
   }
 
   /// 建议部分
-  Widget _buildSuggestionsSection() {
+  Widget _buildSuggestionsSection(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,7 +235,7 @@ class AIResultCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.accentGold.withOpacity(0.1),
+                color: AppColors.accentGold.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -243,9 +245,9 @@ class AIResultCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
-              '改进建议',
-              style: TextStyle(
+            Text(
+              l10n.aiCoachSuggestions,
+              style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -255,11 +257,11 @@ class AIResultCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.accentGold.withOpacity(0.1),
+                color: AppColors.accentGold.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${result.suggestions.length} 条',
+                '${result.suggestions.length} ${l10n.aiCoachSuggestionsCount}',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -287,15 +289,15 @@ class AIResultCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accentGold.withOpacity(0.1),
-            AppColors.accentGold.withOpacity(0.05),
+            AppColors.accentGold.withValues(alpha: 0.1),
+            AppColors.accentGold.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.accentGold.withOpacity(0.2),
+          color: AppColors.accentGold.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -303,7 +305,7 @@ class AIResultCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.accentGold.withOpacity(0.1),
+              color: AppColors.accentGold.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(

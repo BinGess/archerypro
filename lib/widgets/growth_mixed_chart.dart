@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 
 /// Growth trend mixed chart showing score trend (line) and training volume (bar)
 /// Used in comprehensive analysis page for long-term performance tracking
@@ -24,12 +25,13 @@ class GrowthMixedChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (scoreTrendData.isEmpty && volumeData.isEmpty) {
       return SizedBox(
         height: height,
         child: Center(
           child: Text(
-            '暂无数据',
+            l10n.noData,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
@@ -48,7 +50,7 @@ class GrowthMixedChart extends StatelessWidget {
         height: height,
         child: Center(
           child: Text(
-            '暂无数据',
+            l10n.noData,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
@@ -66,7 +68,7 @@ class GrowthMixedChart extends StatelessWidget {
         height: height,
         child: Center(
           child: Text(
-            '暂无有效的数据',
+            l10n.noValidData,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
@@ -76,11 +78,11 @@ class GrowthMixedChart extends StatelessWidget {
     // Define titles for LineChart (visible)
     final titlesData = FlTitlesData(
       leftTitles: AxisTitles(
-        axisNameWidget: const Padding(
+        axisNameWidget: Padding(
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
-            '平均环数',
-            style: TextStyle(fontSize: 10, color: Colors.grey),
+            l10n.averageScore,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
         axisNameSize: 20,
@@ -107,11 +109,11 @@ class GrowthMixedChart extends StatelessWidget {
         ),
       ),
       rightTitles: AxisTitles(
-        axisNameWidget: const Padding(
+        axisNameWidget: Padding(
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
-            '箭数',
-            style: TextStyle(fontSize: 10, color: Colors.grey),
+            l10n.arrows,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
         axisNameSize: 20,
@@ -140,11 +142,11 @@ class GrowthMixedChart extends StatelessWidget {
         sideTitles: SideTitles(showTitles: false),
       ),
       bottomTitles: AxisTitles(
-        axisNameWidget: const Padding(
+        axisNameWidget: Padding(
           padding: EdgeInsets.only(top: 4),
           child: Text(
-            '日期',
-            style: TextStyle(fontSize: 10, color: Colors.grey),
+            l10n.date,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
         axisNameSize: 20,
@@ -187,7 +189,10 @@ class GrowthMixedChart extends StatelessWidget {
           child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
         axisNameSize: 20,
-        sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 28,
+            getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
       rightTitles: AxisTitles(
         axisNameWidget: const Padding(
@@ -195,7 +200,10 @@ class GrowthMixedChart extends StatelessWidget {
           child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
         axisNameSize: 20,
-        sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 28,
+            getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
@@ -204,7 +212,11 @@ class GrowthMixedChart extends StatelessWidget {
           child: Text(' ', style: TextStyle(fontSize: 10)),
         ),
         axisNameSize: 20,
-        sideTitles: SideTitles(showTitles: true, reservedSize: 24, interval: 1.0, getTitlesWidget: (v, m) => const SizedBox.shrink()),
+        sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 24,
+            interval: 1.0,
+            getTitlesWidget: (v, m) => const SizedBox.shrink()),
       ),
     );
 
@@ -235,7 +247,7 @@ class GrowthMixedChart extends StatelessWidget {
                   horizontalInterval: 2.0,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.withOpacity(0.15),
+                      color: Colors.grey.withValues(alpha: 0.15),
                       strokeWidth: 1,
                     );
                   },
@@ -244,10 +256,12 @@ class GrowthMixedChart extends StatelessWidget {
                 borderData: FlBorderData(
                   show: true,
                   border: Border(
-                    left: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                    bottom:
-                        BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                    right: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                    left: BorderSide(
+                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    bottom: BorderSide(
+                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    right: BorderSide(
+                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
                   ),
                 ),
                 minX: 0,
@@ -296,8 +310,8 @@ class GrowthMixedChart extends StatelessWidget {
                           final volume = volumeData[date] ?? 0;
                           return LineTooltipItem(
                             '${DateFormat('yyyy/MM/dd').format(date)}\n'
-                            '平均: ${score.toStringAsFixed(1)}\n'
-                            '箭数: $volume',
+                            '${l10n.averageScore}: ${score.toStringAsFixed(1)}\n'
+                            '${l10n.arrows}: $volume',
                             const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -315,7 +329,7 @@ class GrowthMixedChart extends StatelessWidget {
                     // Reference line at score 8.0
                     HorizontalLine(
                       y: 8.0,
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                     ),
@@ -347,7 +361,7 @@ class GrowthMixedChart extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: normalizedVolume,
-              color: AppColors.accent.withOpacity(0.2),
+              color: AppColors.accent.withValues(alpha: 0.2),
               width: 12,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(2),
@@ -369,7 +383,11 @@ class GrowthMixedChart extends StatelessWidget {
       final date = allDates[i];
       final score = scoreTrendData[date];
       // Only add valid scores (not null, finite, and within valid range)
-      if (score != null && score.isFinite && !score.isNaN && score >= 0 && score <= 10) {
+      if (score != null &&
+          score.isFinite &&
+          !score.isNaN &&
+          score >= 0 &&
+          score <= 10) {
         spots.add(FlSpot(i.toDouble(), score));
       }
     }
@@ -381,7 +399,9 @@ class GrowthMixedChart extends StatelessWidget {
   double _calculateMaxVolume() {
     if (volumeData.isEmpty) return 100.0;
     final maxVol = volumeData.values.reduce((a, b) => a > b ? a : b);
-    return maxVol > 0 ? (maxVol * 1.2).ceilToDouble() : 10.0; // Add 20% padding, min 10
+    return maxVol > 0
+        ? (maxVol * 1.2).ceilToDouble()
+        : 10.0; // Add 20% padding, min 10
   }
 }
 

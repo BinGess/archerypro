@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../models/radar_metrics.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Stability radar chart showing 6-dimension performance metrics
 /// Optionally compares current period with previous period
@@ -32,12 +33,14 @@ class StabilityRadarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = _localizedMetricLabels(l10n);
     final dataSets = <RadarDataSet>[];
 
     // Current period data (primary)
     dataSets.add(
       RadarDataSet(
-        fillColor: AppColors.primary.withOpacity(0.2),
+        fillColor: AppColors.primary.withValues(alpha: 0.2),
         borderColor: AppColors.primary,
         borderWidth: 2.5,
         entryRadius: 4,
@@ -52,7 +55,7 @@ class StabilityRadarChart extends StatelessWidget {
     if (previousMetrics != null) {
       dataSets.add(
         RadarDataSet(
-          fillColor: Colors.grey.withOpacity(0.1),
+          fillColor: Colors.grey.withValues(alpha: 0.1),
           borderColor: Colors.grey,
           borderWidth: 2,
           entryRadius: 3,
@@ -78,15 +81,15 @@ class StabilityRadarChart extends StatelessWidget {
                 fontSize: 10,
               ),
               tickBorderData: BorderSide(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.grey.withValues(alpha: 0.2),
                 width: 1,
               ),
               gridBorderData: BorderSide(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               radarBorderData: BorderSide(
-                color: Colors.grey.withOpacity(0.5),
+                color: Colors.grey.withValues(alpha: 0.5),
                 width: 2,
               ),
               titleTextStyle: const TextStyle(
@@ -96,7 +99,6 @@ class StabilityRadarChart extends StatelessWidget {
               ),
               getTitle: (index, angle) {
                 if (!showLabels) return const RadarChartTitle(text: '');
-                final labels = RadarMetrics.labels;
                 if (index >= 0 && index < labels.length) {
                   return RadarChartTitle(
                     text: labels[index],
@@ -111,22 +113,22 @@ class StabilityRadarChart extends StatelessWidget {
         ),
         if (showLegend) ...[
           const SizedBox(height: 16),
-          _buildLegend(context),
+          _buildLegend(context, l10n),
         ],
         const SizedBox(height: 12),
-        _buildScoreSummary(),
+        _buildScoreSummary(l10n, labels),
       ],
     );
   }
 
-  Widget _buildLegend(BuildContext context) {
+  Widget _buildLegend(BuildContext context, AppLocalizations l10n) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildLegendItem('当前周期', AppColors.primary),
+        _buildLegendItem(l10n.currentPeriod, AppColors.primary),
         if (previousMetrics != null) ...[
           const SizedBox(width: 24),
-          _buildLegendItem('上一周期', Colors.grey),
+          _buildLegendItem(l10n.previousPeriod, Colors.grey),
         ],
       ],
     );
@@ -157,10 +159,13 @@ class StabilityRadarChart extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreSummary() {
+  Widget _buildScoreSummary(AppLocalizations l10n, List<String> labels) {
     final currentScore = currentMetrics.overallScore;
-    final strongest = currentMetrics.strongestDimension;
-    final weakest = currentMetrics.weakestDimension;
+    final values = currentMetrics.toList();
+    final maxIndex = values.indexOf(values.reduce((a, b) => a > b ? a : b));
+    final minIndex = values.indexOf(values.reduce((a, b) => a < b ? a : b));
+    final strongest = labels[maxIndex];
+    final weakest = labels[minIndex];
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -174,7 +179,7 @@ class StabilityRadarChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '综合得分',
+                l10n.overallScore,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade700,
@@ -196,7 +201,7 @@ class StabilityRadarChart extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildDimensionTag(
-                  '优势: $strongest',
+                  l10n.strengthLabel(strongest),
                   Colors.green.shade100,
                   Colors.green.shade700,
                 ),
@@ -204,7 +209,7 @@ class StabilityRadarChart extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildDimensionTag(
-                  '短板: $weakest',
+                  l10n.weaknessLabel(weakest),
                   Colors.orange.shade100,
                   Colors.orange.shade700,
                 ),
@@ -235,6 +240,17 @@ class StabilityRadarChart extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
     );
+  }
+
+  List<String> _localizedMetricLabels(AppLocalizations l10n) {
+    return [
+      l10n.precision,
+      l10n.consistency,
+      l10n.tenRingRate,
+      l10n.groupingDensity,
+      l10n.endurance,
+      l10n.centerPrecision,
+    ];
   }
 }
 

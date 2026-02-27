@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/analytics_provider.dart';
-import '../providers/session_provider.dart';
 import '../providers/ai_coach_provider.dart';
 import '../utils/constants.dart';
-import '../services/analytics_service.dart';
 import '../l10n/app_localizations.dart';
 
 import '../widgets/growth_mixed_chart.dart';
@@ -14,6 +12,7 @@ import '../widgets/quadrant_radar_chart.dart';
 import '../widgets/stability_radar_chart.dart';
 import '../widgets/ai_coach/ai_loading_widget.dart';
 import '../widgets/ai_coach/ai_result_card.dart';
+import '../widgets/ai_coach/ai_source_badge.dart';
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
@@ -69,14 +68,15 @@ class AnalysisScreen extends ConsumerWidget {
                 _buildQuadrantRadarCard(stats, l10n),
                 const SizedBox(height: 20),
 
-                // AI Coach Analysis Section (优先在线，失败自动降级到本地)
+                // AI Coach Analysis Section
                 _buildAICoachSection(ref, selectedPeriod, l10n),
               ],
             ),
     );
   }
 
-  Widget _buildTab(BuildContext context, WidgetRef ref, String period, String selectedPeriod, AppLocalizations l10n) {
+  Widget _buildTab(BuildContext context, WidgetRef ref, String period,
+      String selectedPeriod, AppLocalizations l10n) {
     final isSelected = period == selectedPeriod;
     return GestureDetector(
       onTap: () async {
@@ -85,7 +85,10 @@ class AnalysisScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
+          border: Border(
+              bottom: BorderSide(
+                  width: 2,
+                  color: isSelected ? AppColors.primary : Colors.transparent)),
         ),
         child: Text(
           _getPeriodLabel(period, l10n),
@@ -122,11 +125,11 @@ class AnalysisScreen extends ConsumerWidget {
           child: _buildMetricCard(
             icon: Icons.show_chart,
             label: l10n.totalArrows, // "总箭数" -> "Arrows" or similar
-            // Wait, l10n.totalArrows is "totalArrows" key? 
+            // Wait, l10n.totalArrows is "totalArrows" key?
             // In AppLocalizationsEn: String get arrows => 'Arrows';
             // In AppLocalizationsZh: String get arrows => '支箭';
             // There isn't "totalArrows" key explicitly for label "Total Arrows".
-            // But there is `totalScore`. 
+            // But there is `totalScore`.
             // Let's check `app_localizations.dart` again.
             // Ah, I see `String get arrows;`.
             // I should probably add `totalArrows` key or use `arrows` + `total` prefix?
@@ -221,18 +224,25 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.growthTrendChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+                  Text(l10n.growthTrendChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
-                  Text(l10n.growthTrendSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                  Text(l10n.growthTrendSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.trending_up, color: AppColors.primary, size: 20),
+                child: const Icon(Icons.trending_up,
+                    color: AppColors.primary, size: 20),
               ),
             ],
           ),
@@ -251,7 +261,8 @@ class AnalysisScreen extends ConsumerWidget {
               alignment: Alignment.center,
               child: Text(
                 l10n.noDataForPeriod,
-                style: const TextStyle(color: AppColors.textSlate400, fontSize: 13),
+                style: const TextStyle(
+                    color: AppColors.textSlate400, fontSize: 13),
               ),
             ),
         ],
@@ -260,19 +271,23 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build stability radar chart card with comparison
-  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref,
+      String selectedPeriod, AppLocalizations l10n) {
     if (stats.radarMetrics == null) {
       return ArcheryCard(
         child: Column(
           children: [
-            Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            Text(l10n.stabilityRadarChart,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
             const SizedBox(height: 16),
             Container(
               height: 200,
               alignment: Alignment.center,
               child: Text(
                 l10n.needMoreData,
-                style: const TextStyle(color: AppColors.textSlate400, fontSize: 13),
+                style: const TextStyle(
+                    color: AppColors.textSlate400, fontSize: 13),
               ),
             ),
           ],
@@ -294,18 +309,25 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.stabilityRadarChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+                  Text(l10n.stabilityRadarChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
-                  Text(l10n.stabilityRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate500)),
+                  Text(l10n.stabilityRadarSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate500)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accentGold.withOpacity(0.12),
+                  color: AppColors.accentGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.radar, color: AppColors.accentGold, size: 20),
+                child: const Icon(Icons.radar,
+                    color: AppColors.accentGold, size: 20),
               ),
             ],
           ),
@@ -337,25 +359,33 @@ class AnalysisScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.quadrantRadarChart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
+                  Text(l10n.quadrantRadarChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
                   const SizedBox(height: 2),
-                  Text(l10n.quadrantRadarSubtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSlate400)),
+                  Text(l10n.quadrantRadarSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accentRust.withOpacity(0.12),
+                  color: AppColors.accentRust.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.gps_fixed, color: AppColors.accentRust, size: 20),
+                child: const Icon(Icons.gps_fixed,
+                    color: AppColors.accentRust, size: 20),
               ),
             ],
           ),
           const SizedBox(height: 16),
           if (total > 0)
             RepaintBoundary(
-              child: QuadrantRadarChartDetailed(quadrantDistribution: quadrantDist),
+              child: QuadrantRadarChartDetailed(
+                  quadrantDistribution: quadrantDist),
             )
           else
             Container(
@@ -364,11 +394,13 @@ class AnalysisScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle_outline, size: 48, color: AppColors.primary),
+                  const Icon(Icons.check_circle_outline,
+                      size: 48, color: AppColors.primary),
                   const SizedBox(height: 8),
                   Text(
                     l10n.allArrowsGood,
-                    style: const TextStyle(color: AppColors.textSlate500, fontSize: 13),
+                    style: const TextStyle(
+                        color: AppColors.textSlate500, fontSize: 13),
                   ),
                 ],
               ),
@@ -378,9 +410,9 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-
   /// Build AI Coach analysis section
-  Widget _buildAICoachSection(WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+  Widget _buildAICoachSection(
+      WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
     final aiCoachState = ref.watch(aiCoachProvider);
 
     // 获取当前周期的分析结果
@@ -397,7 +429,7 @@ class AnalysisScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -413,63 +445,26 @@ class AnalysisScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'AI 教练周期分析',
-                          style: TextStyle(
+                        Text(
+                          l10n.aiCoachPeriodAnalysis,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        // Source badge
                         if (periodResult != null) ...[
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: periodResult.source == 'coze'
-                                  ? AppColors.primary.withOpacity(0.1)
-                                  : AppColors.accentGold.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: periodResult.source == 'coze'
-                                    ? AppColors.primary.withOpacity(0.3)
-                                    : AppColors.accentGold.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  periodResult.source == 'coze'
-                                      ? Icons.cloud_done
-                                      : Icons.phone_android,
-                                  color: periodResult.source == 'coze'
-                                      ? AppColors.primary
-                                      : AppColors.accentGold,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  periodResult.source == 'coze' ? '在线分析' : '本地分析',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: periodResult.source == 'coze'
-                                        ? AppColors.primary
-                                        : AppColors.accentGold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          AISourceBadge(
+                            source: periodResult.source,
+                            compact: true,
                           ),
                         ],
                       ],
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      '基于最近10次训练的整体评估',
+                    Text(
+                      l10n.aiCoachBasedOnData,
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -482,23 +477,30 @@ class AnalysisScreen extends ConsumerWidget {
               if (!isAnalyzing && periodResult == null)
                 ElevatedButton.icon(
                   onPressed: () {
-                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .analyzePeriod(selectedPeriod);
                   },
                   icon: const Icon(Icons.auto_awesome, size: 16),
-                  label: const Text('分析'),
+                  label: Text(l10n.aiCoachAnalyzeButton),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
-              
+
               // Close button
               if (periodResult != null)
                 IconButton(
                   onPressed: () {
-                    ref.read(aiCoachProvider.notifier).clearPeriodResult(selectedPeriod);
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .clearPeriodResult(selectedPeriod);
                   },
-                  icon: const Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                  icon: const Icon(Icons.close,
+                      size: 20, color: AppColors.textSecondary),
                 ),
             ],
           ),
@@ -508,8 +510,9 @@ class AnalysisScreen extends ConsumerWidget {
           // Content area
           if (isAnalyzing)
             Center(child: AILoadingWidget(message: aiCoachState.loadingMessage))
-          else if (aiCoachState.error != null && aiCoachState.currentAnalysisType == 'period')
-            _buildErrorState(ref, selectedPeriod, aiCoachState.error!)
+          else if (aiCoachState.error != null &&
+              aiCoachState.currentAnalysisType == 'period')
+            _buildErrorState(ref, selectedPeriod, aiCoachState.error!, l10n)
           else if (periodResult != null)
             Column(
               children: [
@@ -519,26 +522,35 @@ class AnalysisScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: () {
-                    ref.read(aiCoachProvider.notifier).analyzePeriod(selectedPeriod);
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .analyzePeriod(selectedPeriod);
                   },
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('重新分析'),
+                  label: Text(l10n.aiCoachReanalyzeButton),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ],
             )
           else
-            _buildEmptyState(ref, selectedPeriod),
+            _buildEmptyState(ref, selectedPeriod, l10n),
         ],
       ),
     );
   }
 
   /// Error state widget
-  Widget _buildErrorState(WidgetRef ref, String period, String error) {
+  Widget _buildErrorState(
+    WidgetRef ref,
+    String period,
+    String error,
+    AppLocalizations l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -553,7 +565,7 @@ class AnalysisScreen extends ConsumerWidget {
           Icon(Icons.error_outline, color: Colors.red.shade700, size: 40),
           const SizedBox(height: 12),
           Text(
-            '周期分析失败',
+            l10n.aiCoachAnalysisFailed,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -563,7 +575,7 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            error,
+            _localizedAiError(error, l10n),
             style: TextStyle(
               fontSize: 12,
               color: Colors.red.shade600,
@@ -576,7 +588,7 @@ class AnalysisScreen extends ConsumerWidget {
               ref.read(aiCoachProvider.notifier).clearError();
             },
             icon: const Icon(Icons.close, size: 16),
-            label: const Text('关闭'),
+            label: Text(l10n.aiCoachClose),
           ),
         ],
       ),
@@ -584,7 +596,11 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Empty state widget
-  Widget _buildEmptyState(WidgetRef ref, String selectedPeriod) {
+  Widget _buildEmptyState(
+    WidgetRef ref,
+    String selectedPeriod,
+    AppLocalizations l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -592,11 +608,11 @@ class AnalysisScreen extends ConsumerWidget {
           Icon(
             Icons.auto_awesome_outlined,
             size: 48,
-            color: AppColors.textSecondary.withOpacity(0.5),
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 12),
-          const Text(
-            '点击"分析"按钮获取 AI 教练的专业建议',
+          Text(
+            l10n.aiCoachClickToAnalyze,
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
@@ -605,15 +621,22 @@ class AnalysisScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '优先使用在线分析，网络不可用时自动降级到本地分析',
+            l10n.aiCoachPreferOnlineFallbackToLocal,
             style: TextStyle(
               fontSize: 11,
-              color: AppColors.textSecondary.withOpacity(0.7),
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
+  }
+
+  String _localizedAiError(String error, AppLocalizations l10n) {
+    if (error == AICoachNotifier.errorNoData) {
+      return l10n.keepTrainingForInsights;
+    }
+    return error;
   }
 }

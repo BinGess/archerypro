@@ -5,7 +5,7 @@ import '../models/equipment.dart';
 import '../models/training_session.dart';
 import 'scoring_screen.dart';
 import '../providers/scoring_provider.dart';
-import '../services/storage_service.dart';
+import '../l10n/app_localizations.dart';
 
 class SessionSetupScreen extends ConsumerStatefulWidget {
   const SessionSetupScreen({super.key});
@@ -37,13 +37,22 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   void _loadLastSettings() {
     final storage = ref.read(storageServiceProvider);
     setState(() {
-      _selectedBowType = BowType.values[storage.getSetting<int>('lastBowType', defaultValue: 1) ?? 1];
-      _distance = storage.getSetting<double>('lastDistance', defaultValue: 70.0) ?? 70.0;
-      _targetFaceSize = storage.getSetting<int>('lastTargetSize', defaultValue: 122) ?? 122;
-      _endCount = storage.getSetting<int>('lastEndCount', defaultValue: 10) ?? 10;
-      _arrowsPerEnd = storage.getSetting<int>('lastArrowsPerEnd', defaultValue: 6) ?? 6;
-      _environment = EnvironmentType.values[storage.getSetting<int>('lastEnvironment', defaultValue: 0) ?? 0];
-      _isTargetMode = storage.getSetting<bool>('lastIsTargetMode', defaultValue: false) ?? false;
+      _selectedBowType = BowType
+          .values[storage.getSetting<int>('lastBowType', defaultValue: 1) ?? 1];
+      _distance =
+          storage.getSetting<double>('lastDistance', defaultValue: 70.0) ??
+              70.0;
+      _targetFaceSize =
+          storage.getSetting<int>('lastTargetSize', defaultValue: 122) ?? 122;
+      _endCount =
+          storage.getSetting<int>('lastEndCount', defaultValue: 10) ?? 10;
+      _arrowsPerEnd =
+          storage.getSetting<int>('lastArrowsPerEnd', defaultValue: 6) ?? 6;
+      _environment = EnvironmentType.values[
+          storage.getSetting<int>('lastEnvironment', defaultValue: 0) ?? 0];
+      _isTargetMode =
+          storage.getSetting<bool>('lastIsTargetMode', defaultValue: false) ??
+              false;
     });
   }
 
@@ -60,13 +69,14 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   }
 
   void _startTraining() async {
+    final l10n = AppLocalizations.of(context);
     // Save current settings for next time
     await _saveSettings();
 
     // Create equipment
     final equipment = Equipment(
       bowType: _selectedBowType,
-      bowName: _getBowModelName(_selectedBowType),
+      bowName: _getBowModelName(_selectedBowType, l10n),
     );
 
     // Start new session with configuration
@@ -90,27 +100,41 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     }
   }
 
-  String _getBowModelName(BowType type) {
+  String _getBowModelName(BowType type, AppLocalizations l10n) {
+    return l10n.myBowName(_getBowTypeLabel(type, l10n));
+  }
+
+  String _getBowTypeLabel(BowType type, AppLocalizations l10n) {
     switch (type) {
       case BowType.recurve:
-        return '我的反曲弓';
+        return l10n.bowRecurve;
       case BowType.compound:
-        return '我的复合弓';
+        return l10n.bowCompound;
       case BowType.barebow:
-        return '我的光弓';
+        return l10n.bowBarebow;
       case BowType.longbow:
-        return '我的长弓';
+        return l10n.bowLongbow;
     }
+  }
+
+  String _formatDistance(double value, AppLocalizations l10n) {
+    return '${value.toInt()}${l10n.meters}';
+  }
+
+  String _formatTargetSize(int value, AppLocalizations l10n) {
+    return '$value${l10n.centimeters}';
   }
 
   @override
   Widget build(BuildContext context) {
     final totalArrows = _endCount * _arrowsPerEnd;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight, // Use light background for card contrast
+      backgroundColor:
+          AppColors.backgroundLight, // Use light background for card contrast
       appBar: AppBar(
-        title: const Text('训练设置'),
+        title: Text(l10n.newTraining),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -129,7 +153,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 _isTargetMode = false;
               });
             },
-            child: const Text('重置'),
+            child: Text(l10n.reset),
           ),
         ],
       ),
@@ -139,22 +163,25 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           children: [
             // 1. 器材设置 (Equipment)
             _buildCardGroup(
-              title: '器材设置',
+              title: l10n.sessionSetupEquipment,
               icon: Icons.sports_tennis,
               children: [
                 _buildRowItem(
-                  label: '弓种',
-                  child: DropdownButton<String>(
-                    value: _selectedBowType.displayName,
+                  label: l10n.bowType,
+                  child: DropdownButton<BowType>(
+                    value: _selectedBowType,
                     underline: const SizedBox(),
-                    items: BowType.values.map((type) => DropdownMenuItem(
-                      value: type.displayName,
-                      child: Text(type.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    )).toList(),
+                    items: BowType.values
+                        .map((type) => DropdownMenuItem<BowType>(
+                              value: type,
+                              child: Text(_getBowTypeLabel(type, l10n),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                            ))
+                        .toList(),
                     onChanged: (value) {
-                      setState(() {
-                        _selectedBowType = BowType.values.firstWhere((type) => type.displayName == value);
-                      });
+                      if (value == null) return;
+                      setState(() => _selectedBowType = value);
                     },
                   ),
                 ),
@@ -163,7 +190,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: _getBowModelName(_selectedBowType),
+                      hintText: _getBowModelName(_selectedBowType, l10n),
                       filled: true,
                       fillColor: AppColors.backgroundLight,
                       border: OutlineInputBorder(
@@ -171,9 +198,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                         borderSide: BorderSide.none,
                       ),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                     ),
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSlate900),
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSlate900),
                   ),
                 ),
               ],
@@ -182,11 +211,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
 
             // 2. 场地与环境 (Venue & Environment)
             _buildCardGroup(
-              title: '场地环境',
+              title: l10n.sessionSetupVenue,
               icon: Icons.place,
               children: [
                 _buildRowItem(
-                  label: '环境',
+                  label: l10n.environment,
                   child: Container(
                     height: 36,
                     decoration: BoxDecoration(
@@ -196,8 +225,16 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildToggleOption('室内', _environment == EnvironmentType.indoor, () => setState(() => _environment = EnvironmentType.indoor)),
-                        _buildToggleOption('室外', _environment == EnvironmentType.outdoor, () => setState(() => _environment = EnvironmentType.outdoor)),
+                        _buildToggleOption(
+                            l10n.indoor,
+                            _environment == EnvironmentType.indoor,
+                            () => setState(
+                                () => _environment = EnvironmentType.indoor)),
+                        _buildToggleOption(
+                            l10n.outdoor,
+                            _environment == EnvironmentType.outdoor,
+                            () => setState(
+                                () => _environment = EnvironmentType.outdoor)),
                       ],
                     ),
                   ),
@@ -209,19 +246,27 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                     children: [
                       Expanded(
                         child: _buildDropdownItem(
-                          label: '距离', 
-                          value: '${_distance.toInt()}m',
-                          items: _distanceOptions.map((d) => '${d.toInt()}m').toList(),
-                          onChanged: (v) => setState(() => _distance = double.parse(v!.replaceAll('m', ''))),
+                          label: l10n.distance,
+                          value: _formatDistance(_distance, l10n),
+                          items: _distanceOptions
+                              .map((d) => _formatDistance(d, l10n))
+                              .toList(),
+                          onChanged: (v) => setState(() => _distance =
+                              double.parse(
+                                  v!.replaceAll(RegExp(r'[^0-9.]'), ''))),
                         ),
                       ),
-                      Container(width: 1, height: 40, color: AppColors.borderLight),
+                      Container(
+                          width: 1, height: 40, color: AppColors.borderLight),
                       Expanded(
                         child: _buildDropdownItem(
-                          label: '靶面', 
-                          value: '${_targetFaceSize}cm',
-                          items: _targetSizeOptions.map((s) => '${s}cm').toList(),
-                          onChanged: (v) => setState(() => _targetFaceSize = int.parse(v!.replaceAll('cm', ''))),
+                          label: l10n.targetFaceSize,
+                          value: _formatTargetSize(_targetFaceSize, l10n),
+                          items: _targetSizeOptions
+                              .map((s) => _formatTargetSize(s, l10n))
+                              .toList(),
+                          onChanged: (v) => setState(() => _targetFaceSize =
+                              int.parse(v!.replaceAll(RegExp(r'[^0-9]'), ''))),
                         ),
                       ),
                     ],
@@ -233,7 +278,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
 
             // 3. 训练规则 (Rules)
             _buildCardGroup(
-              title: '训练规则',
+              title: l10n.sessionSetupRules,
               icon: Icons.rule,
               children: [
                 Padding(
@@ -241,29 +286,46 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _buildCompactCounter('组数', _endCount, 
-                          () => setState(() => _endCount++), 
-                          () => setState(() { if (_endCount > 1) _endCount--; })
-                        ),
+                        child: _buildCompactCounter(
+                            l10n.numberOfEnds,
+                            _endCount,
+                            () => setState(() => _endCount++),
+                            () => setState(() {
+                                  if (_endCount > 1) _endCount--;
+                                })),
                       ),
                       const SizedBox(width: 32),
                       Expanded(
-                        child: _buildCompactCounter('每组箭数', _arrowsPerEnd, 
-                          () => setState(() { if (_arrowsPerEnd < 12) _arrowsPerEnd++; }), 
-                          () => setState(() { if (_arrowsPerEnd > 1) _arrowsPerEnd--; })
-                        ),
+                        child: _buildCompactCounter(
+                            l10n.arrowsPerEnd,
+                            _arrowsPerEnd,
+                            () => setState(() {
+                                  if (_arrowsPerEnd < 12) _arrowsPerEnd++;
+                                }),
+                            () => setState(() {
+                                  if (_arrowsPerEnd > 1) _arrowsPerEnd--;
+                                })),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  color: AppColors.primary.withOpacity(0.05),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('预计总箭数', style: TextStyle(fontSize: 13, color: AppColors.textSlate500, fontWeight: FontWeight.w500)),
-                      Text('$totalArrows 支', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primary)),
+                      Text(l10n.estimatedTotalArrows,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSlate500,
+                              fontWeight: FontWeight.w500)),
+                      Text('$totalArrows ${l10n.unitArrows}',
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary)),
                     ],
                   ),
                 ),
@@ -273,11 +335,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
 
             // 4. 偏好设置 (Preferences)
             _buildCardGroup(
-              title: '显示与模式',
+              title: l10n.sessionSetupDisplayMode,
               icon: Icons.tune,
               children: [
                 _buildRowItem(
-                  label: '计分视图',
+                  label: l10n.scoringView,
                   child: Container(
                     height: 36,
                     decoration: BoxDecoration(
@@ -287,24 +349,31 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildToggleOption('列表', !_isTargetMode, () => setState(() => _isTargetMode = false)),
-                        _buildToggleOption('靶面', _isTargetMode, () => setState(() => _isTargetMode = true)),
+                        _buildToggleOption(l10n.listView, !_isTargetMode,
+                            () => setState(() => _isTargetMode = false)),
+                        _buildToggleOption(l10n.targetView, _isTargetMode,
+                            () => setState(() => _isTargetMode = true)),
                       ],
                     ),
                   ),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 SwitchListTile(
-                  title: const Text('比赛模式', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSlate900)),
+                  title: Text(l10n.competitionMode,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSlate900)),
                   value: _isCompetitionMode,
                   onChanged: (val) => setState(() => _isCompetitionMode = val),
                   activeColor: AppColors.primary,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   dense: true,
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 100), // Bottom padding for FAB
           ],
         ),
@@ -317,7 +386,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
             onPressed: _startTraining,
             backgroundColor: AppColors.primary,
             elevation: 4,
-            label: const Text('开始训练', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+            label: Text(l10n.startTraining,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
             icon: const Icon(Icons.play_arrow, color: Colors.white),
           ),
         ),
@@ -326,7 +399,10 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     );
   }
 
-  Widget _buildCardGroup({required String title, required IconData icon, required List<Widget> children}) {
+  Widget _buildCardGroup(
+      {required String title,
+      required IconData icon,
+      required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -336,7 +412,12 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
             children: [
               Icon(icon, size: 18, color: AppColors.textSlate500),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSlate500, letterSpacing: 0.4)),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSlate500,
+                      letterSpacing: 0.4)),
             ],
           ),
         ),
@@ -344,10 +425,16 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: children),
         ),
       ],
     );
@@ -359,7 +446,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSlate900)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSlate900)),
           child,
         ],
       ),
@@ -374,7 +465,12 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)] : [],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)
+                ]
+              : [],
         ),
         child: Text(
           text,
@@ -388,11 +484,16 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     );
   }
 
-  Widget _buildDropdownItem({required String label, required String value, required List<String> items, required Function(String?) onChanged}) {
+  Widget _buildDropdownItem(
+      {required String label,
+      required String value,
+      required List<String> items,
+      required Function(String?) onChanged}) {
+    final l10n = AppLocalizations.of(context);
     return InkWell(
       onTap: () => _showSelectionPicker(
         context,
-        title: '选择$label',
+        title: l10n.sessionSetupSelectLabel(label),
         currentValue: value,
         items: items,
         onSelected: (val) => onChanged(val),
@@ -402,13 +503,22 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500, fontWeight: FontWeight.w500)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSlate500,
+                    fontWeight: FontWeight.w500)),
             const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textSlate900)),
-                const Icon(Icons.keyboard_arrow_down, color: AppColors.textSlate400, size: 20),
+                Text(value,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: AppColors.textSlate900)),
+                const Icon(Icons.keyboard_arrow_down,
+                    color: AppColors.textSlate400, size: 20),
               ],
             ),
           ],
@@ -417,7 +527,8 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     );
   }
 
-  void _showSelectionPicker(BuildContext context, {
+  void _showSelectionPicker(
+    BuildContext context, {
     required String title,
     required String currentValue,
     required List<String> items,
@@ -461,7 +572,8 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 20, endIndent: 20),
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, indent: 20, endIndent: 20),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final isSelected = item == currentValue;
@@ -471,8 +583,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                         Navigator.pop(context);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 16),
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.05)
+                            : Colors.transparent,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -480,12 +595,17 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                               item,
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                color: isSelected ? AppColors.primary : AppColors.textSlate900,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textSlate900,
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                              const Icon(Icons.check_circle,
+                                  color: AppColors.primary, size: 20),
                           ],
                         ),
                       ),
@@ -501,10 +621,15 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     );
   }
 
-  Widget _buildCompactCounter(String label, int value, VoidCallback onIncrement, VoidCallback onDecrement) {
+  Widget _buildCompactCounter(String label, int value, VoidCallback onIncrement,
+      VoidCallback onDecrement) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSlate500, fontWeight: FontWeight.w500)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSlate500,
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -515,13 +640,20 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               child: InkWell(
                 onTap: onDecrement,
                 borderRadius: BorderRadius.circular(8),
-                child: const Padding(padding: EdgeInsets.all(8), child: Icon(Icons.remove, size: 20, color: AppColors.primary)),
+                child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child:
+                        Icon(Icons.remove, size: 20, color: AppColors.primary)),
               ),
             ),
             Container(
               constraints: const BoxConstraints(minWidth: 40),
               alignment: Alignment.center,
-              child: Text('$value', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textSlate900)),
+              child: Text('$value',
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSlate900)),
             ),
             Material(
               color: AppColors.backgroundLight,
@@ -529,27 +661,14 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               child: InkWell(
                 onTap: onIncrement,
                 borderRadius: BorderRadius.circular(8),
-                child: const Padding(padding: EdgeInsets.all(8), child: Icon(Icons.add, size: 20, color: AppColors.primary)),
+                child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.add, size: 20, color: AppColors.primary)),
               ),
             ),
           ],
         ),
       ],
     );
-  }
-}
-
-extension BowTypeExtension on BowType {
-  String get displayName {
-    switch (this) {
-      case BowType.recurve:
-        return '反曲弓';
-      case BowType.compound:
-        return '复合弓';
-      case BowType.barebow:
-        return '光弓';
-      case BowType.longbow:
-        return '长弓';
-    }
   }
 }

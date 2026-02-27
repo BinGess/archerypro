@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/ai_coach/ai_coach_result.dart';
+import '../../l10n/app_localizations.dart';
 
 /// 建议卡片组件
 class SuggestionCard extends StatefulWidget {
@@ -51,17 +52,18 @@ class _SuggestionCardState extends State<SuggestionCard> {
   }
 
   String _getCategoryLabel(String category) {
+    final l10n = AppLocalizations.of(context);
     switch (category.toLowerCase()) {
       case 'technique':
-        return '技术';
+        return l10n.aiCoachCategoryTechnique;
       case 'physical':
-        return '体能';
+        return l10n.aiCoachCategoryPhysical;
       case 'mental':
-        return '心理';
+        return l10n.aiCoachCategoryMental;
       case 'equipment':
-        return '器材';
+        return l10n.aiCoachCategoryEquipment;
       default:
-        return '综合';
+        return l10n.aiCoachCategoryGeneral;
     }
   }
 
@@ -77,12 +79,12 @@ class _SuggestionCardState extends State<SuggestionCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: categoryColor.withOpacity(0.2),
+          color: categoryColor.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -110,7 +112,7 @@ class _SuggestionCardState extends State<SuggestionCard> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.1),
+                        color: categoryColor.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -133,7 +135,7 @@ class _SuggestionCardState extends State<SuggestionCard> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.1),
+                        color: categoryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -216,7 +218,7 @@ class _SuggestionCardState extends State<SuggestionCard> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.05),
+                      color: categoryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -231,7 +233,7 @@ class _SuggestionCardState extends State<SuggestionCard> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              '行动步骤',
+                              AppLocalizations.of(context).aiCoachActionSteps,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

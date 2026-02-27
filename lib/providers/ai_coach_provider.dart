@@ -11,7 +11,6 @@ import '../services/logger_service.dart';
 import '../services/analytics_service.dart';
 import '../services/session_analysis_service.dart';
 import 'session_provider.dart';
-import 'analytics_provider.dart';
 import 'locale_provider.dart';
 import 'scoring_provider.dart';
 
@@ -146,20 +145,21 @@ class AICoachState {
   /// 检查是否正在分析特定会话
   bool isAnalyzingSession(String sessionId) {
     return isLoading &&
-           currentAnalysisType == 'session' &&
-           currentAnalysisId == sessionId;
+        currentAnalysisType == 'session' &&
+        currentAnalysisId == sessionId;
   }
 
   /// 检查是否正在分析特定周期
   bool isAnalyzingPeriod(String period) {
     return isLoading &&
-           currentAnalysisType == 'period' &&
-           currentAnalysisId == period;
+        currentAnalysisType == 'period' &&
+        currentAnalysisId == period;
   }
 }
 
 /// AI 教练状态管理
 class AICoachNotifier extends StateNotifier<AICoachState> {
+  static const String errorNoData = 'no_data';
   final SmartAIService _smartAIService;
   final Ref _ref;
 
@@ -180,7 +180,7 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
 
     if (session == null) {
       state = state.copyWith(
-        error: '没有可分析的训练数据',
+        error: errorNoData,
       );
       return;
     }
@@ -192,7 +192,7 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
   Future<void> analyzeSession(TrainingSession session) async {
     state = state.copyWith(
       isLoading: true,
-      loadingMessage: '正在分析训练数据...',
+      loadingMessage: null,
       error: null,
       currentAnalysisType: 'session',
       currentAnalysisId: session.id,
@@ -218,7 +218,8 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       );
 
       // 更新该会话的分析结果
-      final updatedSessionResults = Map<String, AICoachResult>.from(state.sessionResults);
+      final updatedSessionResults =
+          Map<String, AICoachResult>.from(state.sessionResults);
       updatedSessionResults[session.id] = result;
 
       state = state.copyWith(
@@ -243,7 +244,7 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
   Future<void> analyzePeriod(String period) async {
     state = state.copyWith(
       isLoading: true,
-      loadingMessage: '正在分析周期表现...',
+      loadingMessage: null,
       error: null,
       currentAnalysisType: 'period',
       currentAnalysisId: period,
@@ -255,7 +256,14 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       final allSessions = sessionState.sessions;
 
       if (allSessions.isEmpty) {
-        throw Exception('没有可分析的训练数据');
+        state = state.copyWith(
+          isLoading: false,
+          error: errorNoData,
+          loadingMessage: null,
+          currentAnalysisType: null,
+          currentAnalysisId: null,
+        );
+        return;
       }
 
       // 获取统计数据
@@ -280,7 +288,8 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
       );
 
       // 更新该周期的分析结果
-      final updatedPeriodResults = Map<String, AICoachResult>.from(state.periodResults);
+      final updatedPeriodResults =
+          Map<String, AICoachResult>.from(state.periodResults);
       updatedPeriodResults[period] = result;
 
       state = state.copyWith(
@@ -308,7 +317,8 @@ class AICoachNotifier extends StateNotifier<AICoachState> {
 
   /// 清除特定会话的分析结果
   void clearSessionResult(String sessionId) {
-    final updatedResults = Map<String, AICoachResult>.from(state.sessionResults);
+    final updatedResults =
+        Map<String, AICoachResult>.from(state.sessionResults);
     updatedResults.remove(sessionId);
     state = state.copyWith(sessionResults: updatedResults);
   }

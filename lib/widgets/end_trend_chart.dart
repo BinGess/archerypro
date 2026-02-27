@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// End-by-end trend chart showing average score per end
 /// Used in training session details page to detect performance patterns
@@ -27,12 +28,13 @@ class EndTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (endAverageScores.isEmpty) {
       return SizedBox(
         height: height,
         child: Center(
           child: Text(
-            '暂无数据',
+            l10n.noData,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
@@ -58,7 +60,7 @@ class EndTrendChart extends StatelessWidget {
               horizontalInterval: 1.0,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withOpacity(0.15),
+                  color: Colors.grey.withValues(alpha: 0.15),
                   strokeWidth: 1,
                 );
               },
@@ -94,11 +96,11 @@ class EndTrendChart extends StatelessWidget {
                 sideTitles: SideTitles(showTitles: false),
               ),
               bottomTitles: AxisTitles(
-                axisNameWidget: const Padding(
+                axisNameWidget: Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
-                    '组别',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    l10n.endNumber,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),
                 sideTitles: SideTitles(
@@ -127,9 +129,10 @@ class EndTrendChart extends StatelessWidget {
             borderData: FlBorderData(
               show: true,
               border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                bottom:
-                    BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                left: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                bottom: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
               ),
             ),
             minX: 0,
@@ -166,8 +169,8 @@ class EndTrendChart extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primary.withOpacity(0.15),
-                      AppColors.primary.withOpacity(0.0),
+                      AppColors.primary.withValues(alpha: 0.15),
+                      AppColors.primary.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -178,7 +181,7 @@ class EndTrendChart extends StatelessWidget {
                 // Session average line (dashed)
                 HorizontalLine(
                   y: sessionAverage,
-                  color: AppColors.accent.withOpacity(0.6),
+                  color: AppColors.accent.withValues(alpha: 0.6),
                   strokeWidth: 2,
                   dashArray: [8, 4],
                   label: HorizontalLineLabel(
@@ -191,7 +194,7 @@ class EndTrendChart extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                     labelResolver: (line) =>
-                        '平均 ${sessionAverage.toStringAsFixed(1)}',
+                        '${l10n.average} ${sessionAverage.toStringAsFixed(1)}',
                   ),
                 ),
               ],
@@ -209,7 +212,7 @@ class EndTrendChart extends StatelessWidget {
                   return touchedSpots.map((spot) {
                     final endNumber = spot.x.toInt() + 1;
                     return LineTooltipItem(
-                      '第${endNumber}组\n${spot.y.toStringAsFixed(2)}',
+                      '${l10n.endLabel(endNumber.toString())}\n${spot.y.toStringAsFixed(2)}',
                       const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -241,13 +244,14 @@ class EndTrendChartCompact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (endAverageScores.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 80,
         child: Center(
           child: Text(
-            '暂无数据',
-            style: TextStyle(color: Colors.grey, fontSize: 10),
+            l10n.noData,
+            style: const TextStyle(color: Colors.grey, fontSize: 10),
           ),
         ),
       );

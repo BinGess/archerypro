@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class ScoreTrendChart extends StatelessWidget {
   final List<double> scores;
@@ -16,13 +17,15 @@ class ScoreTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Filter valid scores (finite and > 0)
-    final validScores = scores.where((s) => s.isFinite && !s.isNaN && s >= 0).toList();
+    final validScores =
+        scores.where((s) => s.isFinite && !s.isNaN && s >= 0).toList();
 
     if (validScores.isEmpty || scores.isEmpty) {
       return Center(
         child: Text(
-          '暂无数据',
+          l10n.noData,
           style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
         ),
       );
@@ -31,9 +34,11 @@ class ScoreTrendChart extends StatelessWidget {
     final lineColor = color ?? AppColors.primary;
 
     // Calculate dynamic Y-axis range
-    double maxScore = validScores.reduce((curr, next) => curr > next ? curr : next);
-    double minScore = validScores.reduce((curr, next) => curr < next ? curr : next);
-    
+    double maxScore =
+        validScores.reduce((curr, next) => curr > next ? curr : next);
+    double minScore =
+        validScores.reduce((curr, next) => curr < next ? curr : next);
+
     // Handle edge case where max == min (single point or flat line)
     if (maxScore == minScore) {
       if (maxScore > 0) {
@@ -46,9 +51,13 @@ class ScoreTrendChart extends StatelessWidget {
     }
 
     // Add padding to range
-    double maxY = maxScore > 10 ? maxScore * 1.1 : 10.5; // If total score, add 10% padding. If average (<=10), use 10.5
-    double minY = minScore > 10 ? minScore * 0.9 : 0; // If total score, sub 10% padding. If average, use 0
-    
+    double maxY = maxScore > 10
+        ? maxScore * 1.1
+        : 10.5; // If total score, add 10% padding. If average (<=10), use 10.5
+    double minY = minScore > 10
+        ? minScore * 0.9
+        : 0; // If total score, sub 10% padding. If average, use 0
+
     // Ensure range is valid
     if (maxY <= minY) {
       maxY = minY + 1;
@@ -64,7 +73,8 @@ class ScoreTrendChart extends StatelessWidget {
               showTitles: !isCompact,
               reservedSize: 30,
               getTitlesWidget: (value, meta) {
-                if (value == minY || value == maxY) return const SizedBox.shrink();
+                if (value == minY || value == maxY)
+                  return const SizedBox.shrink();
                 return Text(
                   value.toInt().toString(),
                   style: const TextStyle(fontSize: 10, color: Colors.grey),
@@ -72,8 +82,10 @@ class ScoreTrendChart extends StatelessWidget {
               },
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: !isCompact,
@@ -100,23 +112,25 @@ class ScoreTrendChart extends StatelessWidget {
         lineBarsData: [
           LineChartBarData(
             spots: validScores.asMap().entries.map((e) {
-               // If only one point, center it or put at 0. 
-               // With maxX=1, putting it at 0 is fine.
-               return FlSpot(e.key.toDouble(), e.value);
+              // If only one point, center it or put at 0.
+              // With maxX=1, putting it at 0 is fine.
+              return FlSpot(e.key.toDouble(), e.value);
             }).toList(),
             isCurved: validScores.length > 2, // Only curve if enough points
             color: lineColor,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: !isCompact || validScores.length == 1), // Show dot if single point
+            dotData: FlDotData(
+                show: !isCompact ||
+                    validScores.length == 1), // Show dot if single point
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  lineColor.withOpacity(0.2),
-                  lineColor.withOpacity(0.0),
+                  lineColor.withValues(alpha: 0.2),
+                  lineColor.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -130,7 +144,8 @@ class ScoreTrendChart extends StatelessWidget {
               return touchedSpots.map((spot) {
                 return LineTooltipItem(
                   spot.y.toStringAsFixed(1),
-                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 );
               }).toList();
             },

@@ -14,6 +14,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get close => 'Close';
+
+  @override
   String get save => 'Save';
 
   @override
@@ -21,6 +24,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get discard => 'Discard';
 
   @override
   String get confirm => 'Confirm';
@@ -92,6 +101,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeScore => 'Remove';
 
   @override
+  String get currentEnd => 'Current End';
+
+  @override
   String get completeSession => 'Complete';
 
   @override
@@ -102,6 +114,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionCompleted => 'Training completed!';
+
+  @override
+  String get noActiveTraining => 'No active training';
+
+  @override
+  String get clickStartScoring => 'Tap below to start scoring';
+
+  @override
+  String get oneMoreEnd => 'Add One More End';
+
+  @override
+  String get removeShort => 'Remove';
+
+  @override
+  String get scoringExitTitle => 'Exit Scoring?';
+
+  @override
+  String get scoringExitMessage =>
+      'Current records will be lost. Save before exit?';
+
+  @override
+  String endLabel(String number) => 'End $number';
+
+  @override
+  String endCompletedLabel(String number) => 'End $number completed';
+
+  @override
+  String scoreLabel(String score) => 'Score: $score';
+
+  @override
+  String totalScoreLabel(String total) => 'Total: $total';
 
   // Session Setup
   @override
@@ -169,6 +212,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get precision => 'Precision';
 
+  @override
+  String get tenRingRate => '10-Ring Rate';
+
+  @override
+  String get groupingDensity => 'Grouping';
+
+  @override
+  String get endurance => 'Endurance';
+
+  @override
+  String get centerPrecision => 'Center Precision';
+
   // Details
   @override
   String get sessionDetails => 'Session Details';
@@ -184,6 +239,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get endBreakdown => 'End Breakdown';
+
+  @override
+  String get noSessionDetailsHint =>
+      'Details will appear here after you complete a session';
+
+  @override
+  String get endsScoreTitle => 'End Scores';
+
+  @override
+  String totalEndsLabel(String count) => '$count ends';
 
   // Settings
   @override
@@ -225,6 +290,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get viewLogsSubtitle => 'View app logs and crash reports';
 
+  @override
+  String get logsTitle => 'App Logs';
+
+  @override
+  String logsFailedToLoad(String error) => 'Failed to load logs: $error';
+
+  @override
+  String get logsCopied => 'Logs copied to clipboard';
+
+  @override
+  String get clearLogsTitle => 'Clear Logs';
+
+  @override
+  String get clearLogsMessage =>
+      'Are you sure you want to delete all logs? This action cannot be undone.';
+
+  @override
+  String get refreshLogsTooltip => 'Refresh';
+
+  @override
+  String get copyLogsTooltip => 'Copy to clipboard';
+
+  @override
+  String get clearLogsTooltip => 'Clear logs';
+
+  @override
+  String get logsLocalOnlyHint =>
+      'Logs are stored locally and never sent to servers';
+
+  @override
+  String get noLogsAvailable => 'No logs available';
+
+  @override
+  String get logsCleared => 'Logs cleared';
+
   // Messages
   @override
   String get loading => 'Loading...';
@@ -233,10 +333,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noData => 'No data';
 
   @override
+  String get noValidData => 'No valid data';
+
+  @override
+  String get ringNumber => 'Ring';
+
+  @override
+  String get noBiasData => 'No bias data';
+
+  @override
+  String get missDistribution => 'Miss distribution';
+
+  @override
+  String get currentPeriod => 'Current period';
+
+  @override
+  String get previousPeriod => 'Previous period';
+
+  @override
+  String get overallScore => 'Overall score';
+
+  @override
+  String strengthLabel(String strongest) => 'Strength: $strongest';
+
+  @override
+  String weaknessLabel(String weakest) => 'Weakness: $weakest';
+
+  @override
+  String quadrantDominanceMessage(String direction, String percent) =>
+      '$direction bias: $percent%';
+
+  @override
   String get error => 'Error';
 
   @override
   String get success => 'Success';
+
+  @override
+  String get initializationFailed => 'Initialization failed';
+
+  @override
+  String get resetDataAndRetry => 'Reset data and retry';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get restartApp => 'Restart App';
+
+  @override
+  String get failedToStartApp => 'Failed to start app';
 
   // Date Formats
   @override
@@ -411,6 +557,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiCoachBasedOnData => 'Professional advice based on training data';
   @override
+  String get aiCoachBasedOnCurrentSession =>
+      'Professional advice based on this session';
+  @override
   String get aiCoachGetProfessionalAdvice =>
       'Get detailed professional advice and training plans';
   @override
@@ -436,6 +585,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiCoachClickForDeepAnalysis =>
       'Click "Deep Analysis" to get comprehensive advice and training plans';
+  @override
+  String get aiCoachPreferOnlineFallbackToLocal =>
+      'Online analysis is preferred, and automatically falls back to local analysis';
+  @override
+  String get aiCoachPreferOnlineFallbackToOffline =>
+      'Online analysis is preferred, and automatically falls back to offline mode';
   @override
   String get aiCoachDismiss => 'Dismiss';
   @override
@@ -482,4 +637,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiCoachPhase => 'Phase';
   @override
   String get aiCoachSuggestionsCount => 'items';
+
+  // Session setup
+  @override
+  String get environment => 'Environment';
+  @override
+  String get indoor => 'Indoor';
+  @override
+  String get outdoor => 'Outdoor';
+  @override
+  String get sessionSetupEquipment => 'Equipment';
+  @override
+  String get sessionSetupVenue => 'Venue';
+  @override
+  String get sessionSetupRules => 'Rules';
+  @override
+  String get sessionSetupDisplayMode => 'Display & Mode';
+  @override
+  String get scoringView => 'Scoring View';
+  @override
+  String get listView => 'List';
+  @override
+  String get targetView => 'Target';
+  @override
+  String get competitionMode => 'Competition Mode';
+  @override
+  String get estimatedTotalArrows => 'Estimated total arrows';
+  @override
+  String get centimeters => 'cm';
+  @override
+  String sessionSetupSelectLabel(String label) => 'Select $label';
+  @override
+  String myBowName(String bowName) => 'My $bowName';
 }

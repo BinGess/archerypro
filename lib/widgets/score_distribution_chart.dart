@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Score distribution bar chart showing count of arrows per ring
 /// Highlights 10-ring and X-ring with gold color
@@ -28,12 +29,13 @@ class ScoreDistributionChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (scoreDistribution.isEmpty) {
       return SizedBox(
         height: height,
         child: Center(
           child: Text(
-            '暂无数据',
+            l10n.noData,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
@@ -67,7 +69,7 @@ class ScoreDistributionChart extends StatelessWidget {
                   final label = _getBarLabel(group.x.toInt());
                   final count = rod.toY.toInt();
                   return BarTooltipItem(
-                    '$label\n$count箭',
+                    '$label\n$count ${l10n.unitArrows}',
                     const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -108,11 +110,11 @@ class ScoreDistributionChart extends StatelessWidget {
                 sideTitles: SideTitles(showTitles: false),
               ),
               bottomTitles: AxisTitles(
-                axisNameWidget: const Padding(
+                axisNameWidget: Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
-                    '环数',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    l10n.ringNumber,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),
                 sideTitles: SideTitles(
@@ -143,7 +145,7 @@ class ScoreDistributionChart extends StatelessWidget {
               horizontalInterval: maxY / 5,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withOpacity(0.15),
+                  color: Colors.grey.withValues(alpha: 0.15),
                   strokeWidth: 1,
                 );
               },
@@ -151,9 +153,10 @@ class ScoreDistributionChart extends StatelessWidget {
             borderData: FlBorderData(
               show: true,
               border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
-                bottom:
-                    BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                left: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                bottom: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
               ),
             ),
             barGroups: barGroups,
@@ -168,7 +171,8 @@ class ScoreDistributionChart extends StatelessWidget {
     final groups = <BarChartGroupData>[];
 
     // Get all unique scores and sort descending (10, 9, 8, ...)
-    final scores = scoreDistribution.keys.toList()..sort((a, b) => b.compareTo(a));
+    final scores = scoreDistribution.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
 
     // Add X-ring as separate bar if enabled
     if (showXRingSeparate && xRingCount > 0) {
@@ -180,11 +184,12 @@ class ScoreDistributionChart extends StatelessWidget {
               toY: xRingCount.toDouble(),
               color: AppColors.targetGold,
               width: 24,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(4)),
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: _calculateMaxY(),
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -205,11 +210,12 @@ class ScoreDistributionChart extends StatelessWidget {
               toY: count.toDouble(),
               color: _getBarColor(score),
               width: 24,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(4)),
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: _calculateMaxY(),
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -249,7 +255,8 @@ class ScoreDistributionChart extends StatelessWidget {
     final maxCount = scoreDistribution.values.isEmpty
         ? 10
         : scoreDistribution.values.reduce((a, b) => a > b ? a : b);
-    final maxWithX = showXRingSeparate && xRingCount > maxCount ? xRingCount : maxCount;
+    final maxWithX =
+        showXRingSeparate && xRingCount > maxCount ? xRingCount : maxCount;
 
     // Round up to nearest 5
     return ((maxWithX / 5).ceil() * 5).toDouble();

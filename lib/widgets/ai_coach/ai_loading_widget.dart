@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// AI 分析加载中组件
 class AILoadingWidget extends StatefulWidget {
@@ -40,6 +41,7 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return RepaintBoundary(
       child: Container(
         width: double.infinity,
@@ -61,7 +63,7 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -75,7 +77,7 @@ class _AILoadingWidgetState extends State<AILoadingWidget>
 
             // 加载文本
             Text(
-              widget.message ?? 'AI 教练分析中...',
+              widget.message ?? l10n.aiCoachAnalyzing,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

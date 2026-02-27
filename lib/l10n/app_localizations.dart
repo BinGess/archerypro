@@ -8,9 +8,12 @@ abstract class AppLocalizations {
   String get appName;
   String get ok;
   String get cancel;
+  String get close;
   String get save;
   String get delete;
   String get edit;
+  String get reset;
+  String get discard;
   String get confirm;
   String get back;
   String get settings;
@@ -39,10 +42,21 @@ abstract class AppLocalizations {
   String get arrowNumber;
   String get miss;
   String get removeScore;
+  String get currentEnd;
   String get completeSession;
   String get sessionSaved;
   String get endCompleted;
   String get sessionCompleted;
+  String get noActiveTraining;
+  String get clickStartScoring;
+  String get oneMoreEnd;
+  String get removeShort;
+  String get scoringExitTitle;
+  String get scoringExitMessage;
+  String endLabel(String number);
+  String endCompletedLabel(String number);
+  String scoreLabel(String score);
+  String totalScoreLabel(String total);
 
   // Session Setup
   String get newTraining;
@@ -70,6 +84,10 @@ abstract class AppLocalizations {
   String get consistency;
   String get accuracy;
   String get precision;
+  String get tenRingRate;
+  String get groupingDensity;
+  String get endurance;
+  String get centerPrecision;
 
   // Details
   String get sessionDetails;
@@ -77,6 +95,9 @@ abstract class AppLocalizations {
   String get equipment;
   String get scorePercentage;
   String get endBreakdown;
+  String get noSessionDetailsHint;
+  String get endsScoreTitle;
+  String totalEndsLabel(String count);
 
   // Settings
   String get settingsTitle;
@@ -92,12 +113,38 @@ abstract class AppLocalizations {
   String get debugSection;
   String get viewLogs;
   String get viewLogsSubtitle;
+  String get logsTitle;
+  String logsFailedToLoad(String error);
+  String get logsCopied;
+  String get clearLogsTitle;
+  String get clearLogsMessage;
+  String get refreshLogsTooltip;
+  String get copyLogsTooltip;
+  String get clearLogsTooltip;
+  String get logsLocalOnlyHint;
+  String get noLogsAvailable;
+  String get logsCleared;
 
   // Messages
   String get loading;
   String get noData;
+  String get noValidData;
+  String get ringNumber;
+  String get noBiasData;
+  String get missDistribution;
+  String get currentPeriod;
+  String get previousPeriod;
+  String get overallScore;
+  String strengthLabel(String strongest);
+  String weaknessLabel(String weakest);
+  String quadrantDominanceMessage(String direction, String percent);
   String get error;
   String get success;
+  String get initializationFailed;
+  String get resetDataAndRetry;
+  String get somethingWentWrong;
+  String get restartApp;
+  String get failedToStartApp;
 
   // Date Formats
   String formatDate(DateTime date);
@@ -195,6 +242,7 @@ abstract class AppLocalizations {
   String get aiCoachDeepAnalysis;
   String get aiCoachPeriodAnalysis;
   String get aiCoachBasedOnData;
+  String get aiCoachBasedOnCurrentSession;
   String get aiCoachGetProfessionalAdvice;
   String get aiCoachAnalyzeButton;
   String get aiCoachDeepAnalyzeButton;
@@ -206,6 +254,8 @@ abstract class AppLocalizations {
   String get aiCoachNetworkError;
   String get aiCoachClickToAnalyze;
   String get aiCoachClickForDeepAnalysis;
+  String get aiCoachPreferOnlineFallbackToLocal;
+  String get aiCoachPreferOnlineFallbackToOffline;
   String get aiCoachDismiss;
   String get aiCoachClose;
   String get aiCoachDiagnosis;
@@ -229,6 +279,23 @@ abstract class AppLocalizations {
   String get aiCoachArrowsUnit;
   String get aiCoachPhase;
   String get aiCoachSuggestionsCount;
+
+  // Session setup
+  String get environment;
+  String get indoor;
+  String get outdoor;
+  String get sessionSetupEquipment;
+  String get sessionSetupVenue;
+  String get sessionSetupRules;
+  String get sessionSetupDisplayMode;
+  String get scoringView;
+  String get listView;
+  String get targetView;
+  String get competitionMode;
+  String get estimatedTotalArrows;
+  String get centimeters;
+  String sessionSetupSelectLabel(String label);
+  String myBowName(String bowName);
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
