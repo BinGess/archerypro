@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/arrow.dart';
 import '../models/end.dart';
 import '../models/equipment.dart';
 import '../models/training_session.dart';

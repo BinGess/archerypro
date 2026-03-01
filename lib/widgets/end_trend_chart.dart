@@ -35,7 +35,7 @@ class EndTrendChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -60,7 +60,7 @@ class EndTrendChart extends StatelessWidget {
               horizontalInterval: 1.0,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withValues(alpha: 0.15),
+                  color: AppColors.borderLight.withValues(alpha: 0.6),
                   strokeWidth: 1,
                 );
               },
@@ -81,7 +81,7 @@ class EndTrendChart extends StatelessWidget {
                         value.toInt().toString(),
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.grey,
+                          color: AppColors.textSlate500,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -100,7 +100,8 @@ class EndTrendChart extends StatelessWidget {
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
                     l10n.endNumber,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSlate500),
                   ),
                 ),
                 sideTitles: SideTitles(
@@ -115,7 +116,7 @@ class EndTrendChart extends StatelessWidget {
                           '${index + 1}',
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Colors.grey,
+                            color: AppColors.textSlate500,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -130,9 +131,11 @@ class EndTrendChart extends StatelessWidget {
               show: true,
               border: Border(
                 left: BorderSide(
-                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    color: AppColors.borderLight.withValues(alpha: 0.9),
+                    width: 1),
                 bottom: BorderSide(
-                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    color: AppColors.borderLight.withValues(alpha: 0.9),
+                    width: 1),
               ),
             ),
             minX: 0,
@@ -189,7 +192,7 @@ class EndTrendChart extends StatelessWidget {
                     alignment: Alignment.topRight,
                     padding: const EdgeInsets.only(right: 4, bottom: 4),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: AppColors.accent,
                       fontWeight: FontWeight.bold,
                     ),
@@ -202,7 +205,7 @@ class EndTrendChart extends StatelessWidget {
             lineTouchData: LineTouchData(
               enabled: true,
               touchTooltipData: LineTouchTooltipData(
-                tooltipBgColor: Colors.black87,
+                tooltipBgColor: AppColors.textSlate900,
                 tooltipRoundedRadius: 8,
                 tooltipPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -251,7 +254,7 @@ class EndTrendChartCompact extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noData,
-            style: const TextStyle(color: Colors.grey, fontSize: 10),
+            style: const TextStyle(color: AppColors.textSlate500, fontSize: 11),
           ),
         ),
       );

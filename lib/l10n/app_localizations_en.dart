@@ -693,6 +693,95 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get competitionMode => 'Competition Mode';
   @override
+  String get competitionWaStandard => 'WA standard timing & signals';
+  @override
+  String get competitionTimePerArrow => 'TIME PER ARROW';
+  @override
+  String get competitionCustom => 'Custom';
+  @override
+  String get competitionSecondsPerArrow => 'seconds per arrow';
+  @override
+  String get competitionWhistleSounds => 'Whistle Sounds';
+  @override
+  String get competitionWaWhistleDesc => 'Standard WA whistle signals';
+  @override
+  String get competitionInputMode => 'Input Mode';
+  @override
+  String get competitionKeyboardEntry => 'Keyboard';
+  @override
+  String get competitionTargetEntry => 'Target';
+  @override
+  String get competitionTapTargetHint => 'Tap target to score';
+  @override
+  String get competitionPrep => 'Prep';
+  @override
+  String get competitionShoot => 'SHOOT';
+  @override
+  String get competitionWarn => 'Warn';
+  @override
+  String get competitionWarningLeft => '30s left';
+  @override
+  String get competitionTotal => 'Total';
+  @override
+  String get competitionStartBtn => 'START COMPETITION';
+  @override
+  String get competitionReady => 'READY';
+  @override
+  String get competitionGetReady => 'GET READY';
+  @override
+  String get competitionDoNotRaiseBow => 'DO NOT RAISE BOW';
+  @override
+  String get competitionHurryUp => 'HURRY UP';
+  @override
+  String get competitionSkip => 'SKIP';
+  @override
+  String get competitionStop => 'STOP';
+  @override
+  String get competitionShooting => 'SHOOTING';
+  @override
+  String get competitionPaused => 'PAUSED';
+  @override
+  String get competitionSafetyHalt => 'Safety Halt';
+  @override
+  String competitionRemainingTime(int seconds) => '${seconds}s remaining';
+  @override
+  String get competitionResume => 'RESUME';
+  @override
+  String get competitionResetEnd => 'RESET END';
+  @override
+  String get competitionResetEndTitle => 'Reset End?';
+  @override
+  String get competitionResetEndMessage =>
+      'This will discard the current timer and return to the ready state.';
+  @override
+  String get competitionComplete => 'COMPETITION COMPLETE';
+  @override
+  String get competitionAvgPerEnd => 'Avg/End';
+  @override
+  String get competitionBest => 'Best';
+  @override
+  String get competitionWorst => 'Worst';
+  @override
+  String get competitionEnds => 'Ends';
+  @override
+  String get competitionDone => 'DONE';
+  @override
+  String get competitionIncompleteEnd => 'Incomplete End';
+  @override
+  String competitionIncompleteMessage(int current, int total) =>
+      'You have $current of $total arrows scored. Submit anyway?';
+  @override
+  String get competitionSubmit => 'Submit';
+  @override
+  String get competitionLeaveTitle => 'Leave Competition?';
+  @override
+  String get competitionLeaveMessage =>
+      'Timer is still running. Your progress will be lost.';
+  @override
+  String get competitionStay => 'Stay';
+  @override
+  String get competitionLeave => 'Leave';
+  @override
   String get estimatedTotalArrows => 'Estimated total arrows';
   @override
   String get centimeters => 'cm';

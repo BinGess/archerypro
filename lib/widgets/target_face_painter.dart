@@ -115,8 +115,8 @@ class TargetFacePainter extends CustomPainter {
   ///   ring 10 boundary uses (kTargetTenRingBoundary * 2)
   ///   X boundary uses (kTargetXRingBoundary * 2)
   void _paintTripleFace(Canvas canvas, Offset center, double radius) {
-    final tenBoundary = kTargetTenRingBoundary * 2;
-    final xBoundary = kTargetXRingBoundary * 2;
+    const tenBoundary = kTargetTenRingBoundary * 2;
+    const xBoundary = kTargetXRingBoundary * 2;
 
     // Color zones — draw outside → inside
     _fillCircle(canvas, center, radius, AppColors.targetBlue); // ring 6

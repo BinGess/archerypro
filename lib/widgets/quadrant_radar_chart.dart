@@ -36,7 +36,7 @@ class QuadrantRadarChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noBiasData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -60,21 +60,21 @@ class QuadrantRadarChart extends StatelessWidget {
                 fontSize: 0,
               ),
               tickBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: AppColors.borderLight.withValues(alpha: 0.9),
                 width: 1,
               ),
               gridBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: AppColors.borderLight.withValues(alpha: 0.9),
                 width: 1.5,
               ),
               radarBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.5),
+                color: AppColors.textSlate400.withValues(alpha: 0.6),
                 width: 2,
               ),
               titleTextStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppColors.textSlate900,
               ),
               getTitle: (index, angle) {
                 if (!showLabels) return const RadarChartTitle(text: '');
@@ -102,13 +102,14 @@ class QuadrantRadarChart extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: AppColors.borderLight.withValues(alpha: 0.9)),
                 ),
                 child: Text(
                   l10n.missDistribution,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Colors.grey,
+                    color: AppColors.textSlate500,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -192,7 +193,7 @@ class QuadrantRadarChartDetailed extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

@@ -124,7 +124,7 @@ class SessionAnalysisService {
         .length;
 
     if (firstEndsBelow >= firstEndsCount) {
-      return SessionInsight(
+      return const SessionInsight(
         type: InsightType.warmUp,
         title: '状态慢热提醒',
         message: '前几组表现低于整体水平，建议增加热身时间和空拉练习。',
@@ -145,7 +145,7 @@ class SessionAnalysisService {
 
     // Good center (<15% deviation) but poor grouping (>25% scatter)
     if (centerDeviation < 0.15 && groupingRadius > 0.25) {
-      return SessionInsight(
+      return const SessionInsight(
         type: InsightType.stability,
         title: '稳定性改进建议',
         message: '瞄准方向正确但箭支散布较大，建议专注于动作一致性训练。',

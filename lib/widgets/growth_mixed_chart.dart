@@ -32,7 +32,7 @@ class GrowthMixedChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -51,7 +51,7 @@ class GrowthMixedChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -69,7 +69,7 @@ class GrowthMixedChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noValidData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -82,7 +82,7 @@ class GrowthMixedChart extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
             l10n.averageScore,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 11, color: AppColors.textSlate500),
           ),
         ),
         axisNameSize: 20,
@@ -99,8 +99,8 @@ class GrowthMixedChart extends StatelessWidget {
               child: Text(
                 value.toInt().toString(),
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
+                  fontSize: 11,
+                  color: AppColors.textSlate500,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -113,7 +113,7 @@ class GrowthMixedChart extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 8),
           child: Text(
             l10n.arrows,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 11, color: AppColors.textSlate500),
           ),
         ),
         axisNameSize: 20,
@@ -129,8 +129,8 @@ class GrowthMixedChart extends StatelessWidget {
               child: Text(
                 value.toInt().toString(),
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
+                  fontSize: 11,
+                  color: AppColors.textSlate500,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -146,7 +146,7 @@ class GrowthMixedChart extends StatelessWidget {
           padding: EdgeInsets.only(top: 4),
           child: Text(
             l10n.date,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 11, color: AppColors.textSlate500),
           ),
         ),
         axisNameSize: 20,
@@ -167,8 +167,8 @@ class GrowthMixedChart extends StatelessWidget {
                     child: Text(
                       DateFormat('MM/dd').format(allDates[index]),
                       style: const TextStyle(
-                        fontSize: 9,
-                        color: Colors.grey,
+                        fontSize: 10,
+                        color: AppColors.textSlate500,
                       ),
                     ),
                   ),
@@ -186,7 +186,7 @@ class GrowthMixedChart extends StatelessWidget {
       leftTitles: AxisTitles(
         axisNameWidget: const Padding(
           padding: EdgeInsets.only(bottom: 8),
-          child: Text(' ', style: TextStyle(fontSize: 10)),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
         ),
         axisNameSize: 20,
         sideTitles: SideTitles(
@@ -197,7 +197,7 @@ class GrowthMixedChart extends StatelessWidget {
       rightTitles: AxisTitles(
         axisNameWidget: const Padding(
           padding: EdgeInsets.only(bottom: 8),
-          child: Text(' ', style: TextStyle(fontSize: 10)),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
         ),
         axisNameSize: 20,
         sideTitles: SideTitles(
@@ -209,7 +209,7 @@ class GrowthMixedChart extends StatelessWidget {
       bottomTitles: AxisTitles(
         axisNameWidget: const Padding(
           padding: EdgeInsets.only(top: 4),
-          child: Text(' ', style: TextStyle(fontSize: 10)),
+          child: Text(' ', style: TextStyle(fontSize: 11)),
         ),
         axisNameSize: 20,
         sideTitles: SideTitles(
@@ -247,7 +247,7 @@ class GrowthMixedChart extends StatelessWidget {
                   horizontalInterval: 2.0,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.withValues(alpha: 0.15),
+                      color: AppColors.borderLight.withValues(alpha: 0.6),
                       strokeWidth: 1,
                     );
                   },
@@ -257,11 +257,14 @@ class GrowthMixedChart extends StatelessWidget {
                   show: true,
                   border: Border(
                     left: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                        color: AppColors.borderLight.withValues(alpha: 0.9),
+                        width: 1),
                     bottom: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                        color: AppColors.borderLight.withValues(alpha: 0.9),
+                        width: 1),
                     right: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                        color: AppColors.borderLight.withValues(alpha: 0.9),
+                        width: 1),
                   ),
                 ),
                 minX: 0,
@@ -298,7 +301,7 @@ class GrowthMixedChart extends StatelessWidget {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: Colors.black87,
+                    tooltipBgColor: AppColors.textSlate900,
                     tooltipRoundedRadius: 8,
                     tooltipPadding: const EdgeInsets.all(10),
                     getTooltipItems: (touchedSpots) {
@@ -329,7 +332,7 @@ class GrowthMixedChart extends StatelessWidget {
                     // Reference line at score 8.0
                     HorizontalLine(
                       y: 8.0,
-                      color: Colors.grey.withValues(alpha: 0.3),
+                      color: AppColors.borderLight.withValues(alpha: 0.9),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                     ),

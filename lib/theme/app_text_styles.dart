@@ -7,96 +7,102 @@ class AppTextStyles {
   AppTextStyles._();
 
   // ── AppBar / Page Titles ──────────────────────────────────────────────────
-  /// Primary page title used in AppBar (17sp, w800)
+  /// Primary page title used in AppBar
   static const TextStyle appBarTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w800,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
     color: AppColors.textSlate900,
     letterSpacing: 0,
   );
 
   // ── Section Headers ───────────────────────────────────────────────────────
-  /// Grouped-list section header, e.g. "语言设置" (13sp, w700, muted)
+  /// Grouped-list section header
   static const TextStyle sectionHeader = TextStyle(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w700,
     color: AppColors.textSlate500,
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   );
 
-  /// Card section title, e.g. "器材设置" with icon (15sp, w700)
+  /// Card section title
   static const TextStyle cardSectionTitle = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.w700,
     color: AppColors.textSlate900,
   );
 
   // ── Body / Row Labels ─────────────────────────────────────────────────────
-  /// Primary list-row label (15sp, w600)
+  /// Primary list-row label
   static const TextStyle rowLabel = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textSlate900,
+    height: 1.2,
   );
 
-  /// Secondary body text / descriptions (14sp, w500)
+  /// Secondary body text / descriptions
   static const TextStyle body = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textSlate700,
+    height: 1.45,
   );
 
-  /// Muted sub-label below row titles (13sp, w500)
+  /// Muted sub-label below row titles
   static const TextStyle subLabel = TextStyle(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.textSlate500,
+    height: 1.4,
   );
 
   // ── Captions / Tags ───────────────────────────────────────────────────────
-  /// Small uppercase caption, e.g. metric labels (11sp, w700, letterSpacing)
+  /// Small uppercase caption, e.g. metric labels
   static const TextStyle caption = TextStyle(
     fontSize: 11,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     color: AppColors.textSlate400,
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   );
 
-  /// Even smaller micro-label (10sp, w700)
+  /// Micro-label for dense data visuals
   static const TextStyle micro = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w700,
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
     color: AppColors.textSlate400,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   );
 
   // ── Numeric Displays ──────────────────────────────────────────────────────
-  /// Hero score number, e.g. total session score (48sp, w900)
+  /// Hero score number, e.g. total session score
   static const TextStyle heroNumber = TextStyle(
-    fontSize: 48,
+    fontSize: 46,
     fontWeight: FontWeight.w900,
     color: AppColors.primary,
     height: 1.0,
+    letterSpacing: -0.3,
   );
 
-  /// Large stat number on dashboard / cards (32sp, w900)
+  /// Large stat number on dashboard / cards
   static const TextStyle largeNumber = TextStyle(
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: FontWeight.w900,
     height: 1.0,
+    letterSpacing: -0.2,
   );
 
-  /// Medium stat number (24sp, w900)
+  /// Medium stat number
   static const TextStyle mediumNumber = TextStyle(
     fontSize: 24,
-    fontWeight: FontWeight.w900,
+    fontWeight: FontWeight.w800,
     height: 1.0,
+    letterSpacing: -0.1,
   );
 
-  /// Inline fraction denominator (18sp, w700, muted)
+  /// Inline fraction denominator
   static const TextStyle numberDenominator = TextStyle(
     fontSize: 18,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     color: AppColors.textSlate400,
   );
 
@@ -108,13 +114,13 @@ class AppTextStyles {
 
   static const TextStyle navUnselected = TextStyle(
     fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
   );
 
   // ── Buttons ───────────────────────────────────────────────────────────────
   static const TextStyle primaryButton = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.w700,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   );
 }

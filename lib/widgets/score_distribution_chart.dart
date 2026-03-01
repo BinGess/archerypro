@@ -36,7 +36,7 @@ class ScoreDistributionChart extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.noData,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: const TextStyle(color: AppColors.textSlate400, fontSize: 14),
           ),
         ),
       );
@@ -59,7 +59,7 @@ class ScoreDistributionChart extends StatelessWidget {
             barTouchData: BarTouchData(
               enabled: true,
               touchTooltipData: BarTouchTooltipData(
-                tooltipBgColor: Colors.black87,
+                tooltipBgColor: AppColors.textSlate900,
                 tooltipRoundedRadius: 8,
                 tooltipPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -95,7 +95,7 @@ class ScoreDistributionChart extends StatelessWidget {
                         value.toInt().toString(),
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.grey,
+                          color: AppColors.textSlate500,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -114,7 +114,8 @@ class ScoreDistributionChart extends StatelessWidget {
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
                     l10n.ringNumber,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSlate500),
                   ),
                 ),
                 sideTitles: SideTitles(
@@ -128,7 +129,7 @@ class ScoreDistributionChart extends StatelessWidget {
                           fontSize: 11,
                           color: _isGoldRing(value.toInt())
                               ? AppColors.targetGold
-                              : Colors.grey,
+                              : AppColors.textSlate500,
                           fontWeight: _isGoldRing(value.toInt())
                               ? FontWeight.bold
                               : FontWeight.w500,
@@ -145,7 +146,7 @@ class ScoreDistributionChart extends StatelessWidget {
               horizontalInterval: maxY / 5,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withValues(alpha: 0.15),
+                  color: AppColors.borderLight.withValues(alpha: 0.6),
                   strokeWidth: 1,
                 );
               },
@@ -154,9 +155,11 @@ class ScoreDistributionChart extends StatelessWidget {
               show: true,
               border: Border(
                 left: BorderSide(
-                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    color: AppColors.borderLight.withValues(alpha: 0.9),
+                    width: 1),
                 bottom: BorderSide(
-                    color: Colors.grey.withValues(alpha: 0.3), width: 1),
+                    color: AppColors.borderLight.withValues(alpha: 0.9),
+                    width: 1),
               ),
             ),
             barGroups: barGroups,
@@ -189,7 +192,7 @@ class ScoreDistributionChart extends StatelessWidget {
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: _calculateMaxY(),
-                color: Colors.grey.withValues(alpha: 0.1),
+                color: AppColors.surfaceSubtle,
               ),
             ),
           ],
@@ -215,7 +218,7 @@ class ScoreDistributionChart extends StatelessWidget {
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: _calculateMaxY(),
-                color: Colors.grey.withValues(alpha: 0.1),
+                color: AppColors.surfaceSubtle,
               ),
             ),
           ],
@@ -235,7 +238,7 @@ class ScoreDistributionChart extends StatelessWidget {
     } else if (score >= 7) {
       return AppColors.accent;
     } else {
-      return Colors.grey;
+      return AppColors.textSlate500;
     }
   }
 

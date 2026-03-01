@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:math' as math;
 
 import '../models/training_session.dart';
 import '../models/statistics.dart';

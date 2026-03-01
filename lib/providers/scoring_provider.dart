@@ -8,7 +8,6 @@ import '../models/equipment.dart';
 import '../services/scoring_service.dart';
 import '../services/session_service.dart';
 import '../services/storage_service.dart';
-import '../utils/constants.dart';
 
 // Service providers
 final scoringServiceProvider = Provider((ref) => ScoringService());

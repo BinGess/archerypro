@@ -26,10 +26,13 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                   SliverAppBar(
                     floating: true,
                     pinned: true,
-                    backgroundColor: AppColors.backgroundLight.withOpacity(0.95),
+                    backgroundColor:
+                        AppColors.backgroundLight.withOpacity(0.95),
                     title: const Text(
                       'Training History',
-                      style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSlate900),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900),
                     ),
                     actions: [
                       Container(
@@ -40,7 +43,8 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                           color: Colors.grey.shade100,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.tune, color: AppColors.primary, size: 20),
+                        child: const Icon(Icons.tune,
+                            color: AppColors.primary, size: 20),
                       )
                     ],
                   ),
@@ -68,11 +72,15 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                             opacity: 0.4,
                             child: Column(
                               children: [
-                                Icon(Icons.history, size: 64, color: AppColors.textSlate500),
+                                Icon(Icons.history,
+                                    size: 64, color: AppColors.textSlate500),
                                 SizedBox(height: 16),
-                                Text('No training sessions yet', style: TextStyle(fontWeight: FontWeight.w600)),
+                                Text('No training sessions yet',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w600)),
                                 SizedBox(height: 8),
-                                Text('Tap "Score" to start your first session', style: TextStyle(fontSize: 12)),
+                                Text('Tap "Score" to start your first session',
+                                    style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           ),
@@ -98,7 +106,8 @@ class DashboardScreenWithLogic extends ConsumerWidget {
               height: 120,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.05),
-                borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(100)),
+                borderRadius:
+                    const BorderRadius.only(bottomLeft: Radius.circular(100)),
               ),
             ),
           ),
@@ -117,17 +126,30 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Text('${stats.totalSessions}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
+                            Text('${stats.totalSessions}',
+                                style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1)),
                             const SizedBox(width: 4),
-                            const Text('sessions', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600)),
+                            const Text('sessions',
+                                style: TextStyle(
+                                    color: AppColors.textSlate500,
+                                    fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                            const Icon(Icons.calendar_today,
+                                size: 14, color: AppColors.primary),
                             const SizedBox(width: 4),
-                            Text('${stats.currentMonthArrows} arrows this month', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate500)),
+                            Text(
+                                '${stats.currentMonthArrows} arrows this month',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSlate500)),
                           ],
                         )
                       ],
@@ -139,17 +161,37 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Text(stats.avgArrowScore.toStringAsFixed(1), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1, color: AppColors.primary)),
+                            Text(stats.avgArrowScore.toStringAsFixed(1),
+                                style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                    color: AppColors.primary)),
                             const SizedBox(width: 4),
-                            const Text('avg', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.w600, fontSize: 13)),
+                            const Text('avg',
+                                style: TextStyle(
+                                    color: AppColors.textSlate500,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13)),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            StatusBadge(text: stats.trendDisplay, color: stats.trend >= 0 ? Colors.green.shade700 : Colors.red.shade700, backgroundColor: stats.trend >= 0 ? Colors.green.shade50 : Colors.red.shade50),
+                            StatusBadge(
+                                text: stats.trendDisplay,
+                                color: stats.trend >= 0
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
+                                backgroundColor: stats.trend >= 0
+                                    ? Colors.green.shade50
+                                    : Colors.red.shade50),
                             const SizedBox(width: 4),
-                            const Text('Trend', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
+                            const Text('Trend',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSlate400)),
                           ],
                         )
                       ],
@@ -157,17 +199,26 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                const SizedBox(
+                SizedBox(
                   height: 80,
                   width: double.infinity,
-                  child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
+                  child: CustomPaint(
+                      painter: CustomCurvePainter(color: AppColors.primary)),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Monthly Goal: ${stats.monthlyGoal ?? 3000}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
-                    Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    Text('Monthly Goal: ${stats.monthlyGoal ?? 3000}',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade600)),
+                    Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -188,7 +239,8 @@ class DashboardScreenWithLogic extends ConsumerWidget {
     );
   }
 
-  Widget _buildHistoryItem({required dynamic session, required bool isHighRecord}) {
+  Widget _buildHistoryItem(
+      {required dynamic session, required bool isHighRecord}) {
     final dateStr = '${_getMonthAbbr(session.date.month)} ${session.date.day}';
 
     return Stack(
@@ -216,10 +268,18 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                         Row(
                           children: [
                             if (isHighRecord) ...[
-                              StatusBadge(text: 'BEST', color: AppColors.accentGold, backgroundColor: AppColors.accentGold.withOpacity(0.1)),
+                              StatusBadge(
+                                  text: 'BEST',
+                                  color: AppColors.accentGold,
+                                  backgroundColor:
+                                      AppColors.accentGold.withOpacity(0.1)),
                               const SizedBox(width: 8),
                             ],
-                            Text(dateStr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSlate400)),
+                            Text(dateStr,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSlate400)),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -227,18 +287,43 @@ class DashboardScreenWithLogic extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Text('${session.totalScore}', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: isHighRecord ? AppColors.primary : AppColors.textSlate900)),
-                            Text('/${session.maxScore}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textSlate400)),
+                            Text('${session.totalScore}',
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: isHighRecord
+                                        ? AppColors.primary
+                                        : AppColors.textSlate900)),
+                            Text('/${session.maxScore}',
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSlate400)),
                           ],
                         ),
-                        Text('${session.equipment.bowTypeDisplay} • ${session.distance.toInt()}m', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                        Text(
+                            '${session.equipment.bowTypeDisplay} • ${session.distance.toInt()}m',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700)),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Text(isHighRecord ? 'Analytics' : 'Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isHighRecord ? AppColors.primary : AppColors.textSlate400)),
-                        Icon(Icons.chevron_right, size: 16, color: isHighRecord ? AppColors.primary : AppColors.textSlate400),
+                        Text(isHighRecord ? 'Analytics' : 'Details',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isHighRecord
+                                    ? AppColors.primary
+                                    : AppColors.textSlate400)),
+                        Icon(Icons.chevron_right,
+                            size: 16,
+                            color: isHighRecord
+                                ? AppColors.primary
+                                : AppColors.textSlate400),
                       ],
                     )
                   ],
@@ -266,17 +351,42 @@ class DashboardScreenWithLogic extends ConsumerWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('${session.scorePercentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary)),
+        Text('${session.scorePercentage.toStringAsFixed(1)}%',
+            style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary)),
         const SizedBox(height: 4),
-        Text('Accuracy', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+        Text('Accuracy',
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade600)),
         const SizedBox(height: 8),
-        Text('${session.arrowCount} arrows', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        Text('${session.arrowCount} arrows',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700)),
       ],
     );
   }
 
   String _getMonthAbbr(int month) {
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const months = [
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ];
     return months[month - 1];
   }
 }

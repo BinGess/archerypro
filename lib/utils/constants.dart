@@ -1,4 +1,5 @@
 /// Application-wide constants
+library;
 
 // Scoring Constants
 const int kMinScore = 0; // Miss

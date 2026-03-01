@@ -22,9 +22,9 @@
     },
     "linking_enabled": true
   },
-  "out_dir_shared": "/Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/",
-  "out_file": "/Users/bytedance/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/0b28f89409983829d6356966c2c3da83/output.json",
+  "out_dir_shared": "/Users/bigfish/Documents/Code/archerypro/.dart_tool/hooks_runner/shared/objective_c/build/",
+  "out_file": "/Users/bigfish/Documents/Code/archerypro/.dart_tool/hooks_runner/objective_c/0b28f89409983829d6356966c2c3da83/output.json",
   "package_name": "objective_c",
-  "package_root": "/Users/bytedance/.pub-cache/hosted/pub.dev/objective_c-9.2.2/",
+  "package_root": "/Users/bigfish/.pub-cache/hosted/pub.dev/objective_c-9.3.0/",
   "user_defines": {}
 }

@@ -221,7 +221,7 @@ class DetailsScreen extends ConsumerWidget {
             // Bottom Action Buttons
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.backgroundLight,
                 border: Border(
                   top: BorderSide(color: AppColors.borderLight),
@@ -326,7 +326,7 @@ class DetailsScreen extends ConsumerWidget {
         children: [
           Text(
             l10n.visualization,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: AppColors.textSlate900,
@@ -595,7 +595,7 @@ class DetailsScreen extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.aiCoachAnalysis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -634,7 +634,7 @@ class DetailsScreen extends ConsumerWidget {
                   icon: const Icon(Icons.auto_awesome, size: 16),
                   label: Text(
                     l10n.aiCoachAnalyzeButton,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -683,7 +683,7 @@ class DetailsScreen extends ConsumerWidget {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: Text(
                     l10n.aiCoachReanalyzeButton,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -769,7 +769,7 @@ class DetailsScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             '${l10n.aiCoachClickToAnalyze}\n${l10n.aiCoachPreferOnlineFallbackToOffline}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
               height: 1.5,

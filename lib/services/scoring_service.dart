@@ -103,18 +103,18 @@ class ScoringService {
   /// Get score input options for keypad
   List<ScoreOption> getScoreOptions() {
     return [
-      ScoreOption(label: 'X', value: kXRingScore, color: Colors.orange),
-      ScoreOption(label: '10', value: 10, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '9', value: 9, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '8', value: 8, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '7', value: 7, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '6', value: 6, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '5', value: 5, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '4', value: 4, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '3', value: 3, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '2', value: 2, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: '1', value: 1, color: const Color(0xFF1A1A1A)),
-      ScoreOption(label: 'M', value: 0, color: Colors.red),
+      const ScoreOption(label: 'X', value: kXRingScore, color: Colors.orange),
+      const ScoreOption(label: '10', value: 10, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '9', value: 9, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '8', value: 8, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '7', value: 7, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '6', value: 6, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '5', value: 5, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '4', value: 4, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '3', value: 3, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '2', value: 2, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: '1', value: 1, color: Color(0xFF1A1A1A)),
+      const ScoreOption(label: 'M', value: 0, color: Colors.red),
     ];
   }
 

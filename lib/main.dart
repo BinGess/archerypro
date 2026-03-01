@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_colors.dart';
+import 'theme/app_theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/analysis_screen.dart';
 import 'screens/session_setup_screen.dart';
@@ -136,82 +137,7 @@ class ArcheryApp extends ConsumerWidget {
           );
         },
 
-        theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.backgroundLight,
-          primaryColor: AppColors.primary,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            surface: AppColors.backgroundLight,
-          ),
-          useMaterial3: true,
-          // ── AppBar ─────────────────────────────────────────────────────────
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            centerTitle: true,
-            titleTextStyle: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textSlate900,
-              letterSpacing: 0,
-            ),
-            iconTheme: IconThemeData(
-              color: AppColors.textSlate900,
-              size: 22,
-            ),
-          ),
-          // ── Divider ────────────────────────────────────────────────────────
-          dividerTheme: const DividerThemeData(
-            color: AppColors.borderLight,
-            thickness: 1,
-            space: 1,
-          ),
-          // ── Bottom Navigation ──────────────────────────────────────────────
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.textSlate400,
-            showUnselectedLabels: true,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            selectedLabelStyle:
-                TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-            unselectedLabelStyle:
-                TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-          ),
-          // ── Cards ──────────────────────────────────────────────────────────
-          cardTheme: const CardThemeData(
-            color: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-              side: BorderSide(color: AppColors.borderLight),
-            ),
-          ),
-          // ── Elevated Button ────────────────────────────────────────────────
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              textStyle:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-          ),
-          // ── Text Button ────────────────────────────────────────────────────
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              textStyle:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
+        theme: AppTheme.lightTheme,
         home: const InitializationWrapper(),
         builder: (context, child) {
           final l10n = AppLocalizations.of(context);

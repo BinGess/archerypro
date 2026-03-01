@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/session_provider.dart';
 import '../providers/analytics_provider.dart';
@@ -14,6 +16,8 @@ import '../widgets/score_trend_chart.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
+
+  static const double _historyCardGap = 10;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,19 +71,20 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                   SliverPadding(
-                    padding: const EdgeInsets.all(16),
+                    padding: AppSpacing.page,
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         _buildSummaryCard(
                             analyticsState.allTimeStatistics, l10n),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppSpacing.xl),
 
                         // Display sessions from provider
                         ...sessionState.recentSessions.map((session) {
                           final isHighRecord =
                               session == sessionState.bestSession;
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
+                            padding:
+                                const EdgeInsets.only(bottom: _historyCardGap),
                             child: _buildHistoryItem(
                               context: context,
                               isHighRecord: isHighRecord,
@@ -88,7 +93,7 @@ class DashboardScreen extends ConsumerWidget {
                               total: session.maxScore,
                               // Localized Bow Type
                               type:
-                                  '${_getBowTypeDisplay(session.equipment.bowType, l10n)} • ${session.distance.toInt()}m',
+                                  '${_getBowTypeDisplay(session.equipment.bowType, l10n)} * ${session.distance.toInt()}m',
                               percentage: session.scorePercentage,
                               arrowCount: session.arrowCount,
                               l10n: l10n,
@@ -106,7 +111,7 @@ class DashboardScreen extends ConsumerWidget {
                           );
                         }),
 
-                        const SizedBox(height: 32),
+                        const SizedBox(height: AppSpacing.xxl),
                         if (sessionState.sessions.isEmpty)
                           _buildEmptyState(l10n)
                         else
@@ -121,9 +126,9 @@ class DashboardScreen extends ConsumerWidget {
                                     l10n.showingRecentMessage(sessionState
                                         .recentSessions.length
                                         .toString()),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13)),
+                                    style: AppTextStyles.subLabel.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    )),
                               ],
                             ),
                           ),
@@ -168,7 +173,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: AppSpacing.card,
             child: Column(
               children: [
                 Row(
@@ -183,10 +188,7 @@ class DashboardScreen extends ConsumerWidget {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text('${stats.totalSessions}',
-                                style: const TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1)),
+                                style: AppTextStyles.largeNumber),
                             const SizedBox(width: 4),
                             Text(l10n.sessions,
                                 style: const TextStyle(
@@ -203,10 +205,9 @@ class DashboardScreen extends ConsumerWidget {
                             Text(
                                 l10n.monthlyArrowsMessage(
                                     stats.currentMonthArrows.toString()),
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSlate500)),
+                                style: AppTextStyles.subLabel.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                )),
                           ],
                         )
                       ],
@@ -219,11 +220,9 @@ class DashboardScreen extends ConsumerWidget {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(stats.avgArrowScore.toStringAsFixed(1),
-                                style: const TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1,
-                                    color: AppColors.primary)),
+                                style: AppTextStyles.largeNumber.copyWith(
+                                  color: AppColors.primary,
+                                )),
                             const SizedBox(width: 4),
                             Text(l10n.average,
                                 style: const TextStyle(
@@ -247,17 +246,17 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(l10n.trend,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSlate400)),
+                                style: AppTextStyles.subLabel.copyWith(
+                                  color: AppColors.textSlate400,
+                                  fontWeight: FontWeight.w600,
+                                )),
                           ],
                         )
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.lg),
                 RepaintBoundary(
                   child: SizedBox(
                     height: 80,
@@ -269,24 +268,23 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                         l10n.monthlyGoalMessage('${stats.monthlyGoal ?? 3000}'),
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSlate500)),
+                        style: AppTextStyles.subLabel.copyWith(
+                          fontWeight: FontWeight.w700,
+                        )),
                     Text('${stats.monthlyGoalProgress.toStringAsFixed(0)}%',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary)),
+                        style: AppTextStyles.subLabel.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                        )),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.xs),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -317,8 +315,7 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 _buildTargetRing(
                     112, AppColors.textSlate300.withValues(alpha: 0.45)),
-                _buildTargetRing(
-                    78, AppColors.primary.withValues(alpha: 0.18)),
+                _buildTargetRing(78, AppColors.primary.withValues(alpha: 0.18)),
                 _buildTargetRing(
                     44, AppColors.accentGold.withValues(alpha: 0.35)),
                 Container(
@@ -333,13 +330,11 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.md),
           Text(
             l10n.homeEmptyPrompt,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+            style: AppTextStyles.body.copyWith(
               color: AppColors.textSlate500,
             ),
           ),
@@ -376,113 +371,111 @@ class DashboardScreen extends ConsumerWidget {
     final monthFormat = DateFormat.MMM(locale);
     final dayFormat = DateFormat.d(locale);
 
-    // For Chinese, we want "X月" and "X日"
-    // For English, we want "Jan" and "1"
-
-    String monthPart = monthFormat.format(date);
-    String dayPart = dayFormat.format(date);
+    final isChinese = locale.startsWith('zh');
+    final String monthPart =
+        isChinese ? '${date.month}月' : monthFormat.format(date).toUpperCase();
+    final String dayPart = dayFormat.format(date);
+    final String infoLine = isChinese
+        ? '$type · $arrowCount支箭'
+        : '$type · $arrowCount ${l10n.unitArrows}';
 
     return GestureDetector(
       onTap: onTap,
       child: ArcheryCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: AppSpacing.cardCompact,
         child: Row(
           children: [
             // Date Box
             SizedBox(
-              width: 56,
-              height: 56,
-              child: DecoratedBox(
+              width: 58,
+              height: 60,
+              child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isHighRecord
+                        ? [
+                            AppColors.accentGold.withValues(alpha: 0.12),
+                            AppColors.accentGold.withValues(alpha: 0.03),
+                          ]
+                        : [
+                            AppColors.primary.withValues(alpha: 0.09),
+                            AppColors.primary.withValues(alpha: 0.02),
+                          ],
+                  ),
                   border: Border.all(
                     color: (isHighRecord
                             ? AppColors.accentGold
                             : AppColors.primary)
-                        .withValues(alpha: 0.25),
+                        .withValues(alpha: 0.26),
                   ),
                 ),
-                child: Stack(
+                child: Column(
                   children: [
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.calendar_month_outlined,
-                          color: (isHighRecord
-                                  ? AppColors.accentGold
-                                  : AppColors.primary)
-                              .withValues(alpha: 0.08),
-                          size: 44,
+                    Container(
+                      height: 17,
+                      decoration: BoxDecoration(
+                        color: isHighRecord
+                            ? AppColors.accentGold
+                            : AppColors.primary,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(11),
                         ),
                       ),
-                    ),
-                    Column(
-                      children: [
-                        Container(
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: (isHighRecord
-                                    ? AppColors.accentGold
-                                    : AppColors.primary)
-                                .withValues(alpha: 0.95),
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(9)),
-                          ),
-                          alignment: Alignment.center,
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
                           child: Text(
                             monthPart,
                             maxLines: 1,
-                            overflow: TextOverflow.clip,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                            style: AppTextStyles.micro.copyWith(
                               color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              dayPart,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: isHighRecord
-                                    ? AppColors.accentGold
-                                    : AppColors.textSlate900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
                       ),
                     ),
-                    Positioned(
-                      top: 12,
-                      right: 12,
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          dayPart,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: isHighRecord
+                                ? AppColors.accentRust
+                                : AppColors.textSlate900,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 9, right: 9, bottom: 5),
                       child: Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: (isHighRecord
+                                  ? AppColors.accentGold
+                                  : AppColors.primary)
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
 
             // Details
             Expanded(
@@ -492,15 +485,13 @@ class DashboardScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Text('$score',
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textSlate900)),
+                          style: AppTextStyles.mediumNumber.copyWith(
+                            color: AppColors.textSlate900,
+                          )),
                       Text('/$total',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textSlate400)),
+                          style: AppTextStyles.numberDenominator.copyWith(
+                            fontSize: 16,
+                          )),
                       if (isHighRecord) ...[
                         const SizedBox(width: 8),
                         const Icon(Icons.emoji_events,
@@ -509,13 +500,12 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(type,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSlate500)),
-                  const SizedBox(height: 2),
-                  Text('$arrowCount ${l10n.unitArrows}',
-                      style: const TextStyle(
-                          fontSize: 10, color: AppColors.textSlate400)),
+                  Text(
+                    infoLine,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.subLabel,
+                  ),
                 ],
               ),
             ),
@@ -538,8 +528,8 @@ class DashboardScreen extends ConsumerWidget {
                   Text(
                     '${(percentage.isNaN || percentage.isInfinite) ? 0 : percentage.toInt()}%',
                     style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                         color: _getPercentageColor(percentage)),
                   ),
                 ],

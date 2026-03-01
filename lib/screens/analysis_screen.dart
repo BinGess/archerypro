@@ -468,7 +468,7 @@ class AnalysisScreen extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       l10n.aiCoachBasedOnData,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -616,7 +616,7 @@ class AnalysisScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             l10n.aiCoachClickToAnalyze,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
             ),

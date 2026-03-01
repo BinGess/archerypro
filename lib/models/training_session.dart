@@ -136,7 +136,7 @@ class TrainingSession {
     if (dur == null) return 'In Progress';
     final hours = dur.inHours;
     final minutes = dur.inMinutes.remainder(60);
-    return '${hours}:${minutes.toString().padLeft(2, '0')}h';
+    return '$hours:${minutes.toString().padLeft(2, '0')}h';
   }
 
   /// Score percentage (e.g., 98.3%)
@@ -159,7 +159,7 @@ class TrainingSession {
 
     // Convert to percentage (lower std dev = higher consistency)
     // Max std dev for archery is ~3.16 (0-10 range)
-    final maxStdDev = 3.16;
+    const maxStdDev = 3.16;
     final consistencyRaw = (1 - (stdDev / maxStdDev)) * 100;
 
     return consistencyRaw.clamp(0.0, 100.0);

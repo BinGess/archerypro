@@ -678,6 +678,93 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get competitionMode => '比赛模式';
   @override
+  String get competitionWaStandard => 'WA标准计时与信号';
+  @override
+  String get competitionTimePerArrow => '每箭时间';
+  @override
+  String get competitionCustom => '自定义';
+  @override
+  String get competitionSecondsPerArrow => '秒/箭';
+  @override
+  String get competitionWhistleSounds => '哨声信号';
+  @override
+  String get competitionWaWhistleDesc => '标准WA哨声信号';
+  @override
+  String get competitionInputMode => '记录方式';
+  @override
+  String get competitionKeyboardEntry => '键盘记录';
+  @override
+  String get competitionTargetEntry => '箭靶记录';
+  @override
+  String get competitionTapTargetHint => '点击靶面记录环数';
+  @override
+  String get competitionPrep => '准备';
+  @override
+  String get competitionShoot => '射箭';
+  @override
+  String get competitionWarn => '警告';
+  @override
+  String get competitionWarningLeft => '剩余30秒';
+  @override
+  String get competitionTotal => '总计';
+  @override
+  String get competitionStartBtn => '开始比赛';
+  @override
+  String get competitionReady => '准备就绪';
+  @override
+  String get competitionGetReady => '准备';
+  @override
+  String get competitionDoNotRaiseBow => '请勿举弓';
+  @override
+  String get competitionHurryUp => '加快速度';
+  @override
+  String get competitionSkip => '跳过';
+  @override
+  String get competitionStop => '停止';
+  @override
+  String get competitionShooting => '射箭';
+  @override
+  String get competitionPaused => '已暂停';
+  @override
+  String get competitionSafetyHalt => '安全暂停';
+  @override
+  String competitionRemainingTime(int seconds) => '剩余 $seconds 秒';
+  @override
+  String get competitionResume => '继续';
+  @override
+  String get competitionResetEnd => '重置本组';
+  @override
+  String get competitionResetEndTitle => '重置本组？';
+  @override
+  String get competitionResetEndMessage => '将丢弃当前计时并回到准备状态。';
+  @override
+  String get competitionComplete => '比赛结束';
+  @override
+  String get competitionAvgPerEnd => '组均分';
+  @override
+  String get competitionBest => '最佳';
+  @override
+  String get competitionWorst => '最低';
+  @override
+  String get competitionEnds => '组数';
+  @override
+  String get competitionDone => '完成';
+  @override
+  String get competitionIncompleteEnd => '本组未完成';
+  @override
+  String competitionIncompleteMessage(int current, int total) =>
+      '已记录 $current / $total 支箭，是否仍要提交？';
+  @override
+  String get competitionSubmit => '提交';
+  @override
+  String get competitionLeaveTitle => '退出比赛？';
+  @override
+  String get competitionLeaveMessage => '计时器仍在运行，退出将丢失当前进度。';
+  @override
+  String get competitionStay => '留下';
+  @override
+  String get competitionLeave => '离开';
+  @override
   String get estimatedTotalArrows => '预计总箭数';
   @override
   String get centimeters => '厘米';

@@ -236,7 +236,7 @@ class StorageService {
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
-      throw FormatException('Invalid JSON format');
+      throw const FormatException('Invalid JSON format');
     } catch (e) {
       print('Error decoding JSON: $e');
       rethrow;

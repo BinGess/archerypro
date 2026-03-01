@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
 import '../models/equipment.dart';
 import '../models/training_session.dart';
+import '../models/competition_settings.dart';
 import 'scoring_screen.dart';
+import 'competition_screen.dart';
 import '../providers/scoring_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/competition/competition_setup_sheet.dart';
 
 class SessionSetupScreen extends ConsumerStatefulWidget {
   const SessionSetupScreen({super.key});
@@ -15,6 +20,19 @@ class SessionSetupScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
+  static const double _compactPagePadding = 12;
+  static const double _sectionGap = 14;
+  static const double _cardHeaderBottom = 8;
+  static const double _rowHorizontalPadding = 14;
+  static const double _rowVerticalPadding = 10;
+  static const double _toggleHeight = 32;
+  static const double _toggleHorizontalPadding = 12;
+  static const double _toggleVerticalPadding = 4;
+  static const double _rulesCardPadding = 14;
+  static const double _rulesCounterGap = 16;
+  static const double _rulesSummaryVerticalPadding = 10;
+  static const double _bottomSpacer = 76;
+
   BowType _selectedBowType = BowType.recurve;
   double _distance = 70;
   int _targetFaceSize = 122;
@@ -73,6 +91,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     // Save current settings for next time
     await _saveSettings();
 
+    if (_isCompetitionMode) {
+      _startCompetition();
+      return;
+    }
+
     // Create equipment
     final equipment = Equipment(
       bowType: _selectedBowType,
@@ -95,6 +118,26 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => const ScoringScreen(),
+        ),
+      );
+    }
+  }
+
+  void _startCompetition() async {
+    final settings = await Navigator.of(context).push<CompetitionSettings>(
+      MaterialPageRoute(
+        builder: (context) => CompetitionSetupSheet(
+          arrowsPerEnd: _arrowsPerEnd,
+          totalEnds: _endCount,
+          fullScreen: true,
+        ),
+      ),
+    );
+
+    if (settings != null && mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CompetitionScreen(settings: settings),
         ),
       );
     }
@@ -158,7 +201,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(_compactPagePadding),
         child: Column(
           children: [
             // 1. 器材设置 (Equipment)
@@ -175,8 +218,9 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                         .map((type) => DropdownMenuItem<BowType>(
                               value: type,
                               child: Text(_getBowTypeLabel(type, l10n),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
+                                  style: AppTextStyles.rowLabel.copyWith(
+                                    fontSize: 14,
+                                  )),
                             ))
                         .toList(),
                     onChanged: (value) {
@@ -187,7 +231,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: _getBowModelName(_selectedBowType, l10n),
@@ -201,13 +245,14 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                     ),
-                    style: const TextStyle(
-                        fontSize: 14, color: AppColors.textSlate900),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textSlate900,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: _sectionGap),
 
             // 2. 场地与环境 (Venue & Environment)
             _buildCardGroup(
@@ -217,7 +262,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 _buildRowItem(
                   label: l10n.environment,
                   child: Container(
-                    height: 36,
+                    height: _toggleHeight,
                     decoration: BoxDecoration(
                       color: AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(8),
@@ -241,7 +286,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
                       Expanded(
@@ -274,7 +319,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: _sectionGap),
 
             // 3. 训练规则 (Rules)
             _buildCardGroup(
@@ -282,7 +327,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               icon: Icons.rule,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(_rulesCardPadding),
                   child: Row(
                     children: [
                       Expanded(
@@ -294,7 +339,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                                   if (_endCount > 1) _endCount--;
                                 })),
                       ),
-                      const SizedBox(width: 32),
+                      const SizedBox(width: _rulesCounterGap),
                       Expanded(
                         child: _buildCompactCounter(
                             l10n.arrowsPerEnd,
@@ -310,28 +355,30 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _rulesCardPadding,
+                    vertical: _rulesSummaryVerticalPadding,
+                  ),
                   color: AppColors.primary.withValues(alpha: 0.05),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(l10n.estimatedTotalArrows,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSlate500,
-                              fontWeight: FontWeight.w500)),
+                          style: AppTextStyles.subLabel.copyWith(
+                            fontWeight: FontWeight.w500,
+                          )),
                       Text('$totalArrows ${l10n.unitArrows}',
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primary)),
+                          style: AppTextStyles.rowLabel.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          )),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: _sectionGap),
 
             // 4. 偏好设置 (Preferences)
             _buildCardGroup(
@@ -341,7 +388,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 _buildRowItem(
                   label: l10n.scoringView,
                   child: Container(
-                    height: 36,
+                    height: _toggleHeight,
                     decoration: BoxDecoration(
                       color: AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(8),
@@ -360,26 +407,25 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 SwitchListTile(
                   title: Text(l10n.competitionMode,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSlate900)),
+                      style: AppTextStyles.rowLabel.copyWith(
+                        fontSize: 14,
+                      )),
                   value: _isCompetitionMode,
                   onChanged: (val) => setState(() => _isCompetitionMode = val),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
                   dense: true,
                 ),
               ],
             ),
 
-            const SizedBox(height: 100), // Bottom padding for FAB
+            const SizedBox(height: _bottomSpacer), // Bottom padding for FAB
           ],
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: SizedBox(
           width: double.infinity,
           child: FloatingActionButton.extended(
@@ -387,10 +433,9 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
             backgroundColor: AppColors.primary,
             elevation: 4,
             label: Text(l10n.startTraining,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
+                style: AppTextStyles.primaryButton.copyWith(
+                  color: Colors.white,
+                )),
             icon: const Icon(Icons.play_arrow, color: Colors.white),
           ),
         ),
@@ -407,27 +452,26 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          padding: const EdgeInsets.only(left: 4, bottom: _cardHeaderBottom),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.textSlate500),
-              const SizedBox(width: 8),
+              Icon(icon, size: 16, color: AppColors.textSlate500),
+              const SizedBox(width: 6),
               Text(title,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSlate500,
-                      letterSpacing: 0.4)),
+                  style: AppTextStyles.sectionHeader.copyWith(
+                    fontSize: 13,
+                    letterSpacing: 0.4,
+                  )),
             ],
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppRadii.lg),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
+                  color: AppColors.shadowSoft,
                   blurRadius: 8,
                   offset: const Offset(0, 2))
             ],
@@ -442,15 +486,15 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
 
   Widget _buildRowItem({required String label, required Widget child}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+          horizontal: _rowHorizontalPadding, vertical: _rowVerticalPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSlate900)),
+              style: AppTextStyles.rowLabel.copyWith(
+                fontSize: 14,
+              )),
           child,
         ],
       ),
@@ -461,20 +505,19 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+            horizontal: _toggleHorizontalPadding,
+            vertical: _toggleVerticalPadding),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)
-                ]
+              ? [BoxShadow(color: AppColors.shadowMedium, blurRadius: 2)]
               : [],
         ),
         child: Text(
           text,
-          style: TextStyle(
+          style: AppTextStyles.subLabel.copyWith(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected ? AppColors.textSlate900 : AppColors.textSlate500,
@@ -499,24 +542,23 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
         onSelected: (val) => onChanged(val),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSlate500,
-                    fontWeight: FontWeight.w500)),
+                style: AppTextStyles.subLabel.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                )),
             const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(value,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: AppColors.textSlate900)),
+                    style: AppTextStyles.rowLabel.copyWith(
+                      fontSize: 15,
+                    )),
                 const Icon(Icons.keyboard_arrow_down,
                     color: AppColors.textSlate400, size: 20),
               ],
@@ -536,7 +578,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -552,7 +594,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppColors.borderStrong,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -561,11 +603,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSlate900,
-                  ),
+                  style: AppTextStyles.cardSectionTitle,
                 ),
               ),
               Flexible(
@@ -593,11 +631,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                           children: [
                             Text(
                               item,
-                              style: TextStyle(
+                              style: AppTextStyles.rowLabel.copyWith(
                                 fontSize: 16,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
-                                    : FontWeight.normal,
+                                    : FontWeight.w500,
                                 color: isSelected
                                     ? AppColors.primary
                                     : AppColors.textSlate900,
@@ -626,11 +664,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     return Column(
       children: [
         Text(label,
-            style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSlate500,
-                fontWeight: FontWeight.w500)),
-        const SizedBox(height: 12),
+            style: AppTextStyles.subLabel.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            )),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -650,10 +688,9 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               constraints: const BoxConstraints(minWidth: 40),
               alignment: Alignment.center,
               child: Text('$value',
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSlate900)),
+                  style: AppTextStyles.cardSectionTitle.copyWith(
+                    fontSize: 20,
+                  )),
             ),
             Material(
               color: AppColors.backgroundLight,

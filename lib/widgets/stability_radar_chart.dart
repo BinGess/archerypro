@@ -55,8 +55,8 @@ class StabilityRadarChart extends StatelessWidget {
     if (previousMetrics != null) {
       dataSets.add(
         RadarDataSet(
-          fillColor: Colors.grey.withValues(alpha: 0.1),
-          borderColor: Colors.grey,
+          fillColor: AppColors.textSlate400.withValues(alpha: 0.12),
+          borderColor: AppColors.textSlate400,
           borderWidth: 2,
           entryRadius: 3,
           dataEntries: previousMetrics!
@@ -77,25 +77,25 @@ class StabilityRadarChart extends StatelessWidget {
               radarShape: RadarShape.polygon,
               tickCount: 5,
               ticksTextStyle: const TextStyle(
-                color: Colors.grey,
-                fontSize: 10,
+                color: AppColors.textSlate500,
+                fontSize: 11,
               ),
               tickBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.2),
+                color: AppColors.borderLight.withValues(alpha: 0.7),
                 width: 1,
               ),
               gridBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: AppColors.borderLight.withValues(alpha: 0.9),
                 width: 1.5,
               ),
               radarBorderData: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.5),
+                color: AppColors.textSlate400.withValues(alpha: 0.6),
                 width: 2,
               ),
               titleTextStyle: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppColors.textSlate900,
               ),
               getTitle: (index, angle) {
                 if (!showLabels) return const RadarChartTitle(text: '');
@@ -128,7 +128,7 @@ class StabilityRadarChart extends StatelessWidget {
         _buildLegendItem(l10n.currentPeriod, AppColors.primary),
         if (previousMetrics != null) ...[
           const SizedBox(width: 24),
-          _buildLegendItem(l10n.previousPeriod, Colors.grey),
+          _buildLegendItem(l10n.previousPeriod, AppColors.textSlate500),
         ],
       ],
     );
@@ -151,7 +151,7 @@ class StabilityRadarChart extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade700,
+            color: AppColors.textSlate700,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -170,7 +170,7 @@ class StabilityRadarChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -182,7 +182,7 @@ class StabilityRadarChart extends StatelessWidget {
                 l10n.overallScore,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey.shade700,
+                  color: AppColors.textSlate700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -202,16 +202,16 @@ class StabilityRadarChart extends StatelessWidget {
               Expanded(
                 child: _buildDimensionTag(
                   l10n.strengthLabel(strongest),
-                  Colors.green.shade100,
-                  Colors.green.shade700,
+                  AppColors.successSubtle,
+                  AppColors.success,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildDimensionTag(
                   l10n.weaknessLabel(weakest),
-                  Colors.orange.shade100,
-                  Colors.orange.shade700,
+                  AppColors.warningSubtle,
+                  AppColors.warning,
                 ),
               ),
             ],

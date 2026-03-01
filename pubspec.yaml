@@ -34,6 +34,10 @@ dependencies:
   # Path Provider for file storage
   path_provider: ^2.1.1
 
+  # Audio & Screen
+  audioplayers: ^5.2.1
+  wakelock_plus: ^1.2.1
+
   # Network & API
   dio: ^5.4.0
   flutter_dotenv: ^5.1.0
@@ -55,6 +59,7 @@ flutter:
   assets:
     - .env
     - web/icons/Icon-512.png
+    - assets/audio/
 
 flutter_launcher_icons:
   android: "launcher_icon"

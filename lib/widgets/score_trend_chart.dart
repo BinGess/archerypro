@@ -26,7 +26,7 @@ class ScoreTrendChart extends StatelessWidget {
       return Center(
         child: Text(
           l10n.noData,
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
+          style: const TextStyle(color: AppColors.textSlate400, fontSize: 11),
         ),
       );
     }
@@ -77,7 +77,8 @@ class ScoreTrendChart extends StatelessWidget {
                   return const SizedBox.shrink();
                 return Text(
                   value.toInt().toString(),
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textSlate500),
                 );
               },
             ),
@@ -95,7 +96,8 @@ class ScoreTrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       (value.toInt() + 1).toString(),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate500),
                     ),
                   );
                 }
@@ -139,7 +141,7 @@ class ScoreTrendChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           enabled: !isCompact,
           touchTooltipData: LineTouchTooltipData(
-            tooltipBgColor: Colors.black87,
+            tooltipBgColor: AppColors.textSlate900,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 return LineTooltipItem(
