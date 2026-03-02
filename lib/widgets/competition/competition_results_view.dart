@@ -946,9 +946,12 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
   final _logger = LoggerService();
   final List<File> _tempFilesToCleanup = [];
   Timer? _shareCleanupTimer;
-  bool _isExporting = false;
+  bool _isSaving = false;
+  bool _isSharing = false;
   String? _statusText;
   bool _statusError = false;
+
+  bool get _isBusy => _isSaving || _isSharing;
 
   String _t({required String zh, required String en}) {
     return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
@@ -1042,8 +1045,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         throw StateError('Poster key not attached to widget tree');
       }
 
-      final pixelRatio =
-          (MediaQuery.of(context).devicePixelRatio * 2).clamp(2.0, 3.0);
+      const pixelRatio = 3.0;
       RenderRepaintBoundary? boundary;
 
       // Extended polling with adaptive backoff
@@ -1122,20 +1124,23 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
 
   Future<bool> _ensureSavePermission() async {
     if (!Platform.isIOS && !Platform.isAndroid) return true;
+    if (Platform.isIOS) return _ensureIosSavePermission();
+    return _ensureAndroidSavePermission();
+  }
 
-    final permission =
-        Platform.isIOS ? Permission.photosAddOnly : Permission.photos;
-    var status = await permission.status;
+  bool _isGrantedStatus(PermissionStatus status) {
+    return status.isGranted || status.isLimited;
+  }
+
+  Future<bool> _ensureIosSavePermission() async {
+    var status = await Permission.photosAddOnly.status;
     if (!mounted) return false;
+    if (_isGrantedStatus(status)) return true;
 
-    if (status.isGranted || status.isLimited) return true;
-
-    status = await permission.request();
+    status = await Permission.photosAddOnly.request();
     if (!mounted) return false;
+    if (_isGrantedStatus(status)) return true;
 
-    if (status.isGranted || status.isLimited) return true;
-
-    // Handle different denial states
     if (status.isPermanentlyDenied) {
       _setStatus(
         _t(
@@ -1158,22 +1163,64 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       return false;
     }
 
-    if (status.isDenied) {
+    _setStatus(
+      _t(
+        zh: '需要照片权限才能保存海报。请在权限弹窗中选择“允许”。',
+        en: 'Photo access is required to save posters. Please choose "Allow" in the permission dialog.',
+      ),
+      isError: true,
+    );
+    return false;
+  }
+
+  Future<bool> _ensureAndroidSavePermission() async {
+    final photoStatus = await Permission.photos.status;
+    final storageStatus = await Permission.storage.status;
+    if (!mounted) return false;
+
+    if (_isGrantedStatus(photoStatus) || storageStatus.isGranted) return true;
+
+    var requestedPhotoStatus = photoStatus;
+    if (!photoStatus.isPermanentlyDenied && !photoStatus.isRestricted) {
+      requestedPhotoStatus = await Permission.photos.request();
+      if (!mounted) return false;
+      if (_isGrantedStatus(requestedPhotoStatus)) return true;
+    }
+
+    var requestedStorageStatus = storageStatus;
+    if (!storageStatus.isPermanentlyDenied && !storageStatus.isRestricted) {
+      requestedStorageStatus = await Permission.storage.request();
+      if (!mounted) return false;
+      if (requestedStorageStatus.isGranted) return true;
+    }
+
+    if (requestedPhotoStatus.isPermanentlyDenied ||
+        requestedStorageStatus.isPermanentlyDenied) {
       _setStatus(
         _t(
-          zh: '需要照片权限才能保存海报。请在权限弹窗中选择“允许”。',
-          en: 'Photo access is required to save posters. Please choose "Allow" in the permission dialog.',
+          zh: '媒体权限被永久拒绝。请到系统设置开启“照片和视频”权限后重试。',
+          en: 'Media permission is permanently denied. Enable Photos and Videos permission in system settings and retry.',
         ),
         isError: true,
       );
       return false;
     }
 
-    // Other denied states
+    if (requestedPhotoStatus.isRestricted || requestedStorageStatus.isRestricted) {
+      _setStatus(
+        _t(
+          zh: '媒体权限受限，请在系统设置中检查后重试。',
+          en: 'Media permission is restricted. Please check system settings and retry.',
+        ),
+        isError: true,
+      );
+      return false;
+    }
+
     _setStatus(
       _t(
-        zh: '未获得照片权限，无法保存海报。',
-        en: 'Photo permission denied, unable to save poster.',
+        zh: '未获得媒体权限，无法保存海报。请在权限弹窗中选择“允许”。',
+        en: 'Media permission denied. Please choose "Allow" in permission dialog to save posters.',
       ),
       isError: true,
     );
@@ -1181,14 +1228,14 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
   }
 
   Future<void> _savePoster() async {
-    if (_isExporting) return;
+    if (_isBusy) return;
 
     // Clean up old temp files before starting
     _cleanupTempFiles();
 
     final startTime = DateTime.now();
     setState(() {
-      _isExporting = true;
+      _isSaving = true;
       _statusText = null;
     });
 
@@ -1256,13 +1303,13 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       );
     } finally {
       if (mounted) {
-        setState(() => _isExporting = false);
+        setState(() => _isSaving = false);
       }
     }
   }
 
   Future<void> _sharePoster() async {
-    if (_isExporting) return;
+    if (_isBusy) return;
 
     final startTime = DateTime.now();
 
@@ -1278,7 +1325,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     }
 
     setState(() {
-      _isExporting = true;
+      _isSharing = true;
       _statusText = null;
     });
 
@@ -1352,7 +1399,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isExporting = false);
+        setState(() => _isSharing = false);
       }
     }
   }
@@ -1408,7 +1455,9 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
 
   @override
   Widget build(BuildContext context) {
-    final exportLabel = _t(zh: '正在生成海报...', en: 'Preparing poster...');
+    final exportLabel = _isSaving
+        ? _t(zh: '正在保存海报...', en: 'Saving poster...')
+        : _t(zh: '正在准备分享...', en: 'Preparing share...');
     final now = DateTime.now();
     final dateString =
         '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
@@ -1718,8 +1767,14 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isExporting ? null : _savePoster,
-                  icon: const Icon(Icons.download_rounded, size: 18),
+                  onPressed: _isBusy ? null : _savePoster,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.download_rounded, size: 18),
                   label: Text(_t(zh: '保存海报', en: 'Save Poster')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textSlate900,
@@ -1734,8 +1789,17 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: _isExporting ? null : _sharePoster,
-                  icon: const Icon(Icons.share_rounded, size: 18),
+                  onPressed: _isBusy ? null : _sharePoster,
+                  icon: _isSharing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.share_rounded, size: 18),
                   label: Text(_t(zh: '分享海报', en: 'Share Poster')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -1775,7 +1839,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
               ),
             ),
           ],
-          if (_isExporting) ...[
+          if (_isBusy) ...[
             const SizedBox(height: 8),
             Row(
               children: [

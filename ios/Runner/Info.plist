@@ -33,9 +33,9 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Allow Flutter tools on your computer to connect and debug your application.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>需要相册权限来保存你的成绩海报。</string>
+	<string>用于将你的训练成绩海报保存到系统相册。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要相册权限来读取与保存你的成绩海报。</string>
+	<string>用于读取和保存成绩海报，便于你分享训练结果。</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
