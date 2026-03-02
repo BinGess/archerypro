@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:io';
 import 'dart:typed_data';
@@ -12,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/competition_settings.dart';
 import '../../providers/competition_provider.dart';
+import '../../services/logger_service.dart';
 import '../../theme/app_colors.dart';
 
 class CompetitionResultsView extends StatelessWidget {
@@ -941,6 +943,9 @@ class _ResultPosterSection extends StatefulWidget {
 
 class _ResultPosterSectionState extends State<_ResultPosterSection> {
   final GlobalKey _posterKey = GlobalKey();
+  final _logger = LoggerService();
+  final List<File> _tempFilesToCleanup = [];
+  Timer? _shareCleanupTimer;
   bool _isExporting = false;
   String? _statusText;
   bool _statusError = false;
@@ -957,57 +962,162 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     });
   }
 
-  bool _isSaveResultSuccess(dynamic result) {
-    if (result == null) return false;
-    if (result is bool) return result;
-    if (result is num) return result > 0;
-    if (result is String) return result.isNotEmpty;
-    if (result is Map) {
-      final dynamic ok = result['isSuccess'] ?? result['success'];
-      if (ok is bool) return ok;
-      final dynamic filePath = result['filePath'] ?? result['savedFilePath'];
-      if (filePath is String && filePath.isNotEmpty) return true;
-      final dynamic id = result['id'] ?? result['ID'];
-      if (id is num) return id > 0;
+  @override
+  void dispose() {
+    _shareCleanupTimer?.cancel();
+    _cleanupTempFiles();
+    super.dispose();
+  }
+
+  /// Clean up temporary poster files
+  Future<void> _cleanupTempFiles() async {
+    for (final file in _tempFilesToCleanup) {
+      try {
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (e) {
+        _logger.log('Failed to cleanup temp file: ${file.path}', level: LogLevel.warning);
+      }
     }
-    return false;
+    _tempFilesToCleanup.clear();
+  }
+
+  /// Generate unique filename to avoid collisions
+  String _generateUniqueFileName() {
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    final random = math.Random().nextInt(9999).toString().padLeft(4, '0');
+    return 'archery_poster_${timestamp}_$random';
+  }
+
+  bool _isSaveResultSuccess(dynamic result) {
+    try {
+      if (result == null) return false;
+
+      // Explicit boolean success
+      if (result is bool) return result;
+
+      // Map with explicit success indicators
+      if (result is Map) {
+        // Check explicit success flag first
+        final dynamic isSuccess = result['isSuccess'] ?? result['success'];
+        if (isSuccess is bool) return isSuccess;
+
+        // Check for explicit error
+        final dynamic errorMsg = result['error'] ?? result['errorMessage'];
+        if (errorMsg != null) {
+          _logger.log('Save result contains error: $errorMsg', level: LogLevel.warning);
+          return false;
+        }
+
+        // Only accept if has valid file path AND not explicitly marked failed
+        final dynamic filePath = result['filePath'] ?? result['savedFilePath'];
+        if (filePath is String && filePath.isNotEmpty) return true;
+
+        // Check for valid ID (must be positive)
+        final dynamic id = result['id'] ?? result['ID'];
+        if (id is num && id > 0) return true;
+
+        // Map but no valid success indicators
+        _logger.log('Save result Map has no valid success indicators: $result',
+          level: LogLevel.warning);
+        return false;
+      }
+
+      // Reject other types - too ambiguous
+      _logger.log('Save result has unexpected type: ${result.runtimeType}',
+        level: LogLevel.warning);
+      return false;
+    } catch (e, stackTrace) {
+      _logger.logError('Error validating save result', error: e, stackTrace: stackTrace);
+      return false;
+    }
   }
 
   Future<Uint8List> _capturePosterBytes() async {
-    final pixelRatio =
-        (MediaQuery.of(context).devicePixelRatio * 2).clamp(2.0, 3.0);
-    RenderRepaintBoundary? boundary;
-    for (var i = 0; i < 8; i++) {
-      await WidgetsBinding.instance.endOfFrame;
-      final renderObject = _posterKey.currentContext?.findRenderObject();
-      if (renderObject is RenderRepaintBoundary &&
-          !renderObject.debugNeedsPaint) {
-        boundary = renderObject;
-        break;
+    final startTime = DateTime.now();
+    try {
+      // Pre-flight check
+      if (_posterKey.currentContext == null) {
+        throw StateError('Poster key not attached to widget tree');
       }
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-    }
 
-    if (boundary == null) {
-      throw StateError('Poster not ready');
-    }
+      final pixelRatio =
+          (MediaQuery.of(context).devicePixelRatio * 2).clamp(2.0, 3.0);
+      RenderRepaintBoundary? boundary;
 
-    final image = await boundary.toImage(pixelRatio: pixelRatio);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    if (byteData == null) {
-      throw StateError('Failed to encode poster');
+      // Extended polling with adaptive backoff
+      const maxIterations = 15;
+      for (var i = 0; i < maxIterations; i++) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) throw StateError('Widget unmounted during capture');
+
+        final renderObject = _posterKey.currentContext?.findRenderObject();
+        if (renderObject is RenderRepaintBoundary &&
+            !renderObject.debugNeedsPaint) {
+          boundary = renderObject;
+          break;
+        }
+
+        // Adaptive delay: 20ms -> 40ms -> 60ms
+        final delayMs = i < 5 ? 20 : (i < 10 ? 40 : 60);
+        await Future<void>.delayed(Duration(milliseconds: delayMs));
+      }
+
+      if (boundary == null) {
+        final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+        throw StateError('Screenshot timeout: Poster rendering not complete after ${elapsed}ms');
+      }
+
+      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      if (!mounted) {
+        image.dispose();
+        throw StateError('Widget unmounted after toImage');
+      }
+
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (byteData == null) {
+        throw StateError('Failed to encode poster to PNG');
+      }
+
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.log('Screenshot captured successfully in ${elapsed}ms');
+      return byteData.buffer.asUint8List();
+    } catch (e, stackTrace) {
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.logError(
+        'Failed to capture poster screenshot after ${elapsed}ms',
+        error: e,
+        stackTrace: stackTrace,
+        context: 'PosterExport',
+      );
+      rethrow;
     }
-    return byteData.buffer.asUint8List();
   }
 
   Future<File> _persistToTempFile(Uint8List bytes) async {
-    final directory = await getTemporaryDirectory();
-    final path =
-        '${directory.path}/archery_poster_${DateTime.now().millisecondsSinceEpoch}.png';
-    final file = File(path);
-    await file.writeAsBytes(bytes, flush: true);
-    return file;
+    try {
+      final directory = await getTemporaryDirectory();
+      final fileName = _generateUniqueFileName();
+      final path = '${directory.path}/$fileName.png';
+      final file = File(path);
+      await file.writeAsBytes(bytes, flush: true);
+
+      // Track file for cleanup
+      _tempFilesToCleanup.add(file);
+
+      _logger.log('Persisted poster to temp file: $path');
+      return file;
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Failed to persist poster to temp file',
+        error: e,
+        stackTrace: stackTrace,
+        context: 'PosterExport',
+      );
+      rethrow;
+    }
   }
 
   Future<bool> _ensureSavePermission() async {
@@ -1016,11 +1126,16 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     final permission =
         Platform.isIOS ? Permission.photosAddOnly : Permission.photos;
     var status = await permission.status;
+    if (!mounted) return false;
+
     if (status.isGranted || status.isLimited) return true;
 
     status = await permission.request();
+    if (!mounted) return false;
+
     if (status.isGranted || status.isLimited) return true;
 
+    // Handle different denial states
     if (status.isPermanentlyDenied) {
       _setStatus(
         _t(
@@ -1032,6 +1147,29 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       return false;
     }
 
+    if (status.isRestricted) {
+      _setStatus(
+        _t(
+          zh: '照片权限受限制（可能由家长控制）。请在系统设置中检查权限。',
+          en: 'Photo access is restricted (possibly by parental controls). Please check system settings.',
+        ),
+        isError: true,
+      );
+      return false;
+    }
+
+    if (status.isDenied) {
+      _setStatus(
+        _t(
+          zh: '需要照片权限才能保存海报。点击"保存到相册"将请求权限。',
+          en: 'Photo access needed to save poster. Tap "Save to Album" to grant permission.',
+        ),
+        isError: true,
+      );
+      return false;
+    }
+
+    // Other denied states
     _setStatus(
       _t(
         zh: '未获得照片权限，无法保存海报。',
@@ -1044,36 +1182,71 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
 
   Future<void> _savePoster() async {
     if (_isExporting) return;
+
+    // Clean up old temp files before starting
+    _cleanupTempFiles();
+
+    final startTime = DateTime.now();
     setState(() {
       _isExporting = true;
       _statusText = null;
     });
+
     try {
       final granted = await _ensureSavePermission();
+      if (!mounted) return;
       if (!granted) return;
 
       final bytes = await _capturePosterBytes();
+      if (!mounted) return;
+
+      // Try direct byte save first (more efficient, works on most platforms)
       var result = await ImageGallerySaver.saveImage(
         bytes,
         quality: 100,
-        name: 'archery_poster_${DateTime.now().millisecondsSinceEpoch}',
+        name: _generateUniqueFileName(),
         isReturnImagePathOfIOS: false,
       );
+      if (!mounted) return;
+
       if (!_isSaveResultSuccess(result)) {
+        _logger.log('Direct image save failed, trying file-based save',
+          level: LogLevel.warning);
+
+        // Fallback: persist to temp file then save (works on older Android versions)
         final file = await _persistToTempFile(bytes);
+        if (!mounted) return;
+
         result = await ImageGallerySaver.saveFile(
           file.path,
-          name: 'archery_poster_${DateTime.now().millisecondsSinceEpoch}',
+          name: _generateUniqueFileName(),
           isReturnPathOfIOS: false,
         );
+        if (!mounted) return;
       }
+
       if (!_isSaveResultSuccess(result)) {
-        throw StateError('Gallery save failed');
+        _logger.log('Both save attempts failed. Result: $result',
+          level: LogLevel.error);
+        throw StateError('Gallery save failed after both attempts');
       }
+
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.log('Poster saved successfully in ${elapsed}ms');
+
       _setStatus(
         _t(zh: '海报已保存到相册', en: 'Poster saved to gallery'),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.logError(
+        'Failed to save poster after ${elapsed}ms',
+        error: e,
+        stackTrace: stackTrace,
+        context: 'PosterExport',
+      );
+
+      if (!mounted) return;
       _setStatus(
         _t(
           zh: '保存失败。请检查系统照片权限后重试。',
@@ -1090,14 +1263,43 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
 
   Future<void> _sharePoster() async {
     if (_isExporting) return;
-    final box = context.findRenderObject() as RenderBox?;
+
+    final startTime = DateTime.now();
+
+    // Get share position safely
+    RenderBox? box;
+    try {
+      final renderObj = context.findRenderObject();
+      if (renderObj is RenderBox && renderObj.hasSize) {
+        box = renderObj;
+      }
+    } catch (e) {
+      _logger.log('Could not determine share position', level: LogLevel.warning);
+    }
+
     setState(() {
       _isExporting = true;
       _statusText = null;
     });
+
     try {
       final bytes = await _capturePosterBytes();
+      if (!mounted) return;
+
       final posterFile = await _persistToTempFile(bytes);
+      if (!mounted) return;
+
+      // Determine share position origin with fallback
+      Rect? sharePositionOrigin;
+      if (box != null) {
+        sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
+      } else {
+        // Fallback for iPad: center of screen
+        final size = MediaQuery.of(context).size;
+        final center = Offset(size.width / 2, size.height / 2);
+        sharePositionOrigin = center & const Size(1, 1);
+      }
+
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(posterFile.path)],
@@ -1105,16 +1307,38 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
             zh: '我在${widget.appName}打出了 ${widget.totalScore}/${widget.maxScore}，来挑战我！',
             en: 'I scored ${widget.totalScore}/${widget.maxScore} in ${widget.appName}. Come challenge me!',
           ),
-          sharePositionOrigin:
-              box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+          sharePositionOrigin: sharePositionOrigin,
         ),
       );
+      if (!mounted) return;
+
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.log('Share panel opened successfully in ${elapsed}ms');
+
       _setStatus(
         _t(zh: '海报已打开分享面板', en: 'Share panel opened'),
       );
-    } catch (e) {
+
+      // Schedule cleanup of share temp file after delay
+      _shareCleanupTimer?.cancel();
+      _shareCleanupTimer = Timer(const Duration(seconds: 30), () {
+        _cleanupTempFiles();
+      });
+    } catch (e, stackTrace) {
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      _logger.logError(
+        'Failed to share poster after ${elapsed}ms',
+        error: e,
+        stackTrace: stackTrace,
+        context: 'PosterExport',
+      );
+
+      if (!mounted) return;
       _setStatus(
-        _t(zh: '分享失败：$e', en: 'Failed to share poster: $e'),
+        _t(
+          zh: '分享失败。请检查网络和存储权限后重试。',
+          en: 'Share failed. Please check network and storage permissions.',
+        ),
         isError: true,
       );
     } finally {
