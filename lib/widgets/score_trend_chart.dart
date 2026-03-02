@@ -26,7 +26,7 @@ class ScoreTrendChart extends StatelessWidget {
       return Center(
         child: Text(
           l10n.noData,
-          style: const TextStyle(color: AppColors.textSlate400, fontSize: 11),
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
         ),
       );
     }
@@ -65,7 +65,7 @@ class ScoreTrendChart extends StatelessWidget {
 
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: false),
+        gridData: const FlGridData(show: false),
         titlesData: FlTitlesData(
           show: !isCompact,
           leftTitles: AxisTitles(
@@ -73,12 +73,12 @@ class ScoreTrendChart extends StatelessWidget {
               showTitles: !isCompact,
               reservedSize: 30,
               getTitlesWidget: (value, meta) {
-                if (value == minY || value == maxY)
+                if (value == minY || value == maxY) {
                   return const SizedBox.shrink();
+                }
                 return Text(
                   value.toInt().toString(),
-                  style: const TextStyle(
-                      fontSize: 11, color: AppColors.textSlate500),
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
                 );
               },
             ),
@@ -96,8 +96,7 @@ class ScoreTrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       (value.toInt() + 1).toString(),
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textSlate500),
+                      style: const TextStyle(fontSize: 10, color: Colors.grey),
                     ),
                   );
                 }
@@ -141,7 +140,7 @@ class ScoreTrendChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           enabled: !isCompact,
           touchTooltipData: LineTouchTooltipData(
-            tooltipBgColor: AppColors.textSlate900,
+            tooltipBgColor: Colors.black87,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 return LineTooltipItem(

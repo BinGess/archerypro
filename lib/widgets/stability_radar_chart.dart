@@ -55,8 +55,8 @@ class StabilityRadarChart extends StatelessWidget {
     if (previousMetrics != null) {
       dataSets.add(
         RadarDataSet(
-          fillColor: AppColors.textSlate400.withValues(alpha: 0.12),
-          borderColor: AppColors.textSlate400,
+          fillColor: Colors.grey.withValues(alpha: 0.1),
+          borderColor: Colors.grey,
           borderWidth: 2,
           entryRadius: 3,
           dataEntries: previousMetrics!
@@ -77,25 +77,25 @@ class StabilityRadarChart extends StatelessWidget {
               radarShape: RadarShape.polygon,
               tickCount: 5,
               ticksTextStyle: const TextStyle(
-                color: AppColors.textSlate500,
-                fontSize: 11,
+                color: Colors.grey,
+                fontSize: 10,
               ),
               tickBorderData: BorderSide(
-                color: AppColors.borderLight.withValues(alpha: 0.7),
+                color: Colors.grey.withValues(alpha: 0.2),
                 width: 1,
               ),
               gridBorderData: BorderSide(
-                color: AppColors.borderLight.withValues(alpha: 0.9),
+                color: Colors.grey.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               radarBorderData: BorderSide(
-                color: AppColors.textSlate400.withValues(alpha: 0.6),
+                color: Colors.grey.withValues(alpha: 0.5),
                 width: 2,
               ),
               titleTextStyle: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textSlate900,
+                color: Colors.black87,
               ),
               getTitle: (index, angle) {
                 if (!showLabels) return const RadarChartTitle(text: '');
@@ -128,7 +128,7 @@ class StabilityRadarChart extends StatelessWidget {
         _buildLegendItem(l10n.currentPeriod, AppColors.primary),
         if (previousMetrics != null) ...[
           const SizedBox(width: 24),
-          _buildLegendItem(l10n.previousPeriod, AppColors.textSlate500),
+          _buildLegendItem(l10n.previousPeriod, Colors.grey),
         ],
       ],
     );
@@ -151,7 +151,7 @@ class StabilityRadarChart extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSlate700,
+            color: Colors.grey.shade700,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -170,7 +170,7 @@ class StabilityRadarChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSubtle,
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -182,13 +182,13 @@ class StabilityRadarChart extends StatelessWidget {
                 l10n.overallScore,
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSlate700,
+                  color: Colors.grey.shade700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               Text(
                 currentScore.toStringAsFixed(1),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -202,16 +202,16 @@ class StabilityRadarChart extends StatelessWidget {
               Expanded(
                 child: _buildDimensionTag(
                   l10n.strengthLabel(strongest),
-                  AppColors.successSubtle,
-                  AppColors.success,
+                  Colors.green.shade100,
+                  Colors.green.shade700,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildDimensionTag(
                   l10n.weaknessLabel(weakest),
-                  AppColors.warningSubtle,
-                  AppColors.warning,
+                  Colors.orange.shade100,
+                  Colors.orange.shade700,
                 ),
               ),
             ],

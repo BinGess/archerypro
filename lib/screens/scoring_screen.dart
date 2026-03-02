@@ -3,18 +3,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_text_styles.dart';
 import '../providers/scoring_provider.dart';
 import '../providers/session_provider.dart';
 import '../models/equipment.dart';
 import '../models/training_session.dart';
 import '../models/end.dart';
 import '../models/arrow.dart';
-import '../models/competition_settings.dart';
-import '../providers/competition_provider.dart';
 import '../widgets/target_face_painter.dart';
-import '../widgets/competition/competition_results_view.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/constants.dart';
 
@@ -29,7 +24,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   static const double _targetCanvasMinSize = 260.0;
   static const double _targetCanvasMaxSize = 360.0;
   static const double _targetPanelExtraHeight = 120.0;
-  static const double _arrowMarkerSize = 18.0;
+  static const double _arrowMarkerSize = 14.0;
   static const double _ringLineTolerance = 0.0;
   static const double _xRingLineTolerance = 0.0;
 
@@ -168,17 +163,16 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           children: [
             const Icon(Icons.add_circle_outline,
                 size: 64, color: AppColors.primary),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 24),
             Text(l10n.noActiveTraining,
-                style: AppTextStyles.cardSectionTitle.copyWith(
-                  fontSize: 20,
-                )),
-            const SizedBox(height: AppSpacing.xs),
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSlate900)),
+            const SizedBox(height: 8),
             Text(l10n.clickStartScoring,
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.textSlate500,
-                )),
-            const SizedBox(height: AppSpacing.xxl),
+                style: const TextStyle(color: AppColors.textSlate500)),
+            const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _startNewSession,
               icon: const Icon(Icons.play_arrow),
@@ -201,22 +195,22 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Widget _buildHeaderStat(
       String label, String value, String sub, Color bg, Color text) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadowSoft, blurRadius: 10),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
         ],
       ),
       child: Column(
         children: [
           Text(label,
-              style: AppTextStyles.micro.copyWith(
-                color: text.withValues(alpha: 0.65),
-                fontWeight: FontWeight.w700,
-              )),
-          const SizedBox(height: AppSpacing.xxs),
+              style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: text.withValues(alpha: 0.6))),
+          const SizedBox(height: 4),
           RichText(
             text: TextSpan(
               children: [
@@ -228,10 +222,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                         color: text)),
                 TextSpan(
                     text: " $sub",
-                    style: AppTextStyles.subLabel.copyWith(
-                      color: text.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w600,
-                    )),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: text.withValues(alpha: 0.5))),
               ],
             ),
           ),
@@ -243,6 +237,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Widget _buildSessionList(dynamic scoringState) {
     final ends = scoringState.currentSession?.ends ?? [];
     final maxEnds = scoringState.maxEnds;
+    final currentEndNum = scoringState.currentEndNumber;
 
     // We want to render a list of cards, one for each end.
     // We should render up to maxEnds (or more if they added extra).
@@ -252,8 +247,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final displayCount = max<int>(maxEnds, ends.length);
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: displayCount + 1, // +1 for "One More End" button
       itemBuilder: (context, index) {
         if (index == displayCount) {
@@ -301,18 +295,18 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final endScore = endData?.totalScore ?? 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: isCurrent
             ? Border.all(
                 color: AppColors.primary.withValues(alpha: 0.5), width: 1.5)
             : Border.all(color: Colors.transparent),
         boxShadow: [
           BoxShadow(
-              color: (isFuture ? AppColors.shadowSoft : AppColors.shadowMedium),
+              color: Colors.black.withValues(alpha: isFuture ? 0.02 : 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2))
         ],
@@ -324,22 +318,21 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(l10n.endLabel(endNumber.toString()),
-                  style: AppTextStyles.rowLabel.copyWith(
-                    fontSize: 14,
-                    color: isFuture
-                        ? AppColors.textSlate300
-                        : AppColors.textSlate900,
-                  )),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isFuture
+                          ? AppColors.textSlate300
+                          : AppColors.textSlate900)),
               if (!isFuture)
                 Text(l10n.scoreLabel(endScore.toString()),
-                    style: AppTextStyles.rowLabel.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    )),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary)),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(scoringState.arrowsPerEnd, (arrowIndex) {
@@ -363,15 +356,14 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                     }
                   },
                   child: Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
                     height: 48,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: isFocused
                           ? AppColors.primary.withValues(alpha: 0.05)
                           : AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                      borderRadius: BorderRadius.circular(8),
                       border: isFocused
                           ? Border.all(color: AppColors.primary, width: 2)
                           : Border.all(color: Colors.transparent),
@@ -387,7 +379,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                         color: arrow != null
                             ? AppColors.textSlate900
                             : AppColors.textSlate300,
-                        height: 1.1,
                       ),
                     ),
                   ),
@@ -425,20 +416,19 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return Container(
       height: targetPanelHeight,
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowMedium,
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
         ],
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 16),
           // Target Face
           Expanded(
             child: Center(
@@ -513,7 +503,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                                 key: ValueKey(ripple.id),
                                 position: ripple.position,
                               ))
-                          .toList(),
+                          ,
 
                       // Magnifier lens shown while pressing
                       if (_showMagnifier && _magnifierPosition != null)
@@ -531,7 +521,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           ),
           // Footer Buttons
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
                 Expanded(
@@ -545,13 +535,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(l10n.removeScore,
-                        style: AppTextStyles.rowLabel.copyWith(
-                          color: AppColors.textSlate500,
-                          fontSize: 14,
-                        )),
+                        style: const TextStyle(color: AppColors.textSlate500)),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _saveSession,
@@ -563,9 +550,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                       elevation: 0,
                     ),
                     child: Text(l10n.completeSession,
-                        style: AppTextStyles.primaryButton.copyWith(
-                          color: Colors.white,
-                        )),
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -587,18 +573,15 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.primary, width: 2),
-          boxShadow: const [
-            BoxShadow(color: AppColors.shadowMedium, blurRadius: 4)
-          ],
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
         ),
         child: Center(
           child: Text(
             scoreText,
-            style: AppTextStyles.micro.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
+            style: const TextStyle(
+                fontSize: 7,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary),
           ),
         ),
       ),
@@ -640,7 +623,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             border: Border.all(color: Colors.white, width: 2.5),
             boxShadow: [
               BoxShadow(
-                  color: AppColors.shadowMedium,
+                  color: Colors.black.withOpacity(0.30),
                   blurRadius: 10,
                   spreadRadius: 1)
             ],
@@ -682,11 +665,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         },
         icon: const Icon(Icons.add, color: AppColors.primary),
         label: Text(l10n.oneMoreEnd,
-            style: AppTextStyles.rowLabel.copyWith(
-              color: AppColors.primary,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            )),
+            style: const TextStyle(
+                color: AppColors.primary, fontWeight: FontWeight.bold)),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           side: const BorderSide(color: AppColors.primary),
@@ -703,10 +683,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowMedium,
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -720,7 +700,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           Row(
             children: [
               Expanded(
-                  child: _keypadBtn('X', AppColors.targetBlack,
+                  child: _keypadBtn('X', Colors.black,
                       isText: true, onTap: () => _addScore(11))),
               const SizedBox(width: 6),
               Expanded(
@@ -801,7 +781,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                                   onTap: () => _addScore(1))),
                           const SizedBox(width: 6),
                           Expanded(
-                              child: _keypadBtn('M', AppColors.danger,
+                              child: _keypadBtn('M', Colors.red,
                                   isText: true, onTap: () => _addScore(0))),
                         ],
                       ),
@@ -863,14 +843,14 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(l10n.endCompletedLabel(currentEndNumForPopup.toString()),
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   Text(l10n.totalScoreLabel(updatedState.totalScore.toString()),
-                      style: AppTextStyles.subLabel),
+                      style: const TextStyle(fontSize: 12)),
                 ],
               ),
             ],
           ),
-          backgroundColor: AppColors.success,
+          backgroundColor: Colors.green,
           duration: const Duration(seconds: 1), // Shortened duration
           behavior: SnackBarBehavior.floating,
           shape:
@@ -887,7 +867,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.sessionCompleted),
-          backgroundColor: AppColors.success,
+          backgroundColor: Colors.green,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -994,91 +974,20 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         .addArrow(score, position: normalizedPosition);
   }
 
-  List<CompetitionEndResult> _buildSessionEndResults(TrainingSession session) {
-    final sortedEnds = [...session.ends]
-      ..sort((a, b) => a.endNumber.compareTo(b.endNumber));
-
-    return sortedEnds
-        .where((end) => end.arrows.isNotEmpty)
-        .map(
-          (end) => CompetitionEndResult(
-            endNumber: end.endNumber,
-            arrowScores: end.arrows.map((arrow) => arrow.score).toList(),
-          ),
-        )
-        .toList();
-  }
-
-  CompetitionSettings _buildSessionResultSettings(
-    List<CompetitionEndResult> endResults,
-    ScoringState scoringState,
-  ) {
-    final inferredArrowsPerEnd = endResults.fold(
-      scoringState.arrowsPerEnd,
-      (maxValue, result) => result.arrowScores.length > maxValue
-          ? result.arrowScores.length
-          : maxValue,
-    );
-
-    return CompetitionSettings(
-      arrowsPerEnd: inferredArrowsPerEnd > 0 ? inferredArrowsPerEnd : 1,
-      totalEnds: endResults.length,
-      useTargetScoring: scoringState.isTargetView,
-    );
-  }
-
-  Future<void> _showSessionResultPage(
-    TrainingSession session,
-    ScoringState scoringState,
-  ) async {
-    final endResults = _buildSessionEndResults(session);
-    if (endResults.isEmpty) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      return;
-    }
-
-    final settings = _buildSessionResultSettings(endResults, scoringState);
-
-    await Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) {
-          return CompetitionResultsView(
-            endResults: endResults,
-            settings: settings,
-            onDone: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _saveSession({bool showResultPage = true}) async {
+  Future<void> _saveSession() async {
     final l10n = AppLocalizations.of(context);
     final isEditing = ref.read(scoringProvider).isEditing;
     await ref.read(scoringProvider.notifier).saveSession();
     await ref.read(sessionProvider.notifier).refresh();
 
-    if (!mounted) return;
-
-    final updatedState = ref.read(scoringProvider);
-    if (updatedState.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(updatedState.error!),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-      return;
-    }
-
-    if (isEditing || !showResultPage) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.sessionSaved),
-          backgroundColor: AppColors.success,
+          backgroundColor: Colors.green,
         ),
       );
+      // Exit after manual save
       if (isEditing) {
         if (Navigator.canPop(context)) {
           Navigator.of(context).pop();
@@ -1087,18 +996,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
       ref.read(scoringProvider.notifier).resetSession();
-      return;
     }
-
-    final completedSession = updatedState.currentSession;
-    if (completedSession == null) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      ref.read(scoringProvider.notifier).resetSession();
-      return;
-    }
-
-    ref.read(scoringProvider.notifier).resetSession();
-    await _showSessionResultPage(completedSession, updatedState);
   }
 
   void _confirmExit(BuildContext context) {
@@ -1123,13 +1021,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                     .popUntil((route) => route.isFirst); // Return to home
               }
             },
-            child: Text(l10n.discard,
-                style: const TextStyle(color: AppColors.danger)),
+            child:
+                Text(l10n.discard, style: const TextStyle(color: Colors.red)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
-              await _saveSession(showResultPage: false);
+              await _saveSession();
             },
             child: Text(l10n.save),
           ),
@@ -1145,12 +1043,12 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       margin: const EdgeInsets.all(
           0), // Margin handled by parent layout for tighter control
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadii.md),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-              color: AppColors.shadowSoft,
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 2,
               offset: const Offset(0, 2))
         ],
@@ -1159,12 +1057,12 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             alignment: Alignment.center,
             child: Text(text,
                 style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+                    fontSize: 22, fontWeight: FontWeight.w900, color: color)),
           ),
         ),
       ),
@@ -1177,22 +1075,22 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       margin: const EdgeInsets.all(0),
       decoration: BoxDecoration(
           color: AppColors.surfaceSubtle,
-          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderLight)),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderRadius: BorderRadius.circular(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: AppColors.textSlate500, size: 24),
               Text(label,
-                  style: AppTextStyles.micro.copyWith(
-                    color: AppColors.textSlate500,
-                    fontWeight: FontWeight.w700,
-                  ))
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSlate500))
             ],
           ),
         ),
@@ -1207,7 +1105,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.primary,
-          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.3),
@@ -1221,7 +1119,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             const Icon(Icons.check_circle, color: Colors.white, size: 28),
             const SizedBox(height: 4),
             Text(l10n.save,
-                style: AppTextStyles.rowLabel.copyWith(color: Colors.white)),
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
           ],
         ),
       ),
@@ -1234,11 +1135,11 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     if (score >= 5) return AppColors.targetBlue;
     if (score >= 3) return AppColors.targetBlack;
     if (score >= 1) return AppColors.targetWhite;
-    return AppColors.textSlate500;
+    return Colors.grey;
   }
 
   Color _getScoreTextColor(int score) {
-    if (score >= 9 || score >= 7 || score >= 3) return AppColors.textSlate900;
+    if (score >= 9 || score >= 7 || score >= 3) return Colors.black;
     return Colors.white;
   }
 
@@ -1255,7 +1156,8 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     return AnimatedScoreBox(
       score: score,
       bg: bg,
-      text: AppColors.textSlate900,
+      text: Colors
+          .black, // Small text is usually black for readability unless bg is dark
       isSmall: true,
     );
   }
@@ -1292,10 +1194,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(end,
-                  style: AppTextStyles.micro.copyWith(
-                    color: AppColors.textSlate500,
-                    fontWeight: FontWeight.w700,
-                  )),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSlate500)),
               Text(total,
                   style: const TextStyle(
                       fontSize: 16,
@@ -1456,7 +1358,10 @@ class _AnimatedScoreBoxState extends State<AnimatedScoreBox>
           borderRadius: BorderRadius.circular(widget.isSmall ? 6 : 8),
           boxShadow: widget.isSmall
               ? null
-              : [BoxShadow(color: AppColors.shadowMedium, blurRadius: 2)],
+              : [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)
+                ],
         ),
         child: Text(
           '${widget.score}',
