@@ -483,8 +483,8 @@ class DashboardScreen extends ConsumerWidget {
                       '$score/$total',
                       style: AppTextStyles.mediumNumber.copyWith(
                         color: AppColors.textSlate900,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
                         height: 1,
                       ),
                     ),
