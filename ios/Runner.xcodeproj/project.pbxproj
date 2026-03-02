@@ -198,6 +198,7 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				792E348ECB7833748C066CB5 /* [CP] Embed Pods Frameworks */,
+				E9F44B772DF11B3300A8D3F1 /* Generate objective_c dSYM */,
 				03F750F31B5EF204C0A7675E /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
@@ -356,6 +357,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		E9F44B772DF11B3300A8D3F1 /* Generate objective_c dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate objective_c dSYM";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$ACTION\" != \"install\" ]; then\n  exit 0\nfi\n\nif [ \"$CONFIGURATION\" != \"Release\" ] && [ \"$CONFIGURATION\" != \"Profile\" ]; then\n  exit 0\nfi\n\nif ! command -v dsymutil >/dev/null 2>&1; then\n  echo \"error: dsymutil not found in PATH.\"\n  exit 1\nfi\n\nFRAMEWORK_BINARY=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/Frameworks/objective_c.framework/objective_c\"\nDSYM_OUTPUT=\"${DWARF_DSYM_FOLDER_PATH}/objective_c.framework.dSYM\"\n\nif [ ! -f \"$FRAMEWORK_BINARY\" ]; then\n  echo \"objective_c.framework not found, skipping dSYM generation.\"\n  exit 0\nfi\n\necho \"Generating dSYM for objective_c.framework\"\nrm -rf \"$DSYM_OUTPUT\"\nif ! dsymutil \"$FRAMEWORK_BINARY\" -o \"$DSYM_OUTPUT\"; then\n  echo \"error: failed to generate dSYM for objective_c.framework\"\n  exit 1\nfi\n\nif [ ! -f \"$DSYM_OUTPUT/Contents/Resources/DWARF/objective_c\" ]; then\n  echo \"error: objective_c dSYM file missing after generation.\"\n  exit 1\nfi\n";
+			showEnvVarsInLog = 0;
 		};
 		A22AB626DB4FA54815F41EFF /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
