@@ -1139,8 +1139,8 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     if (status.isPermanentlyDenied) {
       _setStatus(
         _t(
-          zh: '照片权限被永久拒绝。请到系统设置 > 隐私与安全性 > 照片，允许本应用访问后重试。',
-          en: 'Photo permission is permanently denied. Please enable it in system settings and try again.',
+          zh: '照片权限被永久拒绝。请到系统设置中开启“照片”权限后重试。',
+          en: 'Photo permission is permanently denied. Enable it in system settings and try again.',
         ),
         isError: true,
       );
@@ -1150,7 +1150,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     if (status.isRestricted) {
       _setStatus(
         _t(
-          zh: '照片权限受限制（可能由家长控制）。请在系统设置中检查权限。',
+          zh: '照片权限受限制（可能由家长控制）。请在系统设置中检查。',
           en: 'Photo access is restricted (possibly by parental controls). Please check system settings.',
         ),
         isError: true,
@@ -1161,8 +1161,8 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     if (status.isDenied) {
       _setStatus(
         _t(
-          zh: '需要照片权限才能保存海报。点击"保存到相册"将请求权限。',
-          en: 'Photo access needed to save poster. Tap "Save to Album" to grant permission.',
+          zh: '需要照片权限才能保存海报。请在权限弹窗中选择“允许”。',
+          en: 'Photo access is required to save posters. Please choose "Allow" in the permission dialog.',
         ),
         isError: true,
       );
@@ -1282,6 +1282,16 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       _statusText = null;
     });
 
+    Rect? sharePositionOrigin;
+    if (box != null) {
+      sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
+    } else {
+      // iPad requires a non-empty origin rect when using popover style share sheet.
+      final size = MediaQuery.of(context).size;
+      final center = Offset(size.width / 2, size.height / 2);
+      sharePositionOrigin = center & const Size(1, 1);
+    }
+
     try {
       final bytes = await _capturePosterBytes();
       if (!mounted) return;
@@ -1289,24 +1299,10 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       final posterFile = await _persistToTempFile(bytes);
       if (!mounted) return;
 
-      // Determine share position origin with fallback
-      Rect? sharePositionOrigin;
-      if (box != null) {
-        sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
-      } else {
-        // Fallback for iPad: center of screen
-        final size = MediaQuery.of(context).size;
-        final center = Offset(size.width / 2, size.height / 2);
-        sharePositionOrigin = center & const Size(1, 1);
-      }
-
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(posterFile.path)],
-          text: _t(
-            zh: '我在${widget.appName}打出了 ${widget.totalScore}/${widget.maxScore}，来挑战我！',
-            en: 'I scored ${widget.totalScore}/${widget.maxScore} in ${widget.appName}. Come challenge me!',
-          ),
+          text: _buildShareCaption(),
           sharePositionOrigin: sharePositionOrigin,
         ),
       );
@@ -1334,17 +1330,79 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       );
 
       if (!mounted) return;
-      _setStatus(
-        _t(
-          zh: '分享失败。请检查网络和存储权限后重试。',
-          en: 'Share failed. Please check network and storage permissions.',
-        ),
-        isError: true,
+      final fallbackShared = await _shareAsTextFallback(
+        sharePositionOrigin: sharePositionOrigin,
       );
+      if (!mounted) return;
+      if (fallbackShared) {
+        _setStatus(
+          _t(
+            zh: '图片分享失败，已回退为文本分享。',
+            en: 'Image share failed. Fell back to text sharing.',
+          ),
+        );
+      } else {
+        _setStatus(
+          _t(
+            zh: '分享失败。请检查系统分享权限后重试。',
+            en: 'Share failed. Please check system share permission and try again.',
+          ),
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
       }
+    }
+  }
+
+  String _buildShareCaption() {
+    return _t(
+      zh: '我在${widget.appName}打出了 ${widget.totalScore}/${widget.maxScore}，来挑战我！',
+      en: 'I scored ${widget.totalScore}/${widget.maxScore} in ${widget.appName}. Come challenge me!',
+    );
+  }
+
+  String _buildFallbackShareText() {
+    final avgArrow = widget.averagePerArrow.toStringAsFixed(2);
+    final avgEnd = widget.averagePerEnd.toStringAsFixed(1);
+    final consistency = widget.consistencyIndex.toStringAsFixed(1);
+    final rate = widget.scoreRate.toStringAsFixed(1);
+    if (Localizations.localeOf(context).languageCode == 'zh') {
+      return '我在${widget.appName}完成了一场训练\n'
+          '总分：${widget.totalScore}/${widget.maxScore}\n'
+          '得分率：$rate%\n'
+          '箭均分：$avgArrow | 组均分：$avgEnd\n'
+          '稳定性：$consistency%\n'
+          '来挑战我吧！';
+    }
+    return 'I finished a training session in ${widget.appName}\n'
+        'Score: ${widget.totalScore}/${widget.maxScore}\n'
+        'Rate: $rate%\n'
+        'Avg/Arrow: $avgArrow | Avg/End: $avgEnd\n'
+        'Consistency: $consistency%\n'
+        'Can you beat me?';
+  }
+
+  Future<bool> _shareAsTextFallback({required Rect? sharePositionOrigin}) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: _buildFallbackShareText(),
+          sharePositionOrigin: sharePositionOrigin,
+        ),
+      );
+      _logger.log('Text fallback share opened successfully');
+      return true;
+    } catch (fallbackError, fallbackStack) {
+      _logger.logError(
+        'Fallback text sharing also failed',
+        error: fallbackError,
+        stackTrace: fallbackStack,
+        context: 'PosterExport',
+      );
+      return false;
     }
   }
 
