@@ -9,7 +9,7 @@ class AppTextStyles {
   // ── AppBar / Page Titles ──────────────────────────────────────────────────
   /// Primary page title used in AppBar
   static const TextStyle appBarTitle = TextStyle(
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: FontWeight.w700,
     color: AppColors.textSlate900,
     letterSpacing: 0,
@@ -21,7 +21,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w700,
     color: AppColors.textSlate500,
-    letterSpacing: 0.5,
+    letterSpacing: 0.35,
   );
 
   /// Card section title
@@ -37,21 +37,21 @@ class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textSlate900,
-    height: 1.2,
+    height: 1.25,
   );
 
   /// Secondary body text / descriptions
   static const TextStyle body = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     color: AppColors.textSlate700,
-    height: 1.45,
+    height: 1.5,
   );
 
   /// Muted sub-label below row titles
   static const TextStyle subLabel = TextStyle(
     fontSize: 12,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     color: AppColors.textSlate500,
     height: 1.4,
   );
@@ -60,43 +60,43 @@ class AppTextStyles {
   /// Small uppercase caption, e.g. metric labels
   static const TextStyle caption = TextStyle(
     fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     color: AppColors.textSlate400,
-    letterSpacing: 0.6,
+    letterSpacing: 0.3,
   );
 
   /// Micro-label for dense data visuals
   static const TextStyle micro = TextStyle(
     fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     color: AppColors.textSlate400,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   );
 
   // ── Numeric Displays ──────────────────────────────────────────────────────
   /// Hero score number, e.g. total session score
   static const TextStyle heroNumber = TextStyle(
     fontSize: 46,
-    fontWeight: FontWeight.w900,
+    fontWeight: FontWeight.w800,
     color: AppColors.primary,
     height: 1.0,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   );
 
   /// Large stat number on dashboard / cards
   static const TextStyle largeNumber = TextStyle(
     fontSize: 30,
-    fontWeight: FontWeight.w900,
+    fontWeight: FontWeight.w800,
     height: 1.0,
-    letterSpacing: -0.2,
+    letterSpacing: -0.4,
   );
 
   /// Medium stat number
   static const TextStyle mediumNumber = TextStyle(
     fontSize: 24,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w700,
     height: 1.0,
-    letterSpacing: -0.1,
+    letterSpacing: -0.2,
   );
 
   /// Inline fraction denominator
@@ -108,12 +108,12 @@ class AppTextStyles {
 
   // ── Navigation Bar ────────────────────────────────────────────────────────
   static const TextStyle navSelected = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
   );
 
   static const TextStyle navUnselected = TextStyle(
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
   );
 
@@ -121,6 +121,6 @@ class AppTextStyles {
   static const TextStyle primaryButton = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w700,
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   );
 }

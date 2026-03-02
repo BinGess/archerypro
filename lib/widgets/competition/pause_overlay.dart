@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_colors.dart';
 
@@ -32,11 +33,13 @@ class PauseOverlay extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               l10n.competitionPaused,
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 6,
+              style: GoogleFonts.barlowSemiCondensed(
+                textStyle: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -47,10 +50,12 @@ class PauseOverlay extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               l10n.competitionRemainingTime(remainingSeconds),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white70,
+              style: GoogleFonts.robotoMono(
+                textStyle: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white70,
+                ),
               ),
             ),
             const Spacer(flex: 2),
@@ -64,10 +69,12 @@ class PauseOverlay extends StatelessWidget {
                   icon: const Icon(Icons.play_arrow_rounded, size: 28),
                   label: Text(
                     l10n.competitionResume,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
+                    style: GoogleFonts.barlowSemiCondensed(
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -91,10 +98,12 @@ class PauseOverlay extends StatelessWidget {
                   icon: const Icon(Icons.refresh_rounded, size: 24),
                   label: Text(
                     l10n.competitionResetEnd,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
+                    style: GoogleFonts.barlowSemiCondensed(
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                   style: OutlinedButton.styleFrom(

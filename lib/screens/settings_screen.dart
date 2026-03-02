@@ -32,10 +32,7 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
-          const SizedBox(height: 8),
-          _buildSectionHeader(context, l10n.languageSettings),
-          _buildLanguageSection(context, ref, l10n),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
           _buildSectionHeader(context, l10n.monthlyGoalSettings),
           _buildMonthlyGoalSection(
             context,
@@ -44,12 +41,16 @@ class SettingsScreen extends ConsumerWidget {
             stats: stats,
             currentGoal: currentGoal,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
+          _buildSectionHeader(context, l10n.languageSettings),
+          _buildLanguageSection(context, ref, l10n),
+          const SizedBox(height: 14),
           _buildSectionHeader(context, l10n.debugSection),
           _buildDebugSection(context, l10n),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
           _buildSectionHeader(context, l10n.about),
           _buildInfoSection(context, l10n),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -57,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       child: Text(
         title,
         style: const TextStyle(
@@ -101,12 +102,12 @@ class SettingsScreen extends ConsumerWidget {
                 _showMonthlyGoalDialog(context, ref, l10n, currentGoal),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: AppColors.surfaceSubtle,
                       borderRadius: BorderRadius.circular(8),
@@ -117,7 +118,7 @@ class SettingsScreen extends ConsumerWidget {
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,16 +126,16 @@ class SettingsScreen extends ConsumerWidget {
                         Text(
                           l10n.monthlyGoalMessage(currentGoal.toString()),
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textSlate900,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           l10n.monthlyGoalSettingsSubtitle,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: AppColors.textSlate500,
                           ),
                         ),
@@ -152,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Column(
               children: [
                 Row(
@@ -175,7 +176,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Text(
@@ -196,7 +197,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -325,7 +326,7 @@ class SettingsScreen extends ConsumerWidget {
         bottom: isLast ? const Radius.circular(12) : Radius.zero,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Expanded(
@@ -340,11 +341,11 @@ class SettingsScreen extends ConsumerWidget {
                       color: AppColors.textSlate900,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: AppColors.textSlate500,
                     ),
                   ),
@@ -399,12 +400,12 @@ class SettingsScreen extends ConsumerWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(8),
@@ -415,7 +416,7 @@ class SettingsScreen extends ConsumerWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,16 +424,16 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       l10n.viewLogs,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSlate900,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       l10n.viewLogsSubtitle,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: AppColors.textSlate500,
                       ),
                     ),
@@ -474,12 +475,12 @@ class SettingsScreen extends ConsumerWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(8),
@@ -490,7 +491,7 @@ class SettingsScreen extends ConsumerWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,16 +499,16 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       l10n.about,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSlate900,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     const Text(
                       '反馈&隐私协议',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: AppColors.textSlate500,
                       ),
                     ),

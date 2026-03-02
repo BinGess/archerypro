@@ -12,6 +12,7 @@ import '../providers/session_provider.dart';
 import '../providers/ai_coach_provider.dart';
 import '../providers/scoring_provider.dart';
 import '../models/training_session.dart';
+import '../models/competition_profile.dart';
 import '../models/arrow.dart';
 import 'scoring_screen.dart';
 import '../models/equipment.dart';
@@ -142,7 +143,7 @@ class DetailsScreen extends ConsumerWidget {
                         style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
+                            letterSpacing: 0.5,
                             color: AppColors.textSlate400)),
                   ],
                 ),
@@ -162,7 +163,7 @@ class DetailsScreen extends ConsumerWidget {
                         style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
+                            letterSpacing: 0.5,
                             color: AppColors.textSlate400)),
                   ],
                 ),
@@ -170,6 +171,21 @@ class DetailsScreen extends ConsumerWidget {
             ),
 
             const SizedBox(height: 32),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  _buildCompetitionReadinessSection(context, session, l10n),
+                  const SizedBox(height: 12),
+                  _buildSessionStructureSection(context, session, l10n),
+                  const SizedBox(height: 12),
+                  _buildSessionBiasBandSection(context, session, l10n),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 28),
 
             // Visualization Section
             _buildVisualizationSection(session, l10n),
@@ -435,6 +451,404 @@ class DetailsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildCompetitionReadinessSection(
+    BuildContext context,
+    TrainingSession session,
+    AppLocalizations l10n,
+  ) {
+    final profile = CompetitionProfile.fromSession(session);
+    final projected = session.averageArrowScore * profile.projectionArrows;
+    final tier = profile.tierForProjection(projected);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(context, zh: '本场比赛化解读', en: 'Competition-style Summary'),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            profile.displayName(Localizations.localeOf(context).languageCode),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSlate500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _diagnosticMetric(
+                  label: profile.projectionArrows == 60
+                      ? _t(context, zh: '投影60箭', en: 'Projected 60')
+                      : _t(context, zh: '投影72箭', en: 'Projected 72'),
+                  value: projected.toStringAsFixed(1),
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '能力段位', en: 'Tier'),
+                  value: tier,
+                  color: AppColors.accentGold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '质量密度(9+)', en: 'Quality density'),
+                  value:
+                      '${(session.qualityDensity * 100).toStringAsFixed(1)}%',
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '关键箭代理', en: 'Clutch proxy'),
+                  value: session.clutchProxy.toStringAsFixed(2),
+                  color: AppColors.accentRust,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionStructureSection(
+    BuildContext context,
+    TrainingSession session,
+    AppLocalizations l10n,
+  ) {
+    final collapseEnds = session.collapseEnds;
+    final collapseText = collapseEnds.isEmpty
+        ? _t(context, zh: '无明显崩盘组', en: 'No clear collapse ends')
+        : collapseEnds.join(', ');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(context, zh: '本场结构诊断', en: 'Structure Diagnosis'),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '崩盘组率', en: 'Collapse rate'),
+                  value: '${(session.collapseRate * 100).toStringAsFixed(1)}%',
+                  color: AppColors.danger,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '恢复指数', en: 'Recovery index'),
+                  value: session.recoveryIndex.toStringAsFixed(2),
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _diagnosticMetric(
+                  label: _t(context, zh: '后程保持', en: 'Endurance hold'),
+                  value: '${session.enduranceHoldRate.toStringAsFixed(1)}%',
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSubtle,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _t(
+                context,
+                zh: '崩盘组编号：$collapseText',
+                en: 'Collapse ends: $collapseText',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSlate700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionBiasBandSection(
+    BuildContext context,
+    TrainingSession session,
+    AppLocalizations l10n,
+  ) {
+    final bands = session.biasByScoreBand;
+    if (bands.values.every((m) => m.values.fold(0, (a, b) => a + b) == 0)) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Text(
+          _t(context,
+              zh: '无落点数据，暂无法进行分层偏差分析。',
+              en: 'No hit positions for score-band bias analysis.'),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSlate500,
+          ),
+        ),
+      );
+    }
+
+    final highSummary = _summarizeBand(context, bands['high'] ?? const {});
+    final midSummary = _summarizeBand(context, bands['mid'] ?? const {});
+    final lowSummary = _summarizeBand(context, bands['low'] ?? const {});
+    final oppositeWarning = highSummary.directionKey.isNotEmpty &&
+        lowSummary.directionKey.isNotEmpty &&
+        _isOppositeDirection(highSummary.directionKey, lowSummary.directionKey);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(context, zh: '分层偏差与建议', en: 'Band Bias & Advice'),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _bandSummaryRow(
+            context,
+            label: _t(context, zh: '高分层(9+)', en: 'High(9+)'),
+            summary: highSummary,
+          ),
+          const SizedBox(height: 6),
+          _bandSummaryRow(
+            context,
+            label: _t(context, zh: '中分层(7-8)', en: 'Mid(7-8)'),
+            summary: midSummary,
+          ),
+          const SizedBox(height: 6),
+          _bandSummaryRow(
+            context,
+            label: _t(context, zh: '低分层(<=6)', en: 'Low(<=6)'),
+            summary: lowSummary,
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: oppositeWarning
+                  ? AppColors.warningSubtle
+                  : AppColors.surfaceSubtle,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              oppositeWarning
+                  ? _t(
+                      context,
+                      zh: '高分层与低分层方向相反，优先排查撒放与动作一致性。',
+                      en: 'High and low bands move oppositely. Check release consistency first.',
+                    )
+                  : _t(
+                      context,
+                      zh: '建议按主偏差方向做针对性修正（瞄具微调/动作稳定训练）。',
+                      en: 'Use dominant bias direction for targeted correction drills.',
+                    ),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSlate700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bandSummaryRow(
+    BuildContext context, {
+    required String label,
+    required _BandSummary summary,
+  }) {
+    final valueText = summary.total == 0
+        ? _t(context, zh: '样本不足', en: 'Not enough samples')
+        : '${summary.directionText} ${summary.percentage.toStringAsFixed(1)}% (${summary.count}/${summary.total})';
+    return Row(
+      children: [
+        SizedBox(
+          width: 92,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            valueText,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _diagnosticMetric({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _BandSummary _summarizeBand(
+    BuildContext context,
+    Map<String, int> quadrantMap,
+  ) {
+    if (quadrantMap.isEmpty) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+    }
+    final total = quadrantMap.values.fold<int>(0, (sum, c) => sum + c);
+    if (total == 0) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+    }
+    final dominant = quadrantMap.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    );
+    final percentage = dominant.value / total * 100;
+    return _BandSummary(
+      directionKey: dominant.key,
+      directionText: _quadrantName(dominant.key, AppLocalizations.of(context)),
+      count: dominant.value,
+      total: total,
+      percentage: percentage,
+    );
+  }
+
+  bool _isOppositeDirection(String a, String b) {
+    const oppositePairs = {
+      'top-left:bottom-right',
+      'bottom-right:top-left',
+      'top-right:bottom-left',
+      'bottom-left:top-right',
+    };
+    return oppositePairs.contains('$a:$b');
+  }
+
+  String _quadrantName(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'top-left':
+        return l10n.directionTopLeft;
+      case 'top-right':
+        return l10n.directionTopRight;
+      case 'bottom-left':
+        return l10n.directionBottomLeft;
+      case 'bottom-right':
+        return l10n.directionBottomRight;
+      default:
+        return key;
+    }
+  }
+
+  String _t(BuildContext context, {required String zh, required String en}) {
+    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  }
+
   Widget _buildSimpleInfo(IconData icon, String text) {
     return Row(
       children: [
@@ -634,7 +1048,8 @@ class DetailsScreen extends ConsumerWidget {
                   icon: const Icon(Icons.auto_awesome, size: 16),
                   label: Text(
                     l10n.aiCoachAnalyzeButton,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -683,7 +1098,8 @@ class DetailsScreen extends ConsumerWidget {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: Text(
                     l10n.aiCoachReanalyzeButton,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -799,5 +1215,31 @@ class DetailsScreen extends ConsumerWidget {
       return l10n.keepTrainingForInsights;
     }
     return error;
+  }
+}
+
+class _BandSummary {
+  final String directionKey;
+  final String directionText;
+  final int count;
+  final int total;
+  final double percentage;
+
+  const _BandSummary({
+    required this.directionKey,
+    required this.directionText,
+    required this.count,
+    required this.total,
+    required this.percentage,
+  });
+
+  factory _BandSummary.empty(String directionText) {
+    return _BandSummary(
+      directionKey: '',
+      directionText: directionText,
+      count: 0,
+      total: 0,
+      percentage: 0,
+    );
   }
 }

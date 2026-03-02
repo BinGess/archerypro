@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'radar_metrics.dart';
+import 'competition_profile.dart';
 
 part 'statistics.g.dart';
 
@@ -58,13 +59,67 @@ class Statistics {
   /// 10-ring rate (percentage of arrows hitting 10 or X)
   final double tenRingRate;
 
+  /// X rate (percentage of arrows hitting X ring)
+  final double xRate;
+
+  /// High value hit rate (percentage of arrows scoring 9+)
+  final double highValueRate;
+
+  /// Miss rate (percentage of misses)
+  final double missRate;
+
   /// Quadrant distribution for bias detection
   /// Map of quadrant name to count of arrows
   @JsonKey(defaultValue: {})
   final Map<String, int> quadrantDistribution;
 
+  /// Bias distribution split by score band.
+  /// Example:
+  /// {
+  ///   "high": {"top-left": 2, ...},
+  ///   "mid":  {"top-left": 3, ...},
+  ///   "low":  {"top-left": 4, ...}
+  /// }
+  @JsonKey(defaultValue: {})
+  final Map<String, Map<String, int>> biasByScoreBand;
+
   /// Radar metrics for comprehensive performance visualization
   final RadarMetrics? radarMetrics;
+
+  /// Dominant competition profile in current dataset
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final CompetitionProfile? competitionProfile;
+
+  /// Competition profile key
+  final String competitionProfileKey;
+
+  /// Qualification projection score in profile arrow count
+  final double projectedQualificationScore;
+
+  /// Qualification tier label
+  final String qualificationTier;
+
+  /// Volatility of normalized end totals
+  final double endVolatility;
+
+  /// Rate of collapsed ends in normalized scoring
+  final double collapseRate;
+
+  /// Recovery index after collapsed ends
+  final double recoveryIndex;
+
+  /// Endurance hold rate (late vs early performance)
+  final double enduranceHoldRate;
+
+  /// Session-level clutch proxy aggregated in period
+  final double clutchProxy;
+
+  /// Average quality density (9+ hit ratio by end)
+  final double qualityDensity;
+
+  /// Arrow volume aggregated per day
+  @JsonKey(includeFromJson: false, includeToJson: false, defaultValue: {})
+  final Map<DateTime, int> dailyArrowVolumeData;
 
   const Statistics({
     required this.period,
@@ -83,8 +138,23 @@ class Statistics {
     this.monthlyGoal,
     required this.currentMonthArrows,
     this.tenRingRate = 0.0,
+    this.xRate = 0.0,
+    this.highValueRate = 0.0,
+    this.missRate = 0.0,
     this.quadrantDistribution = const {},
+    this.biasByScoreBand = const {},
     this.radarMetrics,
+    this.competitionProfile,
+    this.competitionProfileKey = 'generic',
+    this.projectedQualificationScore = 0.0,
+    this.qualificationTier = 'White',
+    this.endVolatility = 0.0,
+    this.collapseRate = 0.0,
+    this.recoveryIndex = 0.0,
+    this.enduranceHoldRate = 0.0,
+    this.clutchProxy = 0.0,
+    this.qualityDensity = 0.0,
+    this.dailyArrowVolumeData = const {},
   });
 
   /// Empty statistics
@@ -105,8 +175,23 @@ class Statistics {
       scoreTrendData: const {},
       currentMonthArrows: 0,
       tenRingRate: 0.0,
+      xRate: 0.0,
+      highValueRate: 0.0,
+      missRate: 0.0,
       quadrantDistribution: const {},
+      biasByScoreBand: const {},
       radarMetrics: null,
+      competitionProfile: CompetitionProfile.generic,
+      competitionProfileKey: CompetitionProfile.generic.key,
+      projectedQualificationScore: 0.0,
+      qualificationTier: 'White',
+      endVolatility: 0.0,
+      collapseRate: 0.0,
+      recoveryIndex: 0.0,
+      enduranceHoldRate: 0.0,
+      clutchProxy: 0.0,
+      qualityDensity: 0.0,
+      dailyArrowVolumeData: const {},
     );
   }
 
@@ -168,8 +253,23 @@ class Statistics {
     int? monthlyGoal,
     int? currentMonthArrows,
     double? tenRingRate,
+    double? xRate,
+    double? highValueRate,
+    double? missRate,
     Map<String, int>? quadrantDistribution,
+    Map<String, Map<String, int>>? biasByScoreBand,
     RadarMetrics? radarMetrics,
+    CompetitionProfile? competitionProfile,
+    String? competitionProfileKey,
+    double? projectedQualificationScore,
+    String? qualificationTier,
+    double? endVolatility,
+    double? collapseRate,
+    double? recoveryIndex,
+    double? enduranceHoldRate,
+    double? clutchProxy,
+    double? qualityDensity,
+    Map<DateTime, int>? dailyArrowVolumeData,
   }) {
     return Statistics(
       period: period ?? this.period,
@@ -188,17 +288,36 @@ class Statistics {
       monthlyGoal: monthlyGoal ?? this.monthlyGoal,
       currentMonthArrows: currentMonthArrows ?? this.currentMonthArrows,
       tenRingRate: tenRingRate ?? this.tenRingRate,
+      xRate: xRate ?? this.xRate,
+      highValueRate: highValueRate ?? this.highValueRate,
+      missRate: missRate ?? this.missRate,
       quadrantDistribution: quadrantDistribution ?? this.quadrantDistribution,
+      biasByScoreBand: biasByScoreBand ?? this.biasByScoreBand,
       radarMetrics: radarMetrics ?? this.radarMetrics,
+      competitionProfile: competitionProfile ?? this.competitionProfile,
+      competitionProfileKey:
+          competitionProfileKey ?? this.competitionProfileKey,
+      projectedQualificationScore:
+          projectedQualificationScore ?? this.projectedQualificationScore,
+      qualificationTier: qualificationTier ?? this.qualificationTier,
+      endVolatility: endVolatility ?? this.endVolatility,
+      collapseRate: collapseRate ?? this.collapseRate,
+      recoveryIndex: recoveryIndex ?? this.recoveryIndex,
+      enduranceHoldRate: enduranceHoldRate ?? this.enduranceHoldRate,
+      clutchProxy: clutchProxy ?? this.clutchProxy,
+      qualityDensity: qualityDensity ?? this.qualityDensity,
+      dailyArrowVolumeData: dailyArrowVolumeData ?? this.dailyArrowVolumeData,
     );
   }
 
   // JSON serialization
-  factory Statistics.fromJson(Map<String, dynamic> json) => _$StatisticsFromJson(json);
+  factory Statistics.fromJson(Map<String, dynamic> json) =>
+      _$StatisticsFromJson(json);
   Map<String, dynamic> toJson() => _$StatisticsToJson(this);
 
   @override
-  String toString() => 'Statistics(period: $period, sessions: $totalSessions, avg: ${avgArrowScore.toStringAsFixed(1)})';
+  String toString() =>
+      'Statistics(period: $period, sessions: $totalSessions, avg: ${avgArrowScore.toStringAsFixed(1)})';
 }
 
 /// Trend direction enum

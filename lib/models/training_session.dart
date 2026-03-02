@@ -154,7 +154,9 @@ class TrainingSession {
     final mean = averageArrowScore;
 
     // Calculate standard deviation
-    final variance = scores.fold(0.0, (sum, score) => sum + math.pow(score - mean, 2)) / scores.length;
+    final variance =
+        scores.fold(0.0, (sum, score) => sum + math.pow(score - mean, 2)) /
+            scores.length;
     final stdDev = math.sqrt(variance);
 
     // Convert to percentage (lower std dev = higher consistency)
@@ -209,8 +211,10 @@ class TrainingSession {
     final positions = heatmapPositions;
     if (positions.isEmpty) return null;
 
-    final centerX = positions.fold(0.0, (sum, p) => sum + p.dx) / positions.length;
-    final centerY = positions.fold(0.0, (sum, p) => sum + p.dy) / positions.length;
+    final centerX =
+        positions.fold(0.0, (sum, p) => sum + p.dx) / positions.length;
+    final centerY =
+        positions.fold(0.0, (sum, p) => sum + p.dy) / positions.length;
     return Offset(centerX, centerY);
   }
 
@@ -223,13 +227,16 @@ class TrainingSession {
     final center = geometricCenter ?? const Offset(0, 0);
 
     // Calculate distances from center
-    final distances = positions.map((p) =>
-      math.sqrt(math.pow(p.dx - center.dx, 2) + math.pow(p.dy - center.dy, 2))
-    ).toList();
+    final distances = positions
+        .map((p) => math.sqrt(
+            math.pow(p.dx - center.dx, 2) + math.pow(p.dy - center.dy, 2)))
+        .toList();
 
     // Calculate standard deviation
     final mean = distances.reduce((a, b) => a + b) / distances.length;
-    final variance = distances.fold(0.0, (sum, d) => sum + math.pow(d - mean, 2)) / distances.length;
+    final variance =
+        distances.fold(0.0, (sum, d) => sum + math.pow(d - mean, 2)) /
+            distances.length;
     return math.sqrt(variance);
   }
 
@@ -332,6 +339,167 @@ class TrainingSession {
     return math.sqrt(center.dx * center.dx + center.dy * center.dy);
   }
 
+  /// Normalized end totals on a common arrows-per-end reference.
+  /// If end arrow counts differ, each end total is scaled by:
+  /// normalized = (effectiveEndTotal / endArrowCount) * arrowsPerEndRef
+  List<double> get normalizedEndTotals {
+    if (ends.isEmpty) return const [];
+    final arrowsPerEndRef = ends
+        .map((e) => math.max(e.maxArrows, e.arrows.length))
+        .fold(0, (prev, curr) => curr > prev ? curr : prev);
+    if (arrowsPerEndRef <= 0) return const [];
+
+    final totals = <double>[];
+    for (final end in ends) {
+      final arrows = end.arrows;
+      if (arrows.isEmpty) continue;
+      final effectiveTotal = arrows.fold<double>(
+        0,
+        (sum, arrow) => sum + arrow.pointValue,
+      );
+      final normalized = (effectiveTotal / arrows.length) * arrowsPerEndRef;
+      totals.add(normalized);
+    }
+    return totals;
+  }
+
+  /// Standard deviation of normalized end totals.
+  double get endVolatility {
+    final totals = normalizedEndTotals;
+    if (totals.length < 2) return 0.0;
+    final mean = totals.reduce((a, b) => a + b) / totals.length;
+    final variance = totals.fold<double>(
+          0,
+          (sum, score) => sum + math.pow(score - mean, 2),
+        ) /
+        totals.length;
+    return math.sqrt(variance);
+  }
+
+  /// End numbers identified as collapse ends.
+  List<int> get collapseEnds {
+    final totals = normalizedEndTotals;
+    if (totals.length < 3) return const [];
+    final mean = totals.reduce((a, b) => a + b) / totals.length;
+    final std = endVolatility;
+    final threshold = mean - 1.5 * std;
+    final collapsed = <int>[];
+    for (var i = 0; i < totals.length; i++) {
+      if (totals[i] < threshold) {
+        collapsed.add(i + 1);
+      }
+    }
+    return collapsed;
+  }
+
+  /// Collapse rate = collapsed ends / valid ends.
+  double get collapseRate {
+    final totals = normalizedEndTotals;
+    if (totals.isEmpty) return 0.0;
+    return collapseEnds.length / totals.length;
+  }
+
+  /// Recovery index after collapse ends.
+  /// Uses positive capped recovery deltas.
+  double get recoveryIndex {
+    final totals = normalizedEndTotals;
+    if (totals.length < 2) return 0.0;
+    final collapsed = collapseEnds;
+    if (collapsed.isEmpty) return 0.0;
+
+    final recoveries = <double>[];
+    for (final endNo in collapsed) {
+      final idx = endNo - 1;
+      final nextIdx = idx + 1;
+      if (nextIdx >= totals.length) continue;
+      final delta = totals[nextIdx] - totals[idx];
+      final capped = delta.clamp(0.0, 60.0).toDouble();
+      recoveries.add(capped);
+    }
+
+    if (recoveries.isEmpty) return 0.0;
+    return recoveries.reduce((a, b) => a + b) / recoveries.length;
+  }
+
+  /// Endurance hold rate = late-stage average / early-stage average * 100.
+  double get enduranceHoldRate {
+    if (firstThirdAverage <= 0) return 0.0;
+    return (lastThirdAverage / firstThirdAverage * 100).clamp(0.0, 200.0);
+  }
+
+  /// Per-end quality density: ratio of 9+ hits in each end.
+  List<double> get qualityDensityByEnd {
+    if (ends.isEmpty) return const [];
+    return ends.map((end) {
+      if (end.arrows.isEmpty) return 0.0;
+      final highValueCount =
+          end.arrows.where((arrow) => arrow.pointValue >= 9).length;
+      return highValueCount / end.arrows.length;
+    }).toList();
+  }
+
+  /// Average quality density across all ends.
+  double get qualityDensity {
+    final values = qualityDensityByEnd;
+    if (values.isEmpty) return 0.0;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  /// Clutch proxy based on end sequence:
+  /// (average of last arrow) - (average of first two arrows)
+  double get clutchProxy {
+    final deltas = <double>[];
+    for (final end in ends) {
+      if (end.arrows.length < 3) continue;
+      final firstTwoAvg =
+          (end.arrows[0].pointValue + end.arrows[1].pointValue) / 2;
+      final lastArrow = end.arrows.last.pointValue.toDouble();
+      deltas.add(lastArrow - firstTwoAvg);
+    }
+    if (deltas.isEmpty) return 0.0;
+    return deltas.reduce((a, b) => a + b) / deltas.length;
+  }
+
+  /// Bias distribution split by score band.
+  /// high: >=9, mid: 7-8, low: <=6
+  Map<String, Map<String, int>> get biasByScoreBand {
+    final result = {
+      'high': _emptyQuadrants(),
+      'mid': _emptyQuadrants(),
+      'low': _emptyQuadrants(),
+    };
+
+    for (final arrow in allArrows) {
+      final pos = arrow.position;
+      if (pos == null) continue;
+      final score = arrow.pointValue;
+      final band = score >= 9
+          ? 'high'
+          : score >= 7
+              ? 'mid'
+              : 'low';
+      final quadrant = _quadrantKey(pos);
+      final bandMap = result[band]!;
+      bandMap[quadrant] = (bandMap[quadrant] ?? 0) + 1;
+    }
+
+    return result;
+  }
+
+  Map<String, int> _emptyQuadrants() => {
+        'top-left': 0,
+        'top-right': 0,
+        'bottom-left': 0,
+        'bottom-right': 0,
+      };
+
+  String _quadrantKey(Offset pos) {
+    if (pos.dx < 0 && pos.dy < 0) return 'top-left';
+    if (pos.dx >= 0 && pos.dy < 0) return 'top-right';
+    if (pos.dx < 0 && pos.dy >= 0) return 'bottom-left';
+    return 'bottom-right';
+  }
+
   // ======================================================================
 
   /// Add an end to the session
@@ -382,11 +550,13 @@ class TrainingSession {
   }
 
   // JSON serialization
-  factory TrainingSession.fromJson(Map<String, dynamic> json) => _$TrainingSessionFromJson(json);
+  factory TrainingSession.fromJson(Map<String, dynamic> json) =>
+      _$TrainingSessionFromJson(json);
   Map<String, dynamic> toJson() => _$TrainingSessionToJson(this);
 
   @override
-  String toString() => 'TrainingSession($scoreDisplay, ${ends.length} ends, ${equipment.bowTypeDisplay})';
+  String toString() =>
+      'TrainingSession($scoreDisplay, ${ends.length} ends, ${equipment.bowTypeDisplay})';
 
   @override
   bool operator ==(Object other) =>

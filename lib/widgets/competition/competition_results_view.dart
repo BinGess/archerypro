@@ -1,6 +1,14 @@
 import 'dart:math' as math;
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/competition_settings.dart';
 import '../../providers/competition_provider.dart';
@@ -86,12 +94,21 @@ class CompetitionResultsView extends StatelessWidget {
   double get trendDelta => secondHalfAvg - firstHalfAvg;
 
   double get averageShootingSeconds {
-    final valid = endResults
-        .map((e) => e.shootingTime.inSeconds)
-        .where((s) => s > 0)
+    final validMs = endResults
+        .map((e) => e.shootingTime.inMilliseconds)
+        .where((ms) => ms > 0)
         .toList();
-    if (valid.isEmpty) return 0;
-    return valid.reduce((a, b) => a + b) / valid.length;
+    if (validMs.isEmpty) return 0;
+    final avgMs = validMs.reduce((a, b) => a + b) / validMs.length;
+    return avgMs / 1000.0;
+  }
+
+  double get totalShootingSeconds {
+    final totalMs = endResults
+        .map((e) => e.shootingTime.inMilliseconds)
+        .where((ms) => ms > 0)
+        .fold<int>(0, (sum, ms) => sum + ms);
+    return totalMs / 1000.0;
   }
 
   @override
@@ -121,32 +138,114 @@ class CompetitionResultsView extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: onDone,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 56,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showPosterSheet(context),
+                        icon: const Icon(Icons.share_outlined, size: 18),
+                        label: Text(_t(context, zh: '分享', en: 'Share')),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textSlate900,
+                          side: const BorderSide(color: AppColors.borderLight),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  child: Text(
-                    doneLabel ?? l10n.competitionDone,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: onDone,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          doneLabel ?? l10n.competitionDone,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showPosterSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.backgroundLight,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textSlate300,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    children: [
+                      _ResultPosterSection(
+                        totalScore: totalScore,
+                        maxScore: maxScore,
+                        scoreRate: scoreRate,
+                        averagePerArrow: averagePerArrow,
+                        averagePerEnd: averagePerEnd,
+                        goldRate: goldRate,
+                        consistencyIndex: consistencyIndex,
+                        endCount: endResults.length,
+                        totalArrows: _shotArrows,
+                        bestEndNumber: bestEnd?.endNumber,
+                        bestEndScore: bestEnd?.totalScore,
+                        worstEndNumber: worstEnd?.endNumber,
+                        worstEndScore: worstEnd?.totalScore,
+                        trendDelta: trendDelta,
+                        endScores: List<int>.from(_endScores),
+                        appName: AppLocalizations.of(sheetContext).appName,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -186,7 +285,7 @@ class CompetitionResultsView extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
+                  letterSpacing: 0.25,
                 ),
               ),
             ],
@@ -362,6 +461,13 @@ class CompetitionResultsView extends StatelessWidget {
                         context,
                         zh: '${averageShootingSeconds.toStringAsFixed(0)}秒',
                         en: '${averageShootingSeconds.toStringAsFixed(0)}s',
+                      ),
+                subtitle: totalShootingSeconds <= 0
+                    ? null
+                    : _t(
+                        context,
+                        zh: '总计 ${totalShootingSeconds.toStringAsFixed(0)}秒',
+                        en: 'Total ${totalShootingSeconds.toStringAsFixed(0)}s',
                       ),
                 icon: Icons.timer_outlined,
                 color: const Color(0xFF7C3AED),
@@ -789,6 +895,659 @@ class CompetitionResultsView extends StatelessWidget {
     if (score >= 5) return AppColors.targetBlue;
     if (score >= 3) return AppColors.targetBlack;
     return AppColors.textSlate400;
+  }
+}
+
+class _ResultPosterSection extends StatefulWidget {
+  final int totalScore;
+  final int maxScore;
+  final double scoreRate;
+  final double averagePerArrow;
+  final double averagePerEnd;
+  final double goldRate;
+  final double consistencyIndex;
+  final int endCount;
+  final int totalArrows;
+  final int? bestEndNumber;
+  final int? bestEndScore;
+  final int? worstEndNumber;
+  final int? worstEndScore;
+  final double trendDelta;
+  final List<int> endScores;
+  final String appName;
+
+  const _ResultPosterSection({
+    required this.totalScore,
+    required this.maxScore,
+    required this.scoreRate,
+    required this.averagePerArrow,
+    required this.averagePerEnd,
+    required this.goldRate,
+    required this.consistencyIndex,
+    required this.endCount,
+    required this.totalArrows,
+    required this.bestEndNumber,
+    required this.bestEndScore,
+    required this.worstEndNumber,
+    required this.worstEndScore,
+    required this.trendDelta,
+    required this.endScores,
+    required this.appName,
+  });
+
+  @override
+  State<_ResultPosterSection> createState() => _ResultPosterSectionState();
+}
+
+class _ResultPosterSectionState extends State<_ResultPosterSection> {
+  final GlobalKey _posterKey = GlobalKey();
+  bool _isExporting = false;
+  String? _statusText;
+  bool _statusError = false;
+
+  String _t({required String zh, required String en}) {
+    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  }
+
+  void _setStatus(String text, {bool isError = false}) {
+    if (!mounted) return;
+    setState(() {
+      _statusText = text;
+      _statusError = isError;
+    });
+  }
+
+  bool _isSaveResultSuccess(dynamic result) {
+    if (result == null) return false;
+    if (result is bool) return result;
+    if (result is num) return result > 0;
+    if (result is String) return result.isNotEmpty;
+    if (result is Map) {
+      final dynamic ok = result['isSuccess'] ?? result['success'];
+      if (ok is bool) return ok;
+      final dynamic filePath = result['filePath'] ?? result['savedFilePath'];
+      if (filePath is String && filePath.isNotEmpty) return true;
+      final dynamic id = result['id'] ?? result['ID'];
+      if (id is num) return id > 0;
+    }
+    return false;
+  }
+
+  Future<Uint8List> _capturePosterBytes() async {
+    final pixelRatio =
+        (MediaQuery.of(context).devicePixelRatio * 2).clamp(2.0, 3.0);
+    RenderRepaintBoundary? boundary;
+    for (var i = 0; i < 8; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      final renderObject = _posterKey.currentContext?.findRenderObject();
+      if (renderObject is RenderRepaintBoundary &&
+          !renderObject.debugNeedsPaint) {
+        boundary = renderObject;
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    }
+
+    if (boundary == null) {
+      throw StateError('Poster not ready');
+    }
+
+    final image = await boundary.toImage(pixelRatio: pixelRatio);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    if (byteData == null) {
+      throw StateError('Failed to encode poster');
+    }
+    return byteData.buffer.asUint8List();
+  }
+
+  Future<File> _persistToTempFile(Uint8List bytes) async {
+    final directory = await getTemporaryDirectory();
+    final path =
+        '${directory.path}/archery_poster_${DateTime.now().millisecondsSinceEpoch}.png';
+    final file = File(path);
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
+  }
+
+  Future<bool> _ensureSavePermission() async {
+    if (!Platform.isIOS && !Platform.isAndroid) return true;
+
+    final permission =
+        Platform.isIOS ? Permission.photosAddOnly : Permission.photos;
+    var status = await permission.status;
+    if (status.isGranted || status.isLimited) return true;
+
+    status = await permission.request();
+    if (status.isGranted || status.isLimited) return true;
+
+    if (status.isPermanentlyDenied) {
+      _setStatus(
+        _t(
+          zh: '照片权限被永久拒绝。请到系统设置 > 隐私与安全性 > 照片，允许本应用访问后重试。',
+          en: 'Photo permission is permanently denied. Please enable it in system settings and try again.',
+        ),
+        isError: true,
+      );
+      return false;
+    }
+
+    _setStatus(
+      _t(
+        zh: '未获得照片权限，无法保存海报。',
+        en: 'Photo permission denied, unable to save poster.',
+      ),
+      isError: true,
+    );
+    return false;
+  }
+
+  Future<void> _savePoster() async {
+    if (_isExporting) return;
+    setState(() {
+      _isExporting = true;
+      _statusText = null;
+    });
+    try {
+      final granted = await _ensureSavePermission();
+      if (!granted) return;
+
+      final bytes = await _capturePosterBytes();
+      var result = await ImageGallerySaver.saveImage(
+        bytes,
+        quality: 100,
+        name: 'archery_poster_${DateTime.now().millisecondsSinceEpoch}',
+        isReturnImagePathOfIOS: false,
+      );
+      if (!_isSaveResultSuccess(result)) {
+        final file = await _persistToTempFile(bytes);
+        result = await ImageGallerySaver.saveFile(
+          file.path,
+          name: 'archery_poster_${DateTime.now().millisecondsSinceEpoch}',
+          isReturnPathOfIOS: false,
+        );
+      }
+      if (!_isSaveResultSuccess(result)) {
+        throw StateError('Gallery save failed');
+      }
+      _setStatus(
+        _t(zh: '海报已保存到相册', en: 'Poster saved to gallery'),
+      );
+    } catch (e) {
+      _setStatus(
+        _t(
+          zh: '保存失败。请检查系统照片权限后重试。',
+          en: 'Save failed. Please check photo permission and try again.',
+        ),
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  Future<void> _sharePoster() async {
+    if (_isExporting) return;
+    final box = context.findRenderObject() as RenderBox?;
+    setState(() {
+      _isExporting = true;
+      _statusText = null;
+    });
+    try {
+      final bytes = await _capturePosterBytes();
+      final posterFile = await _persistToTempFile(bytes);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(posterFile.path)],
+          text: _t(
+            zh: '我在${widget.appName}打出了 ${widget.totalScore}/${widget.maxScore}，来挑战我！',
+            en: 'I scored ${widget.totalScore}/${widget.maxScore} in ${widget.appName}. Come challenge me!',
+          ),
+          sharePositionOrigin:
+              box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+      _setStatus(
+        _t(zh: '海报已打开分享面板', en: 'Share panel opened'),
+      );
+    } catch (e) {
+      _setStatus(
+        _t(zh: '分享失败：$e', en: 'Failed to share poster: $e'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final exportLabel = _t(zh: '正在生成海报...', en: 'Preparing poster...');
+    final now = DateTime.now();
+    final dateString =
+        '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(zh: '成绩海报', en: 'Score Poster'),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _t(
+              zh: '一键保存或分享，让朋友来挑战你的成绩',
+              en: 'Save or share and challenge your friends',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSlate500,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          RepaintBoundary(
+            key: _posterKey,
+            child: AspectRatio(
+              aspectRatio: 3 / 4,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF0B1A4A),
+                      Color(0xFF10398E),
+                      Color(0xFF0EA5A4)
+                    ],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.my_location_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.appName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          dateString,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      _t(zh: '本场总分', en: 'TOTAL SCORE'),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${widget.totalScore}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 68,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            '/ ${widget.maxScore}',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _posterMetric(
+                          _t(zh: '得分率', en: 'Rate'),
+                          '${widget.scoreRate.toStringAsFixed(1)}%',
+                        ),
+                        _posterMetric(
+                          _t(zh: '箭均分', en: 'Avg'),
+                          widget.averagePerArrow.toStringAsFixed(2),
+                        ),
+                        _posterMetric(
+                          _t(zh: '金区命中', en: 'Gold'),
+                          '${widget.goldRate.toStringAsFixed(1)}%',
+                        ),
+                        _posterMetric(
+                          _t(zh: '组均分', en: 'Avg/End'),
+                          widget.averagePerEnd.toStringAsFixed(1),
+                        ),
+                        _posterMetric(
+                          _t(zh: '稳定性', en: 'Consistency'),
+                          '${widget.consistencyIndex.toStringAsFixed(1)}%',
+                        ),
+                        _posterMetric(
+                          _t(zh: '总箭数', en: 'Arrows'),
+                          '${widget.totalArrows}',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _t(zh: '最佳组', en: 'Best End'),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            widget.bestEndScore == null
+                                ? '--'
+                                : _t(
+                                    zh: '第${widget.bestEndNumber}组 ${widget.bestEndScore}分',
+                                    en: 'End ${widget.bestEndNumber} ${widget.bestEndScore}',
+                                  ),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.14),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _t(zh: '后程趋势', en: 'Trend'),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            widget.trendDelta >= 0
+                                ? _t(
+                                    zh: '+${widget.trendDelta.toStringAsFixed(1)} 分',
+                                    en: '+${widget.trendDelta.toStringAsFixed(1)}',
+                                  )
+                                : _t(
+                                    zh: '${widget.trendDelta.toStringAsFixed(1)} 分',
+                                    en: widget.trendDelta.toStringAsFixed(1),
+                                  ),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (widget.endScores.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: List.generate(
+                            widget.endScores.length > 8
+                                ? 8
+                                : widget.endScores.length, (i) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _t(
+                                zh: '${i + 1}组:${widget.endScores[i]}',
+                                en: 'E${i + 1}:${widget.endScores[i]}',
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    const Spacer(),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.24)),
+                      ),
+                      child: Text(
+                        _t(
+                          zh: '我完成了 ${widget.endCount} 组射箭训练，来 ${widget.appName} 超越我！',
+                          en: 'Finished ${widget.endCount} ends. Beat me in ${widget.appName}!',
+                        ),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isExporting ? null : _savePoster,
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: Text(_t(zh: '保存海报', en: 'Save Poster')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSlate900,
+                    side: const BorderSide(color: AppColors.borderLight),
+                    minimumSize: const Size(0, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isExporting ? null : _sharePoster,
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: Text(_t(zh: '分享海报', en: 'Share Poster')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_statusText != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: _statusError
+                    ? Colors.red.withValues(alpha: 0.08)
+                    : Colors.green.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _statusError
+                      ? Colors.red.withValues(alpha: 0.22)
+                      : Colors.green.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Text(
+                _statusText!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _statusError ? Colors.red.shade700 : Colors.green,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          if (_isExporting) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  exportLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSlate500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _posterMetric(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label ',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -9,8 +9,11 @@ import '../models/equipment.dart';
 import '../models/training_session.dart';
 import '../models/end.dart';
 import '../models/arrow.dart';
+import '../models/competition_settings.dart';
 import '../widgets/target_face_painter.dart';
+import '../widgets/competition/competition_results_view.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/competition_provider.dart';
 import '../utils/constants.dart';
 
 class ScoringScreen extends ConsumerStatefulWidget {
@@ -30,10 +33,11 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
   // List of temporary ripple effects
   final List<RippleModel> _ripples = [];
-
-  // Magnifier state — tracks the finger position while pressing on the target
-  Offset? _magnifierPosition;
-  bool _showMagnifier = false;
+  final ScrollController _sessionListController = ScrollController();
+  final Map<String, GlobalKey> _scoreFieldKeys = <String, GlobalKey>{};
+  int _lastFocusedEndIndex = -1;
+  int _lastFocusedArrowIndex = -1;
+  bool _lastIsTargetView = false;
 
   @override
   void initState() {
@@ -44,6 +48,78 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       if (!scoringState.hasActiveSession) {
         _startNewSession();
       }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionListController.dispose();
+    super.dispose();
+  }
+
+  GlobalKey _getScoreFieldKey(int endIndex, int arrowIndex) {
+    final id = '$endIndex-$arrowIndex';
+    return _scoreFieldKeys.putIfAbsent(id, GlobalKey.new);
+  }
+
+  Future<void> _scrollListNearFocusedEnd(int focusedEndIndex) async {
+    if (!_sessionListController.hasClients) return;
+
+    final currentState = ref.read(scoringProvider);
+    final endsLength = currentState.currentSession?.ends.length ?? 0;
+    final totalRows = max<int>(currentState.maxEnds, endsLength) + 1;
+    if (totalRows <= 1) return;
+
+    final fraction = (focusedEndIndex / (totalRows - 1)).clamp(0.0, 1.0);
+    final position = _sessionListController.position;
+    final targetOffset = (position.maxScrollExtent * fraction)
+        .clamp(0.0, position.maxScrollExtent);
+
+    await _sessionListController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _ensureFocusedBoxVisible(dynamic scoringState) {
+    if (scoringState.isTargetView || !mounted) return;
+
+    final targetKey = _getScoreFieldKey(
+      scoringState.focusedEndIndex,
+      scoringState.focusedArrowIndex,
+    );
+    final focusedEndIndex = scoringState.focusedEndIndex as int;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final initialContext = targetKey.currentContext;
+      if (initialContext != null) {
+        Scrollable.ensureVisible(
+          initialContext,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: 0.2,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        );
+        return;
+      }
+
+      _scrollListNearFocusedEnd(focusedEndIndex).then((_) {
+        if (!mounted) return;
+        if (_sessionListController.hasClients) {
+          final currentState = ref.read(scoringProvider);
+          final isNearTail = focusedEndIndex >= currentState.maxEnds - 2;
+          if (isNearTail) {
+            final maxOffset = _sessionListController.position.maxScrollExtent;
+            _sessionListController.animateTo(
+              maxOffset,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        }
+      });
     });
   }
 
@@ -95,6 +171,16 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
     if (!scoringState.hasActiveSession) {
       return _buildEmptyState();
+    }
+
+    final focusChanged = _lastFocusedEndIndex != scoringState.focusedEndIndex ||
+        _lastFocusedArrowIndex != scoringState.focusedArrowIndex ||
+        _lastIsTargetView != scoringState.isTargetView;
+    if (focusChanged) {
+      _ensureFocusedBoxVisible(scoringState);
+      _lastFocusedEndIndex = scoringState.focusedEndIndex;
+      _lastFocusedArrowIndex = scoringState.focusedArrowIndex;
+      _lastIsTargetView = scoringState.isTargetView;
     }
 
     return Scaffold(
@@ -237,7 +323,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   Widget _buildSessionList(dynamic scoringState) {
     final ends = scoringState.currentSession?.ends ?? [];
     final maxEnds = scoringState.maxEnds;
-    final currentEndNum = scoringState.currentEndNumber;
 
     // We want to render a list of cards, one for each end.
     // We should render up to maxEnds (or more if they added extra).
@@ -247,6 +332,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
     final displayCount = max<int>(maxEnds, ends.length);
 
     return ListView.builder(
+      controller: _sessionListController,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: displayCount + 1, // +1 for "One More End" button
       itemBuilder: (context, index) {
@@ -344,6 +430,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
 
               final isFocused = (endIndex == scoringState.focusedEndIndex) &&
                   (arrowIndex == scoringState.focusedArrowIndex);
+              final boxKey = _getScoreFieldKey(endIndex, arrowIndex);
 
               return Expanded(
                 child: GestureDetector(
@@ -356,6 +443,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                     }
                   },
                   child: Container(
+                    key: boxKey,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     height: 48,
                     alignment: Alignment.center,
@@ -433,35 +521,13 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           Expanded(
             child: Center(
               child: Listener(
-                onPointerDown: (event) {
-                  final clamped = _clampToTargetCanvas(
-                      event.localPosition, targetCanvasSize);
-                  setState(() {
-                    _magnifierPosition = clamped;
-                    _showMagnifier = true;
-                  });
-                },
-                onPointerMove: (event) {
-                  final clamped = _clampToTargetCanvas(
-                      event.localPosition, targetCanvasSize);
-                  setState(() {
-                    _magnifierPosition = clamped;
-                  });
-                },
                 onPointerUp: (event) {
-                  // Prefer the tracked press/move coordinate to avoid lift-off jitter.
-                  final rawTapPosition =
-                      _magnifierPosition ?? event.localPosition;
-                  final tapPosition =
-                      _clampToTargetCanvas(rawTapPosition, targetCanvasSize);
+                  final tapPosition = _clampToTargetCanvas(
+                      event.localPosition, targetCanvasSize);
                   _handleTargetTap(
                     tapPosition,
                     targetRadius: targetRadius,
                   );
-                  setState(() {
-                    _showMagnifier = false;
-                    _magnifierPosition = null;
-                  });
                 },
                 child: SizedBox(
                   width: targetCanvasSize,
@@ -498,21 +564,10 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                         }).toList(),
 
                       // Ripple effects
-                      ..._ripples
-                          .map((ripple) => RippleWidget(
-                                key: ValueKey(ripple.id),
-                                position: ripple.position,
-                              ))
-                          ,
-
-                      // Magnifier lens shown while pressing
-                      if (_showMagnifier && _magnifierPosition != null)
-                        _buildMagnifier(
-                          _magnifierPosition!,
-                          isTripleFace: isTripleFace,
-                          isCompoundIndoor: isCompoundIndoor,
-                          targetCanvasSize: targetCanvasSize,
-                        ),
+                      ..._ripples.map((ripple) => RippleWidget(
+                            key: ValueKey(ripple.id),
+                            position: ripple.position,
+                          )),
                     ],
                   ),
                 ),
@@ -582,72 +637,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
                 fontSize: 7,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Magnifier lens — shows a 2× zoomed view of the target centered on
-  /// [fingerPos], positioned 60 px above the finger.
-  Widget _buildMagnifier(
-    Offset fingerPos, {
-    required bool isTripleFace,
-    required bool isCompoundIndoor,
-    required double targetCanvasSize,
-  }) {
-    const double magnifierSize = 120.0;
-    const double halfSize = magnifierSize / 2;
-    const double scale = 2.0;
-
-    // Translate so that fingerPos on the target appears at (60,60)
-    // in the magnifier (the clipped circle center).
-    final double tx = halfSize - scale * fingerPos.dx;
-    final double ty = halfSize - scale * fingerPos.dy;
-
-    // Keep magnifier inside the target stack.
-    final double topOffset = (fingerPos.dy - magnifierSize - 50)
-        .clamp(0.0, targetCanvasSize - magnifierSize);
-    final double leftOffset =
-        (fingerPos.dx - halfSize).clamp(0.0, targetCanvasSize - magnifierSize);
-
-    return Positioned(
-      left: leftOffset,
-      top: topOffset,
-      child: IgnorePointer(
-        child: Container(
-          width: magnifierSize,
-          height: magnifierSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2.5),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.30),
-                  blurRadius: 10,
-                  spreadRadius: 1)
-            ],
-          ),
-          child: ClipOval(
-            child: Transform(
-              alignment: Alignment.topLeft,
-              transform: Matrix4.identity()
-                ..translate(tx, ty)
-                ..scale(scale),
-              child: OverflowBox(
-                minWidth: targetCanvasSize,
-                maxWidth: targetCanvasSize,
-                minHeight: targetCanvasSize,
-                maxHeight: targetCanvasSize,
-                child: CustomPaint(
-                  size: Size(targetCanvasSize, targetCanvasSize),
-                  painter: TargetFacePainter(
-                    isTripleFace: isTripleFace,
-                    isCompoundIndoor: isCompoundIndoor,
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
       ),
@@ -803,7 +792,6 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
   }
 
   Future<void> _addScore(int score) async {
-    final l10n = AppLocalizations.of(context);
     final scoringState = ref.read(scoringProvider);
     if (!scoringState.hasActiveSession) return;
 
@@ -817,49 +805,11 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
       return;
     }
 
-    // Check if we are about to fill the last arrow of the current end
-    // This logic relies on the current focus state BEFORE adding the arrow
-    final isLastArrowOfEnd =
-        scoringState.focusedArrowIndex == (scoringState.arrowsPerEnd - 1);
-    final currentEndNumForPopup = scoringState.focusedEndIndex + 1;
-
     // Add arrow and check if session is complete
     final isComplete = await ref.read(scoringProvider.notifier).addArrow(score);
 
-    // End Completion Notification
-    // Show only if we just completed an end (isLastArrowOfEnd was true) AND session is not complete yet
-    // Note: addArrow returns true only if the ENTIRE SESSION is complete (all ends done)
-    if (!isComplete && isLastArrowOfEnd) {
-      // Re-read state to get the updated total score
-      final updatedState = ref.read(scoringProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.endCompletedLabel(currentEndNumForPopup.toString()),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(l10n.totalScoreLabel(updatedState.totalScore.toString()),
-                      style: const TextStyle(fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 1), // Shortened duration
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-
     if (isComplete && mounted) {
+      final l10n = AppLocalizations.of(context);
       // Refresh session list
       await ref.read(sessionProvider.notifier).refresh();
 
@@ -974,28 +924,108 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         .addArrow(score, position: normalizedPosition);
   }
 
+  List<CompetitionEndResult> _buildEndResultsForSummary(
+      TrainingSession session) {
+    final sortedEnds = [...session.ends]
+      ..sort((a, b) => a.endNumber.compareTo(b.endNumber));
+    return sortedEnds
+        .map(
+          (end) => CompetitionEndResult(
+            endNumber: end.endNumber,
+            arrowScores: end.arrows.map((arrow) => arrow.score).toList(),
+            shootingTime: _estimateEndShootingTime(end),
+          ),
+        )
+        .toList();
+  }
+
+  Duration _estimateEndShootingTime(End end) {
+    // Preferred: arrow timestamps reflect real shot cadence.
+    if (end.arrows.length >= 2) {
+      final sortedArrows = [...end.arrows]
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      final duration = sortedArrows.last.timestamp
+          .difference(sortedArrows.first.timestamp);
+      if (duration.inMilliseconds > 0) {
+        return duration;
+      }
+    }
+
+    // Fallback: end lifecycle timestamps.
+    if (end.completedAt != null) {
+      final duration = end.completedAt!.difference(end.createdAt);
+      if (duration.inMilliseconds > 0) {
+        return duration;
+      }
+    }
+
+    return Duration.zero;
+  }
+
+  CompetitionSettings _buildSummarySettings(
+    dynamic scoringState,
+    int endCount,
+  ) {
+    return CompetitionSettings(
+      arrowsPerEnd: scoringState.arrowsPerEnd,
+      totalEnds: endCount,
+      useTargetScoring: scoringState.isTargetView,
+      soundEnabled: false,
+    );
+  }
+
   Future<void> _saveSession() async {
     final l10n = AppLocalizations.of(context);
-    final isEditing = ref.read(scoringProvider).isEditing;
+    final savingState = ref.read(scoringProvider);
+    final isEditing = savingState.isEditing;
     await ref.read(scoringProvider.notifier).saveSession();
     await ref.read(sessionProvider.notifier).refresh();
+    final updatedState = ref.read(scoringProvider);
+    final savedSession = updatedState.currentSession;
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.sessionSaved),
-          backgroundColor: Colors.green,
-        ),
-      );
-      // Exit after manual save
+      if (savedSession == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(updatedState.error ?? l10n.somethingWentWrong),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       if (isEditing) {
         if (Navigator.canPop(context)) {
           Navigator.of(context).pop();
         }
       } else {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        final endResults = _buildEndResultsForSummary(savedSession);
+        final summarySettings = _buildSummarySettings(
+          updatedState,
+          endResults.isEmpty ? 1 : endResults.length,
+        );
+
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              backgroundColor: AppColors.backgroundLight,
+              body: CompetitionResultsView(
+                endResults: endResults,
+                settings: summarySettings,
+                heroTitle: l10n.sessionCompleted,
+                onDone: () {
+                  ref.read(scoringProvider.notifier).resetSession();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+            ),
+          ),
+        );
       }
-      ref.read(scoringProvider.notifier).resetSession();
+
+      if (isEditing) {
+        ref.read(scoringProvider.notifier).resetSession();
+      }
     }
   }
 

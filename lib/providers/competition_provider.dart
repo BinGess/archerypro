@@ -186,11 +186,22 @@ class CompetitionNotifier extends StateNotifier<CompetitionState> {
     WakelockPlus.disable();
   }
 
-  /// Skip remaining time -> scoring
+  /// Skip handler:
+  /// - preparation -> shooting (only skip preparation countdown)
+  /// - shooting/warning/timesUp -> scoring
   void skipToScoring() {
-    _cancelTimer();
-    if (state.settings.soundEnabled) _audioService.playStopWhistles();
-    _transitionToScoring();
+    if (state.phase == CompetitionPhase.preparation) {
+      _onPreparationComplete();
+      return;
+    }
+
+    if (state.phase == CompetitionPhase.shooting ||
+        state.phase == CompetitionPhase.warning ||
+        state.phase == CompetitionPhase.timesUp) {
+      _cancelTimer();
+      if (state.settings.soundEnabled) _audioService.playStopWhistles();
+      _transitionToScoring();
+    }
   }
 
   // === Scoring ===

@@ -8,6 +8,8 @@
 
 import 'package:audioplayers_web/audioplayers_web.dart';
 import 'package:package_info_plus/src/package_info_plus_web.dart';
+import 'package:permission_handler_html/permission_handler_html.dart';
+import 'package:share_plus/src/share_plus_web.dart';
 import 'package:shared_preferences_web/shared_preferences_web.dart';
 import 'package:url_launcher_web/url_launcher_web.dart';
 import 'package:wakelock_plus/src/wakelock_plus_web_plugin.dart';
@@ -17,6 +19,8 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   final Registrar registrar = pluginRegistrar ?? webPluginRegistrar;
   AudioplayersPlugin.registerWith(registrar);
   PackageInfoPlusWebPlugin.registerWith(registrar);
+  WebPermissionHandler.registerWith(registrar);
+  SharePlusWebPlugin.registerWith(registrar);
   SharedPreferencesPlugin.registerWith(registrar);
   UrlLauncherPlugin.registerWith(registrar);
   WakelockPlusWebPlugin.registerWith(registrar);

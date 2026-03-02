@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/ai_coach_provider.dart';
+import '../models/statistics.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 
@@ -55,11 +56,18 @@ class AnalysisScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 // Core Metrics Cards
+                _buildCompetitionReadinessCard(context, stats, l10n),
+                const SizedBox(height: 16),
+                _buildPressureAndResilienceCard(context, stats, l10n),
+                const SizedBox(height: 16),
                 _buildCoreMetricsSection(stats, l10n),
                 const SizedBox(height: 20),
 
                 // Growth Trend Mixed Chart
                 _buildGrowthTrendCard(stats, l10n),
+                const SizedBox(height: 20),
+
+                _buildBiasByBandCard(context, stats, l10n),
                 const SizedBox(height: 20),
 
                 // Stability Radar Chart
@@ -121,7 +129,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build core metrics cards (总箭数, 平均环数, 10环率)
-  Widget _buildCoreMetricsSection(dynamic stats, AppLocalizations l10n) {
+  Widget _buildCoreMetricsSection(Statistics stats, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
@@ -208,15 +216,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build growth trend chart card
-  Widget _buildGrowthTrendCard(dynamic stats, AppLocalizations l10n) {
-    // Prepare volume data from score trend data
-    final volumeData = <DateTime, int>{};
-    for (final date in stats.scoreTrendData.keys) {
-      // This is a simplification - ideally we'd track actual arrow counts per day
-      // For now, estimate based on sessions
-      volumeData[date] = 30; // Placeholder
-    }
-
+  Widget _buildGrowthTrendCard(Statistics stats, AppLocalizations l10n) {
     return ArcheryCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,7 +254,7 @@ class AnalysisScreen extends ConsumerWidget {
             RepaintBoundary(
               child: GrowthMixedChart(
                 scoreTrendData: stats.scoreTrendData,
-                volumeData: volumeData,
+                volumeData: stats.dailyArrowVolumeData,
                 height: 280,
               ),
             )
@@ -274,9 +274,10 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build stability radar chart card with comparison
-  Widget _buildStabilityRadarCard(dynamic stats, WidgetRef ref,
+  Widget _buildStabilityRadarCard(Statistics stats, WidgetRef ref,
       String selectedPeriod, AppLocalizations l10n) {
-    if (stats.radarMetrics == null) {
+    final radarMetrics = stats.radarMetrics;
+    if (radarMetrics == null) {
       return ArcheryCard(
         child: Column(
           children: [
@@ -337,7 +338,7 @@ class AnalysisScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           RepaintBoundary(
             child: StabilityRadarChart(
-              currentMetrics: stats.radarMetrics,
+              currentMetrics: radarMetrics,
               previousMetrics: null, // TODO: Calculate previous period metrics
               size: 260,
             ),
@@ -348,7 +349,7 @@ class AnalysisScreen extends ConsumerWidget {
   }
 
   /// Build quadrant radar chart card
-  Widget _buildQuadrantRadarCard(dynamic stats, AppLocalizations l10n) {
+  Widget _buildQuadrantRadarCard(Statistics stats, AppLocalizations l10n) {
     final quadrantDist = stats.quadrantDistribution;
     final total = quadrantDist.values.fold(0, (sum, count) => sum + count);
 
@@ -411,6 +412,384 @@ class AnalysisScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildCompetitionReadinessCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    final profileName = stats.competitionProfile
+            ?.displayName(Localizations.localeOf(context).languageCode) ??
+        _t(context, zh: '通用资格赛投影', en: 'Generic qualification');
+    final projectionLabel = stats.competitionProfile?.projectionArrows == 60
+        ? _t(context, zh: '投影60箭', en: 'Projected 60')
+        : _t(context, zh: '投影72箭', en: 'Projected 72');
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.emoji_events_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _t(context, zh: '赛事准备度', en: 'Competition Readiness'),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                    Text(
+                      profileName,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${stats.qualificationTier} Tier',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textSlate900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: projectionLabel,
+                  value: stats.projectedQualificationScore.toStringAsFixed(1),
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '高价值命中(9+)', en: 'High value (9+)'),
+                  value: '${stats.highValueRate.toStringAsFixed(1)}%',
+                  color: AppColors.accentGold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: 'X环率', en: 'X rate'),
+                  value: '${stats.xRate.toStringAsFixed(1)}%',
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '脱靶率', en: 'Miss rate'),
+                  value: '${stats.missRate.toStringAsFixed(1)}%',
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPressureAndResilienceCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(context, zh: '波动与抗压', en: 'Volatility & Resilience'),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '组间波动(σ)', en: 'End volatility'),
+                  value: stats.endVolatility.toStringAsFixed(2),
+                  color: AppColors.accentRust,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '崩盘组率', en: 'Collapse rate'),
+                  value: '${(stats.collapseRate * 100).toStringAsFixed(1)}%',
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '恢复指数', en: 'Recovery index'),
+                  value: stats.recoveryIndex.toStringAsFixed(2),
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '后程保持', en: 'Endurance hold'),
+                  value: '${stats.enduranceHoldRate.toStringAsFixed(1)}%',
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBiasByBandCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    final bands = stats.biasByScoreBand;
+    if (bands.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final highSummary = _summarizeBand(context, bands['high'] ?? const {});
+    final midSummary = _summarizeBand(context, bands['mid'] ?? const {});
+    final lowSummary = _summarizeBand(context, bands['low'] ?? const {});
+
+    final oppositeBiasWarning = highSummary.directionKey.isNotEmpty &&
+        lowSummary.directionKey.isNotEmpty &&
+        _isOppositeDirection(highSummary.directionKey, lowSummary.directionKey);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(context, zh: '分层偏差分析', en: 'Bias by Score Band'),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _bandRow(
+            context,
+            label: _t(context, zh: '高分层 (9+)', en: 'High (9+)'),
+            summary: highSummary,
+          ),
+          const SizedBox(height: 8),
+          _bandRow(
+            context,
+            label: _t(context, zh: '中分层 (7-8)', en: 'Mid (7-8)'),
+            summary: midSummary,
+          ),
+          const SizedBox(height: 8),
+          _bandRow(
+            context,
+            label: _t(context, zh: '低分层 (<=6)', en: 'Low (<=6)'),
+            summary: lowSummary,
+          ),
+          if (oppositeBiasWarning) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.warningSubtle,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _t(
+                  context,
+                  zh: '高分层与低分层偏差方向相反，优先排查释放一致性与动作稳定性。',
+                  en: 'High and low bands bias in opposite directions. Check release consistency first.',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSlate700,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _bandRow(
+    BuildContext context, {
+    required String label,
+    required _BandSummary summary,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            summary.total == 0
+                ? _t(context, zh: '样本不足', en: 'Not enough samples')
+                : '${summary.directionText} ${summary.percentage.toStringAsFixed(1)}% (${summary.count}/${summary.total})',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  _BandSummary _summarizeBand(
+    BuildContext context,
+    Map<String, int> quadrantMap,
+  ) {
+    if (quadrantMap.isEmpty) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+    }
+    final total = quadrantMap.values.fold<int>(0, (sum, c) => sum + c);
+    if (total == 0) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+    }
+
+    final dominant = quadrantMap.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    );
+    final percentage = dominant.value / total * 100;
+    return _BandSummary(
+      directionKey: dominant.key,
+      directionText: _quadrantName(dominant.key, AppLocalizations.of(context)),
+      count: dominant.value,
+      total: total,
+      percentage: percentage,
+    );
+  }
+
+  bool _isOppositeDirection(String a, String b) {
+    const oppositePairs = {
+      'top-left:bottom-right',
+      'bottom-right:top-left',
+      'top-right:bottom-left',
+      'bottom-left:top-right',
+    };
+    return oppositePairs.contains('$a:$b');
+  }
+
+  String _quadrantName(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'top-left':
+        return l10n.directionTopLeft;
+      case 'top-right':
+        return l10n.directionTopRight;
+      case 'bottom-left':
+        return l10n.directionBottomLeft;
+      case 'bottom-right':
+        return l10n.directionBottomRight;
+      default:
+        return key;
+    }
+  }
+
+  Widget _compactMetric({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _t(BuildContext context, {required String zh, required String en}) {
+    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
   }
 
   /// Build AI Coach analysis section
@@ -641,5 +1020,31 @@ class AnalysisScreen extends ConsumerWidget {
       return l10n.keepTrainingForInsights;
     }
     return error;
+  }
+}
+
+class _BandSummary {
+  final String directionKey;
+  final String directionText;
+  final int count;
+  final int total;
+  final double percentage;
+
+  const _BandSummary({
+    required this.directionKey,
+    required this.directionText,
+    required this.count,
+    required this.total,
+    required this.percentage,
+  });
+
+  factory _BandSummary.empty(String directionText) {
+    return _BandSummary(
+      directionKey: '',
+      directionText: directionText,
+      count: 0,
+      total: 0,
+      percentage: 0,
+    );
   }
 }

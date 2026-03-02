@@ -91,9 +91,9 @@ class DashboardScreen extends ConsumerWidget {
                               date: session.date,
                               score: session.totalScore,
                               total: session.maxScore,
-                              // Localized Bow Type
-                              type:
-                                  '${_getBowTypeDisplay(session.equipment.bowType, l10n)} * ${session.distance.toInt()}m',
+                              bowLabel: _getBowTypeDisplay(
+                                  session.equipment.bowType, l10n),
+                              distance: session.distance,
                               percentage: session.scorePercentage,
                               arrowCount: session.arrowCount,
                               l10n: l10n,
@@ -360,7 +360,8 @@ class DashboardScreen extends ConsumerWidget {
     required DateTime date,
     required int score,
     required int total,
-    required String type,
+    required String bowLabel,
+    required double distance,
     required double percentage,
     required int arrowCount,
     required VoidCallback onTap,
@@ -373,171 +374,154 @@ class DashboardScreen extends ConsumerWidget {
 
     final isChinese = locale.startsWith('zh');
     final String monthPart =
-        isChinese ? '${date.month}月' : monthFormat.format(date).toUpperCase();
+        isChinese ? '${date.month}月' : monthFormat.format(date);
     final String dayPart = dayFormat.format(date);
-    final String infoLine = isChinese
-        ? '$type · $arrowCount支箭'
-        : '$type · $arrowCount ${l10n.unitArrows}';
+    final String dateLabel =
+        isChinese ? '$monthPart$dayPart日' : '$monthPart $dayPart';
+    final normalizedPercentage = (percentage.isNaN || percentage.isInfinite)
+        ? 0.0
+        : percentage.clamp(0.0, 100.0);
+    final accentColor = isHighRecord
+        ? AppColors.accentGold
+        : _getPercentageColor(normalizedPercentage);
+    final subtitle = isChinese
+        ? '$bowLabel · ${distance.toInt()}m · $arrowCount支箭'
+        : '$bowLabel · ${distance.toInt()}m · $arrowCount ${l10n.unitArrows}';
 
     return GestureDetector(
       onTap: onTap,
       child: ArcheryCard(
-        padding: AppSpacing.cardCompact,
-        child: Row(
-          children: [
-            // Date Box
-            SizedBox(
-              width: 58,
-              height: 60,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isHighRecord
-                        ? [
-                            AppColors.accentGold.withValues(alpha: 0.12),
-                            AppColors.accentGold.withValues(alpha: 0.03),
-                          ]
-                        : [
-                            AppColors.primary.withValues(alpha: 0.09),
-                            AppColors.primary.withValues(alpha: 0.02),
-                          ],
-                  ),
-                  border: Border.all(
-                    color: (isHighRecord
-                            ? AppColors.accentGold
-                            : AppColors.primary)
-                        .withValues(alpha: 0.26),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadii.lg - 1),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _CardTexturePainter(
+                      tint: accentColor.withValues(alpha: 0.15),
+                    ),
                   ),
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 2, 2, 0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      height: 17,
-                      decoration: BoxDecoration(
-                        color: isHighRecord
-                            ? AppColors.accentGold
-                            : AppColors.primary,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(11),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceSubtle,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_month,
+                                  size: 12, color: AppColors.textSlate500),
+                              const SizedBox(width: 4),
+                              Text(
+                                dateLabel,
+                                style: AppTextStyles.micro.copyWith(
+                                  color: AppColors.textSlate700,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        if (isHighRecord) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 4),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.accentGold.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: AppColors.accentGold
+                                    .withValues(alpha: 0.38),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.emoji_events,
+                                    size: 11, color: AppColors.accentRust),
+                                const SizedBox(width: 3),
+                                Text(
+                                  isChinese ? '最佳记录' : 'Best',
+                                  style: AppTextStyles.micro.copyWith(
+                                    color: AppColors.accentRust,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        const Icon(Icons.chevron_right,
+                            color: AppColors.surfaceIcon, size: 18),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$score/$total',
+                      style: AppTextStyles.mediumNumber.copyWith(
+                        color: AppColors.textSlate900,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
                       ),
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            monthPart,
-                            maxLines: 1,
-                            style: AppTextStyles.micro.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.2,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.subLabel.copyWith(
+                        color: AppColors.textSlate700,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(99),
+                            child: LinearProgressIndicator(
+                              value: normalizedPercentage / 100,
+                              minHeight: 6,
+                              backgroundColor: AppColors.surfaceSubtle,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(accentColor),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          dayPart,
+                        const SizedBox(width: 8),
+                        Text(
+                          '${normalizedPercentage.toStringAsFixed(0)}%',
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: isHighRecord
-                                ? AppColors.accentRust
-                                : AppColors.textSlate900,
-                            height: 1.0,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: accentColor,
                           ),
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(left: 9, right: 9, bottom: 5),
-                      child: Container(
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: (isHighRecord
-                                  ? AppColors.accentGold
-                                  : AppColors.primary)
-                              .withValues(alpha: 0.45),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(width: 14),
-
-            // Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('$score',
-                          style: AppTextStyles.mediumNumber.copyWith(
-                            color: AppColors.textSlate900,
-                          )),
-                      Text('/$total',
-                          style: AppTextStyles.numberDenominator.copyWith(
-                            fontSize: 16,
-                          )),
-                      if (isHighRecord) ...[
-                        const SizedBox(width: 8),
-                        const Icon(Icons.emoji_events,
-                            size: 16, color: AppColors.accentGold),
-                      ]
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    infoLine,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subLabel,
-                  ),
-                ],
-              ),
-            ),
-
-            // Percentage Circle
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: (percentage.isNaN || percentage.isInfinite)
-                        ? 0
-                        : (percentage / 100).clamp(0.0, 1.0),
-                    backgroundColor: AppColors.surfaceSubtle,
-                    color: _getPercentageColor(percentage),
-                    strokeWidth: 4,
-                  ),
-                  Text(
-                    '${(percentage.isNaN || percentage.isInfinite) ? 0 : percentage.toInt()}%',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _getPercentageColor(percentage)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: AppColors.surfaceIcon),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -548,5 +532,56 @@ class DashboardScreen extends ConsumerWidget {
     if (percentage >= 80) return AppColors.targetRed;
     if (percentage >= 70) return AppColors.targetBlue;
     return AppColors.textSlate400;
+  }
+}
+
+class _CardTexturePainter extends CustomPainter {
+  final Color tint;
+
+  const _CardTexturePainter({required this.tint});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    final softFill = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          tint.withValues(alpha: 0.06),
+          Colors.transparent,
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, softFill);
+
+    final stripePaint = Paint()
+      ..color = tint.withValues(alpha: 0.045)
+      ..strokeWidth = 1;
+    const stripeGap = 16.0;
+    for (double x = -size.height; x < size.width; x += stripeGap) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        stripePaint,
+      );
+    }
+
+    final orbPaint = Paint()..color = tint.withValues(alpha: 0.05);
+    canvas.drawCircle(
+      Offset(size.width * 0.92, size.height * 0.1),
+      size.shortestSide * 0.12,
+      orbPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.12, size.height * 0.86),
+      size.shortestSide * 0.08,
+      orbPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CardTexturePainter oldDelegate) {
+    return oldDelegate.tint != tint;
   }
 }

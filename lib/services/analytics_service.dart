@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/training_session.dart';
 import '../models/statistics.dart';
 import '../models/ai_insight.dart';
+import '../models/competition_profile.dart';
 import '../models/radar_metrics.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
@@ -31,9 +34,11 @@ class AnalyticsService {
 
     // Calculate basic metrics
     final totalSessions = filteredSessions.length;
-    final totalArrows = filteredSessions.fold(0, (sum, s) => sum + s.arrowCount);
+    final totalArrows =
+        filteredSessions.fold(0, (sum, s) => sum + s.arrowCount);
     final totalScore = filteredSessions.fold(0, (sum, s) => sum + s.totalScore);
-    final maxPossibleScore = filteredSessions.fold(0, (sum, s) => sum + s.maxScore);
+    final maxPossibleScore =
+        filteredSessions.fold(0, (sum, s) => sum + s.maxScore);
 
     final avgArrowScore = totalArrows > 0 ? totalScore / totalArrows : 0.0;
     final avgEndScore = _calculateAverageEndScore(filteredSessions);
@@ -54,15 +59,31 @@ class AnalyticsService {
 
     // Get score trend data for chart
     final scoreTrendData = _getScoreTrendData(filteredSessions);
+    final dailyArrowVolumeData = _getDailyArrowVolumeData(filteredSessions);
 
     // Current month arrows
     final currentMonthArrows = _getCurrentMonthArrows(sessions);
 
-    // Calculate 10-ring rate
-    final tenRingRate = _calculate10RingRate(filteredSessions);
+    // Competition readiness metrics
+    final hitRates = _calculateHitRates(filteredSessions);
+    final competitionProfile =
+        CompetitionProfile.fromSessions(filteredSessions);
+    final projectedQualificationScore =
+        avgArrowScore * competitionProfile.projectionArrows;
+    final qualificationTier =
+        competitionProfile.tierForProjection(projectedQualificationScore);
 
     // Calculate quadrant distribution
-    final quadrantDistribution = _calculateQuadrantDistribution(filteredSessions);
+    final quadrantDistribution =
+        _calculateQuadrantDistribution(filteredSessions);
+    final biasByScoreBand = _calculateBiasByScoreBand(filteredSessions);
+
+    // Volatility / pressure metrics
+    final pressureMetrics = _calculateVolatilityAndRecovery(filteredSessions);
+
+    // Training quality metrics
+    final qualityDensity = _calculateAverageQualityDensity(filteredSessions);
+    final clutchProxy = _calculateAverageClutchProxy(filteredSessions);
 
     // Calculate radar metrics
     final radarMetrics = calculateRadarMetrics(filteredSessions);
@@ -81,11 +102,26 @@ class AnalyticsService {
       avgConsistency: avgConsistency,
       heatmapData: heatmapData,
       scoreTrendData: scoreTrendData,
+      dailyArrowVolumeData: dailyArrowVolumeData,
       monthlyGoal: monthlyGoal,
       currentMonthArrows: currentMonthArrows,
-      tenRingRate: tenRingRate,
+      tenRingRate: hitRates.tenRingRate,
+      xRate: hitRates.xRate,
+      highValueRate: hitRates.highValueRate,
+      missRate: hitRates.missRate,
       quadrantDistribution: quadrantDistribution,
+      biasByScoreBand: biasByScoreBand,
       radarMetrics: radarMetrics,
+      competitionProfile: competitionProfile,
+      competitionProfileKey: competitionProfile.key,
+      projectedQualificationScore: projectedQualificationScore,
+      qualificationTier: qualificationTier,
+      endVolatility: pressureMetrics.endVolatility,
+      collapseRate: pressureMetrics.collapseRate,
+      recoveryIndex: pressureMetrics.recoveryIndex,
+      enduranceHoldRate: pressureMetrics.enduranceHoldRate,
+      qualityDensity: qualityDensity,
+      clutchProxy: clutchProxy,
     );
   }
 
@@ -105,7 +141,8 @@ class AnalyticsService {
       insights.add(AIInsight.stability(
         id: _uuid.v4(),
         title: 'Stability Focus Needed',
-        description: 'Your consistency is at ${stats.avgConsistency.toStringAsFixed(1)}%. Focus on back tension and maintain expansion through the clicker.',
+        description:
+            'Your consistency is at ${stats.avgConsistency.toStringAsFixed(1)}%. Focus on back tension and maintain expansion through the clicker.',
         priority: 4,
       ));
     }
@@ -115,7 +152,8 @@ class AnalyticsService {
       insights.add(AIInsight.warning(
         id: _uuid.v4(),
         title: 'Performance Decline Detected',
-        description: 'Your average score has decreased by ${stats.trend.abs().toStringAsFixed(1)}% recently. Consider taking a rest day or reviewing your form.',
+        description:
+            'Your average score has decreased by ${stats.trend.abs().toStringAsFixed(1)}% recently. Consider taking a rest day or reviewing your form.',
         priority: 5,
       ));
     }
@@ -125,7 +163,8 @@ class AnalyticsService {
       insights.add(AIInsight.achievement(
         id: _uuid.v4(),
         title: 'Great Progress!',
-        description: 'You\'ve improved by ${stats.trend.toStringAsFixed(1)}% in this period. Keep up the excellent work!',
+        description:
+            'You\'ve improved by ${stats.trend.toStringAsFixed(1)}% in this period. Keep up the excellent work!',
         priority: 2,
       ));
     }
@@ -141,7 +180,8 @@ class AnalyticsService {
       insights.add(AIInsight.drill(
         id: _uuid.v4(),
         title: 'Suggestion: Distance Practice',
-        description: 'To improve accuracy, perform 30 arrows on blank bale focusing on bow arm stability and release.',
+        description:
+            'To improve accuracy, perform 30 arrows on blank bale focusing on bow arm stability and release.',
         priority: 4,
       ));
     }
@@ -153,7 +193,8 @@ class AnalyticsService {
   }
 
   /// Filter sessions by period
-  List<TrainingSession> _filterSessionsByPeriod(List<TrainingSession> sessions, String period) {
+  List<TrainingSession> _filterSessionsByPeriod(
+      List<TrainingSession> sessions, String period) {
     final now = DateTime.now();
     DateTime cutoffDate;
 
@@ -179,7 +220,8 @@ class AnalyticsService {
   /// Calculate average end score across sessions
   double _calculateAverageEndScore(List<TrainingSession> sessions) {
     if (sessions.isEmpty) return 0.0;
-    final totalEndScore = sessions.fold(0.0, (sum, s) => sum + s.averageEndScore);
+    final totalEndScore =
+        sessions.fold(0.0, (sum, s) => sum + s.averageEndScore);
     return totalEndScore / sessions.length;
   }
 
@@ -198,8 +240,12 @@ class AnalyticsService {
 
     if (firstHalf.isEmpty || secondHalf.isEmpty) return 0.0;
 
-    final firstAvg = firstHalf.fold(0.0, (sum, s) => sum + s.averageArrowScore) / firstHalf.length;
-    final secondAvg = secondHalf.fold(0.0, (sum, s) => sum + s.averageArrowScore) / secondHalf.length;
+    final firstAvg =
+        firstHalf.fold(0.0, (sum, s) => sum + s.averageArrowScore) /
+            firstHalf.length;
+    final secondAvg =
+        secondHalf.fold(0.0, (sum, s) => sum + s.averageArrowScore) /
+            secondHalf.length;
 
     if (firstAvg == 0) return 0.0;
 
@@ -209,7 +255,8 @@ class AnalyticsService {
   /// Calculate average consistency across sessions
   double _calculateAverageConsistency(List<TrainingSession> sessions) {
     if (sessions.isEmpty) return 0.0;
-    final totalConsistency = sessions.fold(0.0, (sum, s) => sum + s.consistency);
+    final totalConsistency =
+        sessions.fold(0.0, (sum, s) => sum + s.consistency);
     return totalConsistency / sessions.length;
   }
 
@@ -224,14 +271,34 @@ class AnalyticsService {
 
   /// Get score trend data for charts
   Map<DateTime, double> _getScoreTrendData(List<TrainingSession> sessions) {
-    final trendData = <DateTime, double>{};
-
+    final grouped = <DateTime, List<double>>{};
     for (final session in sessions) {
-      final date = DateTime(session.date.year, session.date.month, session.date.day);
-      trendData[date] = session.averageArrowScore;
+      final date =
+          DateTime(session.date.year, session.date.month, session.date.day);
+      grouped
+          .putIfAbsent(date, () => <double>[])
+          .add(session.averageArrowScore);
     }
 
+    final trendData = <DateTime, double>{};
+    for (final entry in grouped.entries) {
+      final values = entry.value;
+      if (values.isEmpty) continue;
+      final avg = values.reduce((a, b) => a + b) / values.length;
+      trendData[entry.key] = avg;
+    }
     return trendData;
+  }
+
+  /// Aggregate arrow volume by day.
+  Map<DateTime, int> _getDailyArrowVolumeData(List<TrainingSession> sessions) {
+    final volumeData = <DateTime, int>{};
+    for (final session in sessions) {
+      final date =
+          DateTime(session.date.year, session.date.month, session.date.day);
+      volumeData[date] = (volumeData[date] ?? 0) + session.arrowCount;
+    }
+    return volumeData;
   }
 
   /// Get current month arrow count
@@ -240,7 +307,8 @@ class AnalyticsService {
     final startOfMonth = DateTime(now.year, now.month, 1);
 
     return sessions
-        .where((s) => s.date.isAfter(startOfMonth.subtract(const Duration(days: 1))))
+        .where((s) =>
+            s.date.isAfter(startOfMonth.subtract(const Duration(days: 1))))
         .fold(0, (sum, s) => sum + s.arrowCount);
   }
 
@@ -249,8 +317,10 @@ class AnalyticsService {
     if (positions.length < kMinArrowsForHeatmap) return null;
 
     // Calculate center of mass
-    final centerX = positions.fold(0.0, (sum, p) => sum + p.dx) / positions.length;
-    final centerY = positions.fold(0.0, (sum, p) => sum + p.dy) / positions.length;
+    final centerX =
+        positions.fold(0.0, (sum, p) => sum + p.dx) / positions.length;
+    final centerY =
+        positions.fold(0.0, (sum, p) => sum + p.dy) / positions.length;
 
     // Determine tendency
     String tendency = '';
@@ -288,19 +358,47 @@ class AnalyticsService {
 
   // ==================== New Analysis Methods ====================
 
-  /// Calculate 10-ring rate across all sessions
-  double _calculate10RingRate(List<TrainingSession> sessions) {
-    if (sessions.isEmpty) return 0.0;
+  _HitRates _calculateHitRates(List<TrainingSession> sessions) {
+    var totalArrows = 0;
+    var goldHits = 0;
+    var xHits = 0;
+    var highValueHits = 0;
+    var missHits = 0;
 
-    final total10Rings = sessions.fold(0, (sum, s) => sum + s.goldRingCount);
-    final totalArrows = sessions.fold(0, (sum, s) => sum + s.arrowCount);
+    for (final session in sessions) {
+      for (final arrow in session.allArrows) {
+        totalArrows++;
+        final score = arrow.pointValue;
+        if (score >= 9) {
+          highValueHits++;
+        }
+        if (score == 10) {
+          goldHits++;
+        }
+        if (arrow.isX) {
+          xHits++;
+        }
+        if (score == 0) {
+          missHits++;
+        }
+      }
+    }
 
-    if (totalArrows == 0) return 0.0;
-    return (total10Rings / totalArrows) * 100;
+    if (totalArrows == 0) {
+      return const _HitRates();
+    }
+
+    return _HitRates(
+      tenRingRate: (goldHits / totalArrows) * 100,
+      xRate: (xHits / totalArrows) * 100,
+      highValueRate: (highValueHits / totalArrows) * 100,
+      missRate: (missHits / totalArrows) * 100,
+    );
   }
 
   /// Calculate aggregated quadrant distribution across all sessions
-  Map<String, int> _calculateQuadrantDistribution(List<TrainingSession> sessions) {
+  Map<String, int> _calculateQuadrantDistribution(
+      List<TrainingSession> sessions) {
     final aggregated = {
       'top-left': 0,
       'top-right': 0,
@@ -310,10 +408,14 @@ class AnalyticsService {
 
     for (final session in sessions) {
       final distribution = session.quadrantDistribution;
-      aggregated['top-left'] = aggregated['top-left']! + (distribution['top-left'] ?? 0);
-      aggregated['top-right'] = aggregated['top-right']! + (distribution['top-right'] ?? 0);
-      aggregated['bottom-left'] = aggregated['bottom-left']! + (distribution['bottom-left'] ?? 0);
-      aggregated['bottom-right'] = aggregated['bottom-right']! + (distribution['bottom-right'] ?? 0);
+      aggregated['top-left'] =
+          aggregated['top-left']! + (distribution['top-left'] ?? 0);
+      aggregated['top-right'] =
+          aggregated['top-right']! + (distribution['top-right'] ?? 0);
+      aggregated['bottom-left'] =
+          aggregated['bottom-left']! + (distribution['bottom-left'] ?? 0);
+      aggregated['bottom-right'] =
+          aggregated['bottom-right']! + (distribution['bottom-right'] ?? 0);
     }
 
     return aggregated;
@@ -325,13 +427,25 @@ class AnalyticsService {
     if (sessions.isEmpty) return null;
 
     // Calculate aggregate values
-    final avgArrowScore = sessions.fold(0.0, (sum, s) => sum + s.averageArrowScore) / sessions.length;
-    final avgConsistency = sessions.fold(0.0, (sum, s) => sum + s.consistency) / sessions.length;
-    final avg10RingRate = sessions.fold(0.0, (sum, s) => sum + s.tenRingRate) / sessions.length;
-    final avgGroupingRadius = sessions.fold(0.0, (sum, s) => sum + s.groupingRadius) / sessions.length;
-    final avgFirstThird = sessions.fold(0.0, (sum, s) => sum + s.firstThirdAverage) / sessions.length;
-    final avgLastThird = sessions.fold(0.0, (sum, s) => sum + s.lastThirdAverage) / sessions.length;
-    final avgCenterDeviation = sessions.fold(0.0, (sum, s) => sum + s.centerDeviation) / sessions.length;
+    final avgArrowScore =
+        sessions.fold(0.0, (sum, s) => sum + s.averageArrowScore) /
+            sessions.length;
+    final avgConsistency =
+        sessions.fold(0.0, (sum, s) => sum + s.consistency) / sessions.length;
+    final avg10RingRate =
+        sessions.fold(0.0, (sum, s) => sum + s.tenRingRate) / sessions.length;
+    final avgGroupingRadius =
+        sessions.fold(0.0, (sum, s) => sum + s.groupingRadius) /
+            sessions.length;
+    final avgFirstThird =
+        sessions.fold(0.0, (sum, s) => sum + s.firstThirdAverage) /
+            sessions.length;
+    final avgLastThird =
+        sessions.fold(0.0, (sum, s) => sum + s.lastThirdAverage) /
+            sessions.length;
+    final avgCenterDeviation =
+        sessions.fold(0.0, (sum, s) => sum + s.centerDeviation) /
+            sessions.length;
 
     return RadarMetrics.fromSessionData(
       avgArrowScore: avgArrowScore,
@@ -344,6 +458,111 @@ class AnalyticsService {
     );
   }
 
+  /// Aggregate score-band bias distributions.
+  Map<String, Map<String, int>> _calculateBiasByScoreBand(
+    List<TrainingSession> sessions,
+  ) {
+    final aggregated = {
+      'high': _emptyQuadrants(),
+      'mid': _emptyQuadrants(),
+      'low': _emptyQuadrants(),
+    };
+
+    for (final session in sessions) {
+      final sessionBands = session.biasByScoreBand;
+      for (final band in aggregated.keys) {
+        final target = aggregated[band]!;
+        final source = sessionBands[band] ?? const <String, int>{};
+        for (final quadrant in target.keys) {
+          target[quadrant] = (target[quadrant] ?? 0) + (source[quadrant] ?? 0);
+        }
+      }
+    }
+
+    return aggregated;
+  }
+
+  _VolatilityMetrics _calculateVolatilityAndRecovery(
+    List<TrainingSession> sessions,
+  ) {
+    final normalizedTotals = <double>[];
+    var totalEnds = 0;
+    var collapsedEnds = 0;
+    final recoveries = <double>[];
+    final holdRates = <double>[];
+
+    for (final session in sessions) {
+      final totals = session.normalizedEndTotals;
+      if (totals.isEmpty) continue;
+      normalizedTotals.addAll(totals);
+      totalEnds += totals.length;
+
+      final collapsed = session.collapseEnds;
+      collapsedEnds += collapsed.length;
+      final recovery = session.recoveryIndex;
+      if (recovery > 0) {
+        recoveries.add(recovery);
+      }
+
+      if (session.enduranceHoldRate > 0) {
+        holdRates.add(session.enduranceHoldRate);
+      }
+    }
+
+    final endVolatility = _standardDeviation(normalizedTotals);
+    final collapseRate = totalEnds == 0 ? 0.0 : collapsedEnds / totalEnds;
+    final recoveryIndex = recoveries.isEmpty
+        ? 0.0
+        : recoveries.reduce((a, b) => a + b) / recoveries.length;
+    final enduranceHoldRate = holdRates.isEmpty
+        ? 0.0
+        : holdRates.reduce((a, b) => a + b) / holdRates.length;
+
+    return _VolatilityMetrics(
+      endVolatility: endVolatility,
+      collapseRate: collapseRate,
+      recoveryIndex: recoveryIndex,
+      enduranceHoldRate: enduranceHoldRate,
+    );
+  }
+
+  double _calculateAverageQualityDensity(List<TrainingSession> sessions) {
+    final values = <double>[];
+    for (final session in sessions) {
+      values.addAll(session.qualityDensityByEnd);
+    }
+    if (values.isEmpty) return 0.0;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  double _calculateAverageClutchProxy(List<TrainingSession> sessions) {
+    final values = <double>[];
+    for (final session in sessions) {
+      final value = session.clutchProxy;
+      if (value != 0) {
+        values.add(value);
+      }
+    }
+    if (values.isEmpty) return 0.0;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  double _standardDeviation(List<double> values) {
+    if (values.length < 2) return 0.0;
+    final mean = values.reduce((a, b) => a + b) / values.length;
+    final variance =
+        values.fold<double>(0, (sum, v) => sum + (v - mean) * (v - mean)) /
+            values.length;
+    return variance <= 0 ? 0.0 : math.sqrt(variance);
+  }
+
+  Map<String, int> _emptyQuadrants() => {
+        'top-left': 0,
+        'top-right': 0,
+        'bottom-left': 0,
+        'bottom-right': 0,
+      };
+
   /// Detect plateau in performance (stagnation)
   /// Returns true if average score has remained flat (±1%) for recent sessions
   bool detectPlateau(List<TrainingSession> recentSessions) {
@@ -354,7 +573,8 @@ class AnalyticsService {
       ..sort((a, b) => a.date.compareTo(b.date));
 
     // Take last 5 sessions
-    final last5 = sorted.length > 5 ? sorted.sublist(sorted.length - 5) : sorted;
+    final last5 =
+        sorted.length > 5 ? sorted.sublist(sorted.length - 5) : sorted;
 
     // Calculate variance in average scores
     final scores = last5.map((s) => s.averageArrowScore).toList();
@@ -376,7 +596,9 @@ class AnalyticsService {
   bool detectVolumeDecline(Statistics current, Statistics previous) {
     if (previous.totalArrows == 0) return false;
 
-    final decline = ((previous.totalArrows - current.totalArrows) / previous.totalArrows) * 100;
+    final decline =
+        ((previous.totalArrows - current.totalArrows) / previous.totalArrows) *
+            100;
     return decline > 30.0; // 30% decline threshold
   }
 
@@ -403,8 +625,11 @@ class AnalyticsService {
     }
 
     // Insight 2: Volume decline warning
-    if (previousStats != null && detectVolumeDecline(currentStats, previousStats)) {
-      final decline = ((previousStats.totalArrows - currentStats.totalArrows) / previousStats.totalArrows * 100)
+    if (previousStats != null &&
+        detectVolumeDecline(currentStats, previousStats)) {
+      final decline = ((previousStats.totalArrows - currentStats.totalArrows) /
+              previousStats.totalArrows *
+              100)
           .toStringAsFixed(0);
       insights.add(PeriodInsight(
         type: PeriodInsightType.volumeWarning,
@@ -421,7 +646,8 @@ class AnalyticsService {
       insights.add(PeriodInsight(
         type: PeriodInsightType.advancement,
         title: l10n.insightAdvancementTitle,
-        message: l10n.insightAdvancementMessage(currentStats.tenRingRate.toStringAsFixed(1)),
+        message: l10n.insightAdvancementMessage(
+            currentStats.tenRingRate.toStringAsFixed(1)),
         icon: Icons.arrow_upward,
         color: Colors.green,
         actionable: true,
@@ -430,10 +656,12 @@ class AnalyticsService {
 
     // Insight 4: Chronic bias detection
     final quadrants = currentStats.quadrantDistribution;
-    final totalBelowNine = quadrants.values.fold(0, (sum, count) => sum + count);
+    final totalBelowNine =
+        quadrants.values.fold(0, (sum, count) => sum + count);
     if (totalBelowNine > 20) {
       // Find dominant quadrant
-      final maxQuadrant = quadrants.entries.reduce((a, b) => a.value > b.value ? a : b);
+      final maxQuadrant =
+          quadrants.entries.reduce((a, b) => a.value > b.value ? a : b);
       final dominancePercentage = (maxQuadrant.value / totalBelowNine * 100);
 
       if (dominancePercentage > 40.0) {
@@ -441,7 +669,8 @@ class AnalyticsService {
         insights.add(PeriodInsight(
           type: PeriodInsightType.chronicBias,
           title: l10n.insightChronicBiasTitle,
-          message: l10n.insightChronicBiasMessage(dominancePercentage.toStringAsFixed(0), quadrantName),
+          message: l10n.insightChronicBiasMessage(
+              dominancePercentage.toStringAsFixed(0), quadrantName),
           icon: Icons.gps_fixed,
           color: Colors.purple,
           actionable: true,
@@ -454,7 +683,8 @@ class AnalyticsService {
       insights.add(PeriodInsight(
         type: PeriodInsightType.excellence,
         title: l10n.insightExcellenceTitle,
-        message: l10n.insightExcellenceMessage(currentStats.avgConsistency.toStringAsFixed(1)),
+        message: l10n.insightExcellenceMessage(
+            currentStats.avgConsistency.toStringAsFixed(1)),
         icon: Icons.emoji_events,
         color: Colors.amber,
         actionable: false,
@@ -481,6 +711,34 @@ class AnalyticsService {
   }
 }
 
+class _HitRates {
+  final double tenRingRate;
+  final double xRate;
+  final double highValueRate;
+  final double missRate;
+
+  const _HitRates({
+    this.tenRingRate = 0.0,
+    this.xRate = 0.0,
+    this.highValueRate = 0.0,
+    this.missRate = 0.0,
+  });
+}
+
+class _VolatilityMetrics {
+  final double endVolatility;
+  final double collapseRate;
+  final double recoveryIndex;
+  final double enduranceHoldRate;
+
+  const _VolatilityMetrics({
+    this.endVolatility = 0.0,
+    this.collapseRate = 0.0,
+    this.recoveryIndex = 0.0,
+    this.enduranceHoldRate = 0.0,
+  });
+}
+
 /// Period insight model for comprehensive analysis
 class PeriodInsight {
   final PeriodInsightType type;
@@ -502,9 +760,9 @@ class PeriodInsight {
 
 /// Period insight type enum
 enum PeriodInsightType {
-  plateau,       // Performance stagnation
+  plateau, // Performance stagnation
   volumeWarning, // Training volume decline
-  advancement,   // Ready for next level
-  chronicBias,   // Persistent directional bias
-  excellence,    // Outstanding achievement
+  advancement, // Ready for next level
+  chronicBias, // Persistent directional bias
+  excellence, // Outstanding achievement
 }

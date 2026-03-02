@@ -14,6 +14,7 @@ import 'package:shared_preferences_foundation/shared_preferences_foundation.dart
 import 'package:url_launcher_ios/url_launcher_ios.dart' as url_launcher_ios;
 import 'package:package_info_plus/package_info_plus.dart' as package_info_plus;
 import 'package:path_provider_linux/path_provider_linux.dart' as path_provider_linux;
+import 'package:share_plus/share_plus.dart' as share_plus;
 import 'package:shared_preferences_linux/shared_preferences_linux.dart' as shared_preferences_linux;
 import 'package:url_launcher_linux/url_launcher_linux.dart' as url_launcher_linux;
 import 'package:wakelock_plus/wakelock_plus.dart' as wakelock_plus;
@@ -23,6 +24,7 @@ import 'package:url_launcher_macos/url_launcher_macos.dart' as url_launcher_maco
 import 'package:wakelock_plus/wakelock_plus.dart' as wakelock_plus;
 import 'package:package_info_plus/package_info_plus.dart' as package_info_plus;
 import 'package:path_provider_windows/path_provider_windows.dart' as path_provider_windows;
+import 'package:share_plus/share_plus.dart' as share_plus;
 import 'package:shared_preferences_windows/shared_preferences_windows.dart' as shared_preferences_windows;
 import 'package:url_launcher_windows/url_launcher_windows.dart' as url_launcher_windows;
 import 'package:wakelock_plus/wakelock_plus.dart' as wakelock_plus;
@@ -108,6 +110,15 @@ class _PluginRegistrant {
       }
 
       try {
+        share_plus.SharePlusLinuxPlugin.registerWith();
+      } catch (err) {
+        print(
+          '`share_plus` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
         shared_preferences_linux.SharedPreferencesLinux.registerWith();
       } catch (err) {
         print(
@@ -186,6 +197,15 @@ class _PluginRegistrant {
       } catch (err) {
         print(
           '`path_provider_windows` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
+        share_plus.SharePlusWindowsPlugin.registerWith();
+      } catch (err) {
+        print(
+          '`share_plus` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }

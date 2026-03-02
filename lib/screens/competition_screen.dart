@@ -108,7 +108,7 @@ class _CompetitionScreenState extends ConsumerState<CompetitionScreen> {
         return CompetitionResultsView(
           endResults: state.endResults,
           settings: state.settings,
-          onDone: () => Navigator.of(context).pop(),
+          onDone: () => Navigator.of(context).popUntil((route) => route.isFirst),
         );
     }
   }

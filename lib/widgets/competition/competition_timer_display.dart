@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/competition_provider.dart';
 import '../../theme/app_colors.dart';
@@ -81,21 +82,25 @@ class CompetitionTimerDisplay extends StatelessWidget {
         const Spacer(flex: 2),
         Text(
           '${l10n.endNumber} $currentEnd',
-          style: TextStyle(
-            fontSize: short * 0.08,
-            fontWeight: FontWeight.w900,
-            color: Colors.white.withValues(alpha: 0.5),
-            letterSpacing: 4,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.08,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.5),
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           l10n.competitionReady,
-          style: TextStyle(
-            fontSize: short * 0.12,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: 2,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.12,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.8,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -145,11 +150,13 @@ class CompetitionTimerDisplay extends StatelessWidget {
         const Spacer(flex: 2),
         Text(
           l10n.competitionGetReady,
-          style: TextStyle(
-            fontSize: short * 0.06,
-            fontWeight: FontWeight.w800,
-            color: Colors.white.withValues(alpha: 0.7),
-            letterSpacing: 4,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.06,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 1.4,
+            ),
           ),
         ),
         const Spacer(),
@@ -157,22 +164,27 @@ class CompetitionTimerDisplay extends StatelessWidget {
           onLongPress: onPause,
           child: Text(
             '$remainingSeconds',
-            style: TextStyle(
-              fontSize: short * 0.5,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 1,
+            style: GoogleFonts.robotoMono(
+              textStyle: TextStyle(
+                fontSize: short * 0.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: -1.0,
+                height: 1,
+              ),
             ),
           ),
         ),
         const Spacer(),
         Text(
           l10n.competitionDoNotRaiseBow,
-          style: TextStyle(
-            fontSize: short * 0.04,
-            fontWeight: FontWeight.w700,
-            color: Colors.white.withValues(alpha: 0.6),
-            letterSpacing: 2,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.04,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.6),
+              letterSpacing: 0.6,
+            ),
           ),
         ),
         const SizedBox(height: 14),
@@ -181,10 +193,10 @@ class CompetitionTimerDisplay extends StatelessWidget {
           icon: const Icon(Icons.skip_next_rounded, color: Colors.white70),
           label: Text(
             l10n.competitionSkip,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -217,11 +229,13 @@ class CompetitionTimerDisplay extends StatelessWidget {
         const Spacer(),
         Text(
           isWarning ? l10n.competitionHurryUp : l10n.competitionShoot,
-          style: TextStyle(
-            fontSize: short * 0.055,
-            fontWeight: FontWeight.w800,
-            color: Colors.white.withValues(alpha: 0.7),
-            letterSpacing: 4,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.055,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         const Spacer(),
@@ -253,11 +267,14 @@ class CompetitionTimerDisplay extends StatelessWidget {
                     child: Text(
                       timeText,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 200,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        height: 1,
+                      style: GoogleFonts.robotoMono(
+                        textStyle: const TextStyle(
+                          fontSize: 200,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -2.2,
+                          height: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -272,10 +289,10 @@ class CompetitionTimerDisplay extends StatelessWidget {
           icon: const Icon(Icons.skip_next_rounded, color: Colors.white70),
           label: Text(
             l10n.competitionSkip,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -299,20 +316,24 @@ class CompetitionTimerDisplay extends StatelessWidget {
         const SizedBox(height: 24),
         Text(
           l10n.competitionStop,
-          style: TextStyle(
-            fontSize: short * 0.18,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: 4,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.18,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 1.0,
+            ),
           ),
         ),
         Text(
           l10n.competitionShooting,
-          style: TextStyle(
-            fontSize: short * 0.1,
-            fontWeight: FontWeight.w800,
-            color: Colors.white.withValues(alpha: 0.7),
-            letterSpacing: 6,
+          style: GoogleFonts.barlowSemiCondensed(
+            textStyle: TextStyle(
+              fontSize: short * 0.1,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 1.6,
+            ),
           ),
         ),
       ],

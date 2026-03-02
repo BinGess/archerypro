@@ -33,6 +33,9 @@ dependencies:
 
   # Path Provider for file storage
   path_provider: ^2.1.1
+  share_plus: ^11.1.0
+  image_gallery_saver: ^2.0.3
+  permission_handler: ^11.3.1
 
   # Audio & Screen
   audioplayers: ^5.2.1

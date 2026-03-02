@@ -286,8 +286,8 @@ class _CompetitionSetupSheetState extends State<CompetitionSetupSheet> {
                 l10n.competitionStartBtn,
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.25,
                 ),
               ),
               style: ElevatedButton.styleFrom(
@@ -314,7 +314,7 @@ class _CompetitionSetupSheetState extends State<CompetitionSetupSheet> {
         fontSize: 11,
         fontWeight: FontWeight.w800,
         color: AppColors.textSlate400,
-        letterSpacing: 1.5,
+        letterSpacing: 0.5,
       ),
     );
   }
