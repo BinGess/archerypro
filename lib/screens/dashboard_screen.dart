@@ -368,14 +368,13 @@ class DashboardScreen extends ConsumerWidget {
     required AppLocalizations l10n,
   }) {
     // Format date based on locale
-    final locale = Localizations.localeOf(context).toString();
-    final monthFormat = DateFormat.MMM(locale);
-    final dayFormat = DateFormat.d(locale);
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    final monthFormat = DateFormat.MMM(localeTag);
 
-    final isChinese = locale.startsWith('zh');
+    final isChinese = localeTag.startsWith('zh');
     final String monthPart =
         isChinese ? '${date.month}月' : monthFormat.format(date);
-    final String dayPart = dayFormat.format(date);
+    final String dayPart = date.day.toString();
     final String dateLabel =
         isChinese ? '$monthPart$dayPart日' : '$monthPart $dayPart';
     final normalizedPercentage = (percentage.isNaN || percentage.isInfinite)
@@ -387,6 +386,11 @@ class DashboardScreen extends ConsumerWidget {
     final subtitle = isChinese
         ? '$bowLabel · ${distance.toInt()}m · $arrowCount支箭'
         : '$bowLabel · ${distance.toInt()}m · $arrowCount ${l10n.unitArrows}';
+    final dateChipBackground =
+        Color.alphaBlend(accentColor.withValues(alpha: 0.14), Colors.white);
+    final dateChipBorder = accentColor.withValues(alpha: 0.24);
+    final dateChipTextColor = Color.alphaBlend(
+        accentColor.withValues(alpha: 0.55), AppColors.textSlate900);
 
     return GestureDetector(
       onTap: onTap,
@@ -416,19 +420,22 @@ class DashboardScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtle,
+                            color: dateChipBackground,
                             borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: dateChipBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.calendar_month,
-                                  size: 12, color: AppColors.textSlate500),
+                              Icon(Icons.calendar_month,
+                                  size: 12,
+                                  color: dateChipTextColor.withValues(
+                                      alpha: 0.86)),
                               const SizedBox(width: 4),
                               Text(
                                 dateLabel,
                                 style: AppTextStyles.micro.copyWith(
-                                  color: AppColors.textSlate700,
+                                  color: dateChipTextColor,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -507,12 +514,26 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '${normalizedPercentage.toStringAsFixed(0)}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: accentColor,
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: normalizedPercentage.toStringAsFixed(0),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: accentColor,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '%',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: accentColor.withValues(alpha: 0.92),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
