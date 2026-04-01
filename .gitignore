@@ -25,7 +25,14 @@ dist-ssr
 
 # Flutter build artifacts
 build/
+.dart_tool/
+.flutter-plugins-dependencies
 
 # Environment variables
 .env
 .env.local
+
+# Android release signing (never commit)
+android/key.properties
+android/*.jks
+android/*.keystore

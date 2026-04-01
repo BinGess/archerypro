@@ -469,11 +469,11 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
             borderRadius: BorderRadius.circular(AppRadii.lg),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                   color: AppColors.shadowSoft,
                   blurRadius: 8,
-                  offset: const Offset(0, 2))
+                  offset: Offset(0, 2))
             ],
           ),
           clipBehavior: Clip.antiAlias,
@@ -512,7 +512,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           boxShadow: isSelected
-              ? [BoxShadow(color: AppColors.shadowMedium, blurRadius: 2)]
+              ? [const BoxShadow(color: AppColors.shadowMedium, blurRadius: 2)]
               : [],
         ),
         child: Text(

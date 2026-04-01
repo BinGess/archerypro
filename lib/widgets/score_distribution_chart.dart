@@ -111,7 +111,7 @@ class ScoreDistributionChart extends StatelessWidget {
               ),
               bottomTitles: AxisTitles(
                 axisNameWidget: Padding(
-                  padding: EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     l10n.ringNumber,
                     style: const TextStyle(
