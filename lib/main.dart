@@ -110,7 +110,7 @@ class ArcheryApp extends ConsumerWidget {
 
       return MaterialApp(
         onGenerateTitle: (context) => AppLocalizations.of(context).appName,
-        title: '射箭记录专业版',
+        title: 'Archery Record Pro',
         debugShowCheckedModeBanner: false,
 
         // Localization delegates

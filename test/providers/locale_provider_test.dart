@@ -24,6 +24,15 @@ void main() {
     expect(notifier.state.languageCode, 'zh');
   });
 
+  test('initialize follows Japanese system locale', () async {
+    systemLocale = const Locale('ja', 'JP');
+    await notifier.initialize();
+
+    expect(notifier.state.isSystemDefault, isTrue);
+    expect(notifier.state.locale.languageCode, 'ja');
+    expect(notifier.state.languageCode, 'ja');
+  });
+
   test('initialize falls back to English for unsupported system locale',
       () async {
     systemLocale = const Locale('fr', 'FR');
@@ -46,6 +55,20 @@ void main() {
     expect(notifier.state.isSystemDefault, isFalse);
     expect(notifier.state.locale.languageCode, 'zh');
     expect(notifier.state.languageCode, 'zh');
+  });
+
+  test('initialize restores manual saved Japanese locale', () async {
+    SharedPreferences.setMockInitialValues({
+      'use_system_locale': false,
+      'app_locale': 'ja',
+    });
+    systemLocale = const Locale('en', 'US');
+    notifier = LocaleNotifier(systemLocaleGetter: () => systemLocale);
+    await notifier.initialize();
+
+    expect(notifier.state.isSystemDefault, isFalse);
+    expect(notifier.state.locale.languageCode, 'ja');
+    expect(notifier.state.languageCode, 'ja');
   });
 
   test('refreshSystemLocale updates state only in system mode', () async {

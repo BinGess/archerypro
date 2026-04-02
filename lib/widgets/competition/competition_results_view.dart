@@ -148,7 +148,9 @@ class CompetitionResultsView extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () => _showPosterSheet(context),
                         icon: const Icon(Icons.share_outlined, size: 18),
-                        label: Text(_t(context, zh: '分享', en: 'Share')),
+                        label: Text(
+                          _t(context, zh: '分享', en: 'Share', ja: '共有'),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textSlate900,
                           side: const BorderSide(color: AppColors.borderLight),
@@ -319,7 +321,7 @@ class CompetitionResultsView extends StatelessWidget {
               ),
               const Spacer(),
               _heroPill(
-                label: _t(context, zh: '得分率', en: 'Rate'),
+                label: _t(context, zh: '得分率', en: 'Rate', ja: '得点率'),
                 value: '${scoreRate.toStringAsFixed(1)}%',
               ),
             ],
@@ -332,12 +334,14 @@ class CompetitionResultsView extends StatelessWidget {
               _heroTag(
                 _t(context,
                     zh: '平均 ${averagePerEnd.toStringAsFixed(1)} 分/组',
-                    en: 'Avg ${averagePerEnd.toStringAsFixed(1)} / end'),
+                    en: 'Avg ${averagePerEnd.toStringAsFixed(1)} / end',
+                    ja: '平均 ${averagePerEnd.toStringAsFixed(1)} / エンド'),
               ),
               _heroTag(
                 _t(context,
                     zh: '金区命中 ${goldRate.toStringAsFixed(1)}%',
-                    en: 'Gold ${goldRate.toStringAsFixed(1)}%'),
+                    en: 'Gold ${goldRate.toStringAsFixed(1)}%',
+                    ja: 'ゴールド ${goldRate.toStringAsFixed(1)}%'),
               ),
               _heroTag(
                 trendDelta >= 0
@@ -345,11 +349,13 @@ class CompetitionResultsView extends StatelessWidget {
                         context,
                         zh: '后程 +${trendDelta.toStringAsFixed(1)}',
                         en: '2nd half +${trendDelta.toStringAsFixed(1)}',
+                        ja: '後半 +${trendDelta.toStringAsFixed(1)}',
                       )
                     : _t(
                         context,
                         zh: '后程 ${trendDelta.toStringAsFixed(1)}',
                         en: '2nd half ${trendDelta.toStringAsFixed(1)}',
+                        ja: '後半 ${trendDelta.toStringAsFixed(1)}',
                       ),
               ),
             ],
@@ -421,7 +427,7 @@ class CompetitionResultsView extends StatelessWidget {
               width: width,
               child: _kpiCard(
                 context,
-                title: _t(context, zh: '箭均分', en: 'Avg/Arrow'),
+                title: _t(context, zh: '箭均分', en: 'Avg/Arrow', ja: '平均/射'),
                 value: averagePerArrow.toStringAsFixed(2),
                 icon: Icons.my_location_rounded,
                 color: AppColors.primary,
@@ -431,7 +437,7 @@ class CompetitionResultsView extends StatelessWidget {
               width: width,
               child: _kpiCard(
                 context,
-                title: _t(context, zh: '稳定性', en: 'Consistency'),
+                title: _t(context, zh: '稳定性', en: 'Consistency', ja: '安定性'),
                 value: '${consistencyIndex.toStringAsFixed(1)}%',
                 icon: Icons.insights_rounded,
                 color: const Color(0xFF0F766E),
@@ -441,13 +447,14 @@ class CompetitionResultsView extends StatelessWidget {
               width: width,
               child: _kpiCard(
                 context,
-                title: _t(context, zh: '最佳组', en: 'Best End'),
+                title: _t(context, zh: '最佳组', en: 'Best End', ja: '最高エンド'),
                 value: '${bestEnd?.totalScore ?? '-'}',
                 subtitle: bestEnd == null
                     ? null
                     : _t(context,
                         zh: '第 ${bestEnd!.endNumber} 组',
-                        en: 'End ${bestEnd!.endNumber}'),
+                        en: 'End ${bestEnd!.endNumber}',
+                        ja: '第${bestEnd!.endNumber}エンド'),
                 icon: Icons.star_rounded,
                 color: AppColors.accentGold,
               ),
@@ -456,13 +463,14 @@ class CompetitionResultsView extends StatelessWidget {
               width: width,
               child: _kpiCard(
                 context,
-                title: _t(context, zh: '平均用时', en: 'Avg Time'),
+                title: _t(context, zh: '平均用时', en: 'Avg Time', ja: '平均時間'),
                 value: averageShootingSeconds <= 0
                     ? '--'
                     : _t(
                         context,
                         zh: '${averageShootingSeconds.toStringAsFixed(0)}秒',
                         en: '${averageShootingSeconds.toStringAsFixed(0)}s',
+                        ja: '${averageShootingSeconds.toStringAsFixed(0)}秒',
                       ),
                 subtitle: totalShootingSeconds <= 0
                     ? null
@@ -470,6 +478,7 @@ class CompetitionResultsView extends StatelessWidget {
                         context,
                         zh: '总计 ${totalShootingSeconds.toStringAsFixed(0)}秒',
                         en: 'Total ${totalShootingSeconds.toStringAsFixed(0)}s',
+                        ja: '合計 ${totalShootingSeconds.toStringAsFixed(0)}秒',
                       ),
                 icon: Icons.timer_outlined,
                 color: const Color(0xFF7C3AED),
@@ -558,11 +567,13 @@ class CompetitionResultsView extends StatelessWidget {
             context,
             zh: '后半程上升 ${trendDelta.toStringAsFixed(1)} 分',
             en: 'Second half +${trendDelta.toStringAsFixed(1)}',
+            ja: '後半で ${trendDelta.toStringAsFixed(1)} 点上昇',
           )
         : _t(
             context,
             zh: '后半程下降 ${trendDelta.abs().toStringAsFixed(1)} 分',
             en: 'Second half -${trendDelta.abs().toStringAsFixed(1)}',
+            ja: '後半で ${trendDelta.abs().toStringAsFixed(1)} 点低下',
           );
 
     return Container(
@@ -576,7 +587,7 @@ class CompetitionResultsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '本场分析', en: 'Session Insights'),
+            _t(context, zh: '本场分析', en: 'Session Insights', ja: '今回の分析'),
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -588,20 +599,21 @@ class CompetitionResultsView extends StatelessWidget {
             children: [
               Expanded(
                 child: _insightTile(
-                  title: _t(context, zh: '金区命中率', en: 'Gold Rate'),
+                  title: _t(context, zh: '金区命中率', en: 'Gold Rate', ja: 'ゴールド率'),
                   value: '${goldRate.toStringAsFixed(1)}%',
                   sub: _t(context,
                       zh: '$goldHits / $_shotArrows 箭',
-                      en: '$goldHits / $_shotArrows arrows'),
+                      en: '$goldHits / $_shotArrows arrows',
+                      ja: '$goldHits / $_shotArrows 射'),
                   valueColor: AppColors.accentGold,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _insightTile(
-                  title: _t(context, zh: '脱靶率', en: 'Miss Rate'),
+                  title: _t(context, zh: '脱靶率', en: 'Miss Rate', ja: 'ミス率'),
                   value: '${missRate.toStringAsFixed(1)}%',
-                  sub: _t(context, zh: '$missHits 次脱靶', en: '$missHits misses'),
+                  sub: _t(context, zh: '$missHits 次脱靶', en: '$missHits misses', ja: '$missHits 回ミス'),
                   valueColor:
                       missHits == 0 ? AppColors.success : AppColors.danger,
                 ),
@@ -704,7 +716,7 @@ class CompetitionResultsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '组间走势', en: 'End Trend'),
+            _t(context, zh: '组间走势', en: 'End Trend', ja: 'エンド推移'),
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -713,7 +725,7 @@ class CompetitionResultsView extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _t(context, zh: '每组总分变化', en: 'Score progression by end'),
+            _t(context, zh: '每组总分变化', en: 'Score progression by end', ja: '各エンドの得点推移'),
             style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSlate500,
@@ -738,7 +750,8 @@ class CompetitionResultsView extends StatelessWidget {
               Text(
                 _t(context,
                     zh: '起始: ${_endScores.isEmpty ? '-' : _endScores.first}',
-                    en: 'Start: ${_endScores.isEmpty ? '-' : _endScores.first}'),
+                    en: 'Start: ${_endScores.isEmpty ? '-' : _endScores.first}',
+                    ja: '開始: ${_endScores.isEmpty ? '-' : _endScores.first}'),
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.textSlate400,
@@ -748,7 +761,8 @@ class CompetitionResultsView extends StatelessWidget {
               Text(
                 _t(context,
                     zh: '结束: ${_endScores.isEmpty ? '-' : _endScores.last}',
-                    en: 'End: ${_endScores.isEmpty ? '-' : _endScores.last}'),
+                    en: 'End: ${_endScores.isEmpty ? '-' : _endScores.last}',
+                    ja: '終了: ${_endScores.isEmpty ? '-' : _endScores.last}'),
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.textSlate400,
@@ -774,7 +788,7 @@ class CompetitionResultsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '分组明细', en: 'End Breakdown'),
+            _t(context, zh: '分组明细', en: 'End Breakdown', ja: 'エンド内訳'),
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -887,8 +901,16 @@ class CompetitionResultsView extends StatelessWidget {
     BuildContext context, {
     required String zh,
     required String en,
+    String? ja,
   }) {
-    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return zh;
+      case 'ja':
+        return ja ?? en;
+      default:
+        return en;
+    }
   }
 
   Color _scoreColor(int score) {
@@ -953,8 +975,15 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
 
   bool get _isBusy => _isSaving || _isSharing;
 
-  String _t({required String zh, required String en}) {
-    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  String _t({required String zh, required String en, String? ja}) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return zh;
+      case 'ja':
+        return ja ?? en;
+      default:
+        return en;
+    }
   }
 
   void _setStatus(String text, {bool isError = false}) {
@@ -1146,6 +1175,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         _t(
           zh: '照片权限被永久拒绝。请到系统设置中开启“照片”权限后重试。',
           en: 'Photo permission is permanently denied. Enable it in system settings and try again.',
+          ja: '写真へのアクセスが恒久的に拒否されています。設定で写真権限を有効にしてから再試行してください。',
         ),
         isError: true,
       );
@@ -1157,6 +1187,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         _t(
           zh: '照片权限受限制（可能由家长控制）。请在系统设置中检查。',
           en: 'Photo access is restricted (possibly by parental controls). Please check system settings.',
+          ja: '写真へのアクセスが制限されています。システム設定を確認してください。',
         ),
         isError: true,
       );
@@ -1167,6 +1198,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       _t(
         zh: '需要照片权限才能保存海报。请在权限弹窗中选择“允许”。',
         en: 'Photo access is required to save posters. Please choose "Allow" in the permission dialog.',
+        ja: 'ポスターを保存するには写真権限が必要です。権限ダイアログで「許可」を選択してください。',
       ),
       isError: true,
     );
@@ -1200,6 +1232,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         _t(
           zh: '媒体权限被永久拒绝。请到系统设置开启“照片和视频”权限后重试。',
           en: 'Media permission is permanently denied. Enable Photos and Videos permission in system settings and retry.',
+          ja: 'メディア権限が恒久的に拒否されています。設定で写真と動画の権限を有効にしてから再試行してください。',
         ),
         isError: true,
       );
@@ -1211,6 +1244,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         _t(
           zh: '媒体权限受限，请在系统设置中检查后重试。',
           en: 'Media permission is restricted. Please check system settings and retry.',
+          ja: 'メディア権限が制限されています。システム設定を確認して再試行してください。',
         ),
         isError: true,
       );
@@ -1221,6 +1255,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       _t(
         zh: '未获得媒体权限，无法保存海报。请在权限弹窗中选择“允许”。',
         en: 'Media permission denied. Please choose "Allow" in permission dialog to save posters.',
+        ja: 'メディア権限がないためポスターを保存できません。権限ダイアログで「許可」を選択してください。',
       ),
       isError: true,
     );
@@ -1282,7 +1317,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       _logger.log('Poster saved successfully in ${elapsed}ms');
 
       _setStatus(
-        _t(zh: '海报已保存到相册', en: 'Poster saved to gallery'),
+        _t(zh: '海报已保存到相册', en: 'Poster saved to gallery', ja: 'ポスターを写真に保存しました'),
       );
     } catch (e, stackTrace) {
       final elapsed = DateTime.now().difference(startTime).inMilliseconds;
@@ -1298,6 +1333,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         _t(
           zh: '保存失败。请检查系统照片权限后重试。',
           en: 'Save failed. Please check photo permission and try again.',
+          ja: '保存に失敗しました。写真権限を確認して再試行してください。',
         ),
         isError: true,
       );
@@ -1359,7 +1395,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
       _logger.log('Share panel opened successfully in ${elapsed}ms');
 
       _setStatus(
-        _t(zh: '海报已打开分享面板', en: 'Share panel opened'),
+        _t(zh: '海报已打开分享面板', en: 'Share panel opened', ja: '共有パネルを開きました'),
       );
 
       // Schedule cleanup of share temp file after delay
@@ -1386,6 +1422,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
           _t(
             zh: '图片分享失败，已回退为文本分享。',
             en: 'Image share failed. Fell back to text sharing.',
+            ja: '画像共有に失敗したため、テキスト共有へ切り替えました。',
           ),
         );
       } else {
@@ -1393,6 +1430,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
           _t(
             zh: '分享失败。请检查系统分享权限后重试。',
             en: 'Share failed. Please check system share permission and try again.',
+            ja: '共有に失敗しました。システムの共有設定を確認して再試行してください。',
           ),
           isError: true,
         );
@@ -1408,6 +1446,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
     return _t(
       zh: '我在${widget.appName}打出了 ${widget.totalScore}/${widget.maxScore}，来挑战我！',
       en: 'I scored ${widget.totalScore}/${widget.maxScore} in ${widget.appName}. Come challenge me!',
+      ja: '${widget.appName} で ${widget.totalScore}/${widget.maxScore} を記録しました。挑戦してみてください！',
     );
   }
 
@@ -1423,6 +1462,14 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
           '箭均分：$avgArrow | 组均分：$avgEnd\n'
           '稳定性：$consistency%\n'
           '来挑战我吧！';
+    }
+    if (Localizations.localeOf(context).languageCode == 'ja') {
+      return '${widget.appName} でトレーニングを完了しました\n'
+          '総得点: ${widget.totalScore}/${widget.maxScore}\n'
+          '得点率: $rate%\n'
+          '平均/射: $avgArrow | 平均/エンド: $avgEnd\n'
+          '安定性: $consistency%\n'
+          'ぜひ挑戦してください！';
     }
     return 'I finished a training session in ${widget.appName}\n'
         'Score: ${widget.totalScore}/${widget.maxScore}\n'
@@ -1456,8 +1503,8 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
   @override
   Widget build(BuildContext context) {
     final exportLabel = _isSaving
-        ? _t(zh: '正在保存海报...', en: 'Saving poster...')
-        : _t(zh: '正在准备分享...', en: 'Preparing share...');
+        ? _t(zh: '正在保存海报...', en: 'Saving poster...', ja: 'ポスターを保存中...')
+        : _t(zh: '正在准备分享...', en: 'Preparing share...', ja: '共有を準備中...');
     final now = DateTime.now();
     final dateString =
         '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
@@ -1473,7 +1520,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(zh: '成绩海报', en: 'Score Poster'),
+            _t(zh: '成绩海报', en: 'Score Poster', ja: 'スコアポスター'),
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -1485,6 +1532,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
             _t(
               zh: '一键保存或分享，让朋友来挑战你的成绩',
               en: 'Save or share and challenge your friends',
+              ja: '保存または共有して、あなたのスコアに挑戦してもらいましょう',
             ),
             style: const TextStyle(
               fontSize: 12,
@@ -1552,7 +1600,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      _t(zh: '本场总分', en: 'TOTAL SCORE'),
+                      _t(zh: '本场总分', en: 'TOTAL SCORE', ja: 'TOTAL SCORE'),
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
@@ -1593,27 +1641,27 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                       runSpacing: 8,
                       children: [
                         _posterMetric(
-                          _t(zh: '得分率', en: 'Rate'),
+                          _t(zh: '得分率', en: 'Rate', ja: '得点率'),
                           '${widget.scoreRate.toStringAsFixed(1)}%',
                         ),
                         _posterMetric(
-                          _t(zh: '箭均分', en: 'Avg'),
+                          _t(zh: '箭均分', en: 'Avg', ja: '平均'),
                           widget.averagePerArrow.toStringAsFixed(2),
                         ),
                         _posterMetric(
-                          _t(zh: '金区命中', en: 'Gold'),
+                          _t(zh: '金区命中', en: 'Gold', ja: 'ゴールド'),
                           '${widget.goldRate.toStringAsFixed(1)}%',
                         ),
                         _posterMetric(
-                          _t(zh: '组均分', en: 'Avg/End'),
+                          _t(zh: '组均分', en: 'Avg/End', ja: '平均/エンド'),
                           widget.averagePerEnd.toStringAsFixed(1),
                         ),
                         _posterMetric(
-                          _t(zh: '稳定性', en: 'Consistency'),
+                          _t(zh: '稳定性', en: 'Consistency', ja: '安定性'),
                           '${widget.consistencyIndex.toStringAsFixed(1)}%',
                         ),
                         _posterMetric(
-                          _t(zh: '总箭数', en: 'Arrows'),
+                          _t(zh: '总箭数', en: 'Arrows', ja: '総矢数'),
                           '${widget.totalArrows}',
                         ),
                       ],
@@ -1633,7 +1681,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                         children: [
                           Expanded(
                             child: Text(
-                              _t(zh: '最佳组', en: 'Best End'),
+                              _t(zh: '最佳组', en: 'Best End', ja: '最高エンド'),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 11,
@@ -1647,6 +1695,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                                 : _t(
                                     zh: '第${widget.bestEndNumber}组 ${widget.bestEndScore}分',
                                     en: 'End ${widget.bestEndNumber} ${widget.bestEndScore}',
+                                    ja: '第${widget.bestEndNumber}エンド ${widget.bestEndScore}点',
                                   ),
                             style: const TextStyle(
                               color: Colors.white,
@@ -1675,7 +1724,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                         children: [
                           Expanded(
                             child: Text(
-                              _t(zh: '后程趋势', en: 'Trend'),
+                              _t(zh: '后程趋势', en: 'Trend', ja: '後半推移'),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 11,
@@ -1688,10 +1737,12 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                                 ? _t(
                                     zh: '+${widget.trendDelta.toStringAsFixed(1)} 分',
                                     en: '+${widget.trendDelta.toStringAsFixed(1)}',
+                                    ja: '+${widget.trendDelta.toStringAsFixed(1)} 点',
                                   )
                                 : _t(
                                     zh: '${widget.trendDelta.toStringAsFixed(1)} 分',
                                     en: widget.trendDelta.toStringAsFixed(1),
+                                    ja: '${widget.trendDelta.toStringAsFixed(1)} 点',
                                   ),
                             style: const TextStyle(
                               color: Colors.white,
@@ -1722,6 +1773,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                               _t(
                                 zh: '${i + 1}组:${widget.endScores[i]}',
                                 en: 'E${i + 1}:${widget.endScores[i]}',
+                                ja: '${i + 1}E:${widget.endScores[i]}',
                               ),
                               style: const TextStyle(
                                 color: Colors.white,
@@ -1749,6 +1801,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                         _t(
                           zh: '我完成了 ${widget.endCount} 组射箭训练，来 ${widget.appName} 超越我！',
                           en: 'Finished ${widget.endCount} ends. Beat me in ${widget.appName}!',
+                          ja: '${widget.endCount} エンドのトレーニングを完了しました。${widget.appName} で挑戦してください！',
                         ),
                         style: const TextStyle(
                           color: Colors.white,
@@ -1775,7 +1828,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.download_rounded, size: 18),
-                  label: Text(_t(zh: '保存海报', en: 'Save Poster')),
+                  label: Text(_t(zh: '保存海报', en: 'Save Poster', ja: 'ポスターを保存')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textSlate900,
                     side: const BorderSide(color: AppColors.borderLight),
@@ -1800,7 +1853,7 @@ class _ResultPosterSectionState extends State<_ResultPosterSection> {
                           ),
                         )
                       : const Icon(Icons.share_rounded, size: 18),
-                  label: Text(_t(zh: '分享海报', en: 'Share Poster')),
+                  label: Text(_t(zh: '分享海报', en: 'Share Poster', ja: 'ポスターを共有')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

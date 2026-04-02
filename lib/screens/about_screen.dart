@@ -12,6 +12,7 @@ class AboutScreen extends StatelessWidget {
       'https://lucky-geranium-802.notion.site/314407f7a7018042a975fc1f44683f27?source=copy_link';
 
   Future<void> _openEmail(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final emailUri = Uri(
       scheme: 'mailto',
       path: _feedbackEmail,
@@ -20,16 +21,17 @@ class AboutScreen extends StatelessWidget {
       context: context,
       uri: emailUri,
       fallbackText: _feedbackEmail,
-      fallbackMessage: '邮箱地址已复制',
+      fallbackMessage: l10n.emailCopied,
     );
   }
 
   Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     await _openUrlOrCopy(
       context: context,
       uri: Uri.parse(_privacyPolicyUrl),
       fallbackText: _privacyPolicyUrl,
-      fallbackMessage: '隐私协议地址已复制',
+      fallbackMessage: l10n.privacyPolicyCopied,
     );
   }
 
@@ -111,12 +113,12 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _AboutItem(
-            title: 'App 名称',
+            title: l10n.aboutAppNameLabel,
             value: l10n.appName,
           ),
           const SizedBox(height: 10),
           _AboutItem(
-            title: '反馈联系方式',
+            title: l10n.aboutFeedbackLabel,
             value: _feedbackEmail,
             onTap: () => _openEmail(context),
             trailing:
@@ -124,7 +126,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _AboutItem(
-            title: '隐私协议',
+            title: l10n.aboutPrivacyPolicyLabel,
             value: _privacyPolicyUrl,
             onTap: () => _openPrivacyPolicy(context),
             trailing:

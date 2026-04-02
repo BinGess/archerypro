@@ -472,7 +472,12 @@ class DetailsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '本场比赛化解读', en: 'Competition-style Summary'),
+            _t(
+              context,
+              zh: '本场比赛化解读',
+              en: 'Competition-style Summary',
+              ja: '競技形式サマリー',
+            ),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -494,8 +499,8 @@ class DetailsScreen extends ConsumerWidget {
               Expanded(
                 child: _diagnosticMetric(
                   label: profile.projectionArrows == 60
-                      ? _t(context, zh: '投影60箭', en: 'Projected 60')
-                      : _t(context, zh: '投影72箭', en: 'Projected 72'),
+                      ? _t(context, zh: '投影60箭', en: 'Projected 60', ja: '60射換算')
+                      : _t(context, zh: '投影72箭', en: 'Projected 72', ja: '72射換算'),
                   value: projected.toStringAsFixed(1),
                   color: AppColors.primary,
                 ),
@@ -503,7 +508,7 @@ class DetailsScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '能力段位', en: 'Tier'),
+                  label: _t(context, zh: '能力段位', en: 'Tier', ja: 'ランク'),
                   value: tier,
                   color: AppColors.accentGold,
                 ),
@@ -515,7 +520,12 @@ class DetailsScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '质量密度(9+)', en: 'Quality density'),
+                  label: _t(
+                    context,
+                    zh: '质量密度(9+)',
+                    en: 'Quality density',
+                    ja: '高得点密度 (9+)',
+                  ),
                   value:
                       '${(session.qualityDensity * 100).toStringAsFixed(1)}%',
                   color: AppColors.success,
@@ -524,7 +534,12 @@ class DetailsScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '关键箭代理', en: 'Clutch proxy'),
+                  label: _t(
+                    context,
+                    zh: '关键箭代理',
+                    en: 'Clutch proxy',
+                    ja: '勝負矢指標',
+                  ),
                   value: session.clutchProxy.toStringAsFixed(2),
                   color: AppColors.accentRust,
                 ),
@@ -543,7 +558,12 @@ class DetailsScreen extends ConsumerWidget {
   ) {
     final collapseEnds = session.collapseEnds;
     final collapseText = collapseEnds.isEmpty
-        ? _t(context, zh: '无明显崩盘组', en: 'No clear collapse ends')
+        ? _t(
+            context,
+            zh: '无明显崩盘组',
+            en: 'No clear collapse ends',
+            ja: '明確な崩れエンドなし',
+          )
         : collapseEnds.join(', ');
 
     return Container(
@@ -558,7 +578,12 @@ class DetailsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '本场结构诊断', en: 'Structure Diagnosis'),
+            _t(
+              context,
+              zh: '本场结构诊断',
+              en: 'Structure Diagnosis',
+              ja: '今回の構造診断',
+            ),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -570,7 +595,7 @@ class DetailsScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '崩盘组率', en: 'Collapse rate'),
+                  label: _t(context, zh: '崩盘组率', en: 'Collapse rate', ja: '崩れエンド率'),
                   value: '${(session.collapseRate * 100).toStringAsFixed(1)}%',
                   color: AppColors.danger,
                 ),
@@ -578,7 +603,7 @@ class DetailsScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '恢复指数', en: 'Recovery index'),
+                  label: _t(context, zh: '恢复指数', en: 'Recovery index', ja: '回復指数'),
                   value: session.recoveryIndex.toStringAsFixed(2),
                   color: AppColors.success,
                 ),
@@ -586,7 +611,7 @@ class DetailsScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _diagnosticMetric(
-                  label: _t(context, zh: '后程保持', en: 'Endurance hold'),
+                  label: _t(context, zh: '后程保持', en: 'Endurance hold', ja: '後半維持率'),
                   value: '${session.enduranceHoldRate.toStringAsFixed(1)}%',
                   color: AppColors.primary,
                 ),
@@ -606,6 +631,7 @@ class DetailsScreen extends ConsumerWidget {
                 context,
                 zh: '崩盘组编号：$collapseText',
                 en: 'Collapse ends: $collapseText',
+                ja: '崩れエンド: $collapseText',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -637,7 +663,8 @@ class DetailsScreen extends ConsumerWidget {
         child: Text(
           _t(context,
               zh: '无落点数据，暂无法进行分层偏差分析。',
-              en: 'No hit positions for score-band bias analysis.'),
+              en: 'No hit positions for score-band bias analysis.',
+              ja: '着弾位置データがないため、得点帯別偏差分析は行えません。'),
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -666,7 +693,12 @@ class DetailsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '分层偏差与建议', en: 'Band Bias & Advice'),
+            _t(
+              context,
+              zh: '分层偏差与建议',
+              en: 'Band Bias & Advice',
+              ja: '得点帯別の偏差と提案',
+            ),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -676,19 +708,19 @@ class DetailsScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _bandSummaryRow(
             context,
-            label: _t(context, zh: '高分层(9+)', en: 'High(9+)'),
+            label: _t(context, zh: '高分层(9+)', en: 'High(9+)', ja: '高得点帯(9+)'),
             summary: highSummary,
           ),
           const SizedBox(height: 6),
           _bandSummaryRow(
             context,
-            label: _t(context, zh: '中分层(7-8)', en: 'Mid(7-8)'),
+            label: _t(context, zh: '中分层(7-8)', en: 'Mid(7-8)', ja: '中得点帯(7-8)'),
             summary: midSummary,
           ),
           const SizedBox(height: 6),
           _bandSummaryRow(
             context,
-            label: _t(context, zh: '低分层(<=6)', en: 'Low(<=6)'),
+            label: _t(context, zh: '低分层(<=6)', en: 'Low(<=6)', ja: '低得点帯(<=6)'),
             summary: lowSummary,
           ),
           const SizedBox(height: 10),
@@ -707,11 +739,13 @@ class DetailsScreen extends ConsumerWidget {
                       context,
                       zh: '高分层与低分层方向相反，优先排查撒放与动作一致性。',
                       en: 'High and low bands move oppositely. Check release consistency first.',
+                      ja: '高得点帯と低得点帯で方向が逆です。まずリリースの一貫性を確認してください。',
                     )
                   : _t(
                       context,
                       zh: '建议按主偏差方向做针对性修正（瞄具微调/动作稳定训练）。',
                       en: 'Use dominant bias direction for targeted correction drills.',
+                      ja: '主な偏差方向に合わせて、サイト微調整や安定化ドリルを行ってください。',
                     ),
               style: const TextStyle(
                 fontSize: 12,
@@ -731,7 +765,7 @@ class DetailsScreen extends ConsumerWidget {
     required _BandSummary summary,
   }) {
     final valueText = summary.total == 0
-        ? _t(context, zh: '样本不足', en: 'Not enough samples')
+        ? _t(context, zh: '样本不足', en: 'Not enough samples', ja: 'サンプル不足')
         : '${summary.directionText} ${summary.percentage.toStringAsFixed(1)}% (${summary.count}/${summary.total})';
     return Row(
       children: [
@@ -801,11 +835,11 @@ class DetailsScreen extends ConsumerWidget {
     Map<String, int> quadrantMap,
   ) {
     if (quadrantMap.isEmpty) {
-      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
     }
     final total = quadrantMap.values.fold<int>(0, (sum, c) => sum + c);
     if (total == 0) {
-      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
     }
     final dominant = quadrantMap.entries.reduce(
       (a, b) => a.value >= b.value ? a : b,
@@ -845,8 +879,20 @@ class DetailsScreen extends ConsumerWidget {
     }
   }
 
-  String _t(BuildContext context, {required String zh, required String en}) {
-    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  String _t(
+    BuildContext context, {
+    required String zh,
+    required String en,
+    required String ja,
+  }) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return zh;
+      case 'ja':
+        return ja;
+      default:
+        return en;
+    }
   }
 
   Widget _buildSimpleInfo(IconData icon, String text) {

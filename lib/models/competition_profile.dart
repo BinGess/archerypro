@@ -6,6 +6,7 @@ class CompetitionProfile {
   final String key;
   final String nameZh;
   final String nameEn;
+  final String nameJa;
   final int projectionArrows;
   final List<TierThreshold> _tierThresholds;
 
@@ -13,6 +14,7 @@ class CompetitionProfile {
     required this.key,
     required this.nameZh,
     required this.nameEn,
+    required this.nameJa,
     required this.projectionArrows,
     required List<TierThreshold> tierThresholds,
   }) : _tierThresholds = tierThresholds;
@@ -21,6 +23,7 @@ class CompetitionProfile {
     key: 'recurveOutdoor70',
     nameZh: '反曲弓 70m（72箭）',
     nameEn: 'Recurve 70m (72 arrows)',
+    nameJa: 'リカーブ 70m（72射）',
     projectionArrows: 72,
     tierThresholds: [
       TierThreshold('Purple', 680),
@@ -36,6 +39,7 @@ class CompetitionProfile {
     key: 'compoundOutdoor50',
     nameZh: '复合弓 50m（72箭）',
     nameEn: 'Compound 50m (72 arrows)',
+    nameJa: 'コンパウンド 50m（72射）',
     projectionArrows: 72,
     tierThresholds: [
       TierThreshold('Purple', 705),
@@ -51,6 +55,7 @@ class CompetitionProfile {
     key: 'indoor18',
     nameZh: '室内 18m（60箭）',
     nameEn: 'Indoor 18m (60 arrows)',
+    nameJa: 'インドア 18m（60射）',
     projectionArrows: 60,
     tierThresholds: [
       TierThreshold('Purple', 570),
@@ -66,6 +71,7 @@ class CompetitionProfile {
     key: 'generic',
     nameZh: '通用资格赛投影（72箭）',
     nameEn: 'Generic Qualification Projection (72 arrows)',
+    nameJa: '標準予選換算（72射）',
     projectionArrows: 72,
     tierThresholds: [
       TierThreshold('Purple', 680),
@@ -85,7 +91,11 @@ class CompetitionProfile {
   ];
 
   String displayName(String languageCode) =>
-      languageCode == 'zh' ? nameZh : nameEn;
+      switch (languageCode) {
+        'zh' => nameZh,
+        'ja' => nameJa,
+        _ => nameEn,
+      };
 
   String tierForProjection(double projectedScore) {
     for (final threshold in _tierThresholds) {

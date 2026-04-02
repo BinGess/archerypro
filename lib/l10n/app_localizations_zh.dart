@@ -289,13 +289,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chinese => '简体中文';
 
   @override
+  String get chineseDisplayName => '中文（简体）';
+
+  @override
   String get english => 'English';
+
+  @override
+  String get englishDisplayName => '英语';
+
+  @override
+  String get japanese => '日语';
+
+  @override
+  String get japaneseDisplayName => '日语';
 
   @override
   String get systemDefault => '跟随系统';
 
   @override
   String get about => '关于';
+
+  @override
+  String get feedbackAndPrivacy => '反馈与隐私';
+
+  @override
+  String get aboutAppNameLabel => 'App 名称';
+
+  @override
+  String get aboutFeedbackLabel => '反馈联系方式';
+
+  @override
+  String get aboutPrivacyPolicyLabel => '隐私协议';
 
   @override
   String get version => '版本';
@@ -347,6 +371,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get logsCleared => '日志已清空';
+
+  @override
+  String get emailCopied => '邮箱地址已复制';
+
+  @override
+  String get privacyPolicyCopied => '隐私协议地址已复制';
 
   // Messages
   @override

@@ -5,7 +5,7 @@ import 'app_localizations.dart';
 class AppLocalizationsEn extends AppLocalizations {
   // Common
   @override
-  String get appName => '射箭记录专业版';
+  String get appName => 'Archery Record Pro';
 
   @override
   String get ok => 'OK';
@@ -290,16 +290,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectLanguage => 'Select Language';
 
   @override
-  String get chinese => '简体中文';
+  String get chinese => 'Chinese';
+
+  @override
+  String get chineseDisplayName => 'Simplified Chinese';
 
   @override
   String get english => 'English';
+
+  @override
+  String get englishDisplayName => 'English';
+
+  @override
+  String get japanese => 'Japanese';
+
+  @override
+  String get japaneseDisplayName => 'Japanese';
 
   @override
   String get systemDefault => 'System Default';
 
   @override
   String get about => 'About';
+
+  @override
+  String get feedbackAndPrivacy => 'Feedback & Privacy';
+
+  @override
+  String get aboutAppNameLabel => 'App Name';
+
+  @override
+  String get aboutFeedbackLabel => 'Feedback';
+
+  @override
+  String get aboutPrivacyPolicyLabel => 'Privacy Policy';
 
   @override
   String get version => 'Version';
@@ -353,6 +377,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logsCleared => 'Logs cleared';
+
+  @override
+  String get emailCopied => 'Email address copied';
+
+  @override
+  String get privacyPolicyCopied => 'Privacy policy link copied';
 
   // Messages
   @override

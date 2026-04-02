@@ -421,10 +421,15 @@ class AnalysisScreen extends ConsumerWidget {
   ) {
     final profileName = stats.competitionProfile
             ?.displayName(Localizations.localeOf(context).languageCode) ??
-        _t(context, zh: '通用资格赛投影', en: 'Generic qualification');
+        _t(
+          context,
+          zh: '通用资格赛投影',
+          en: 'Generic qualification',
+          ja: '標準予選換算',
+        );
     final projectionLabel = stats.competitionProfile?.projectionArrows == 60
-        ? _t(context, zh: '投影60箭', en: 'Projected 60')
-        : _t(context, zh: '投影72箭', en: 'Projected 72');
+        ? _t(context, zh: '投影60箭', en: 'Projected 60', ja: '60射換算')
+        : _t(context, zh: '投影72箭', en: 'Projected 72', ja: '72射換算');
 
     return ArcheryCard(
       child: Column(
@@ -450,7 +455,12 @@ class AnalysisScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _t(context, zh: '赛事准备度', en: 'Competition Readiness'),
+                      _t(
+                        context,
+                        zh: '赛事准备度',
+                        en: 'Competition Readiness',
+                        ja: '競技準備度',
+                      ),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -499,7 +509,12 @@ class AnalysisScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '高价值命中(9+)', en: 'High value (9+)'),
+                  label: _t(
+                    context,
+                    zh: '高价值命中(9+)',
+                    en: 'High value (9+)',
+                    ja: '高得点率 (9+)',
+                  ),
                   value: '${stats.highValueRate.toStringAsFixed(1)}%',
                   color: AppColors.accentGold,
                 ),
@@ -511,7 +526,7 @@ class AnalysisScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: 'X环率', en: 'X rate'),
+                  label: _t(context, zh: 'X环率', en: 'X rate', ja: 'X率'),
                   value: '${stats.xRate.toStringAsFixed(1)}%',
                   color: AppColors.success,
                 ),
@@ -519,7 +534,7 @@ class AnalysisScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '脱靶率', en: 'Miss rate'),
+                  label: _t(context, zh: '脱靶率', en: 'Miss rate', ja: 'ミス率'),
                   value: '${stats.missRate.toStringAsFixed(1)}%',
                   color: AppColors.danger,
                 ),
@@ -541,7 +556,12 @@ class AnalysisScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '波动与抗压', en: 'Volatility & Resilience'),
+            _t(
+              context,
+              zh: '波动与抗压',
+              en: 'Volatility & Resilience',
+              ja: '変動とプレッシャー耐性',
+            ),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -553,7 +573,12 @@ class AnalysisScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '组间波动(σ)', en: 'End volatility'),
+                  label: _t(
+                    context,
+                    zh: '组间波动(σ)',
+                    en: 'End volatility',
+                    ja: 'エンド間変動 (σ)',
+                  ),
                   value: stats.endVolatility.toStringAsFixed(2),
                   color: AppColors.accentRust,
                 ),
@@ -561,7 +586,12 @@ class AnalysisScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '崩盘组率', en: 'Collapse rate'),
+                  label: _t(
+                    context,
+                    zh: '崩盘组率',
+                    en: 'Collapse rate',
+                    ja: '崩れエンド率',
+                  ),
                   value: '${(stats.collapseRate * 100).toStringAsFixed(1)}%',
                   color: AppColors.danger,
                 ),
@@ -573,7 +603,12 @@ class AnalysisScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '恢复指数', en: 'Recovery index'),
+                  label: _t(
+                    context,
+                    zh: '恢复指数',
+                    en: 'Recovery index',
+                    ja: '回復指数',
+                  ),
                   value: stats.recoveryIndex.toStringAsFixed(2),
                   color: AppColors.success,
                 ),
@@ -581,7 +616,12 @@ class AnalysisScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _compactMetric(
-                  label: _t(context, zh: '后程保持', en: 'Endurance hold'),
+                  label: _t(
+                    context,
+                    zh: '后程保持',
+                    en: 'Endurance hold',
+                    ja: '後半維持率',
+                  ),
                   value: '${stats.enduranceHoldRate.toStringAsFixed(1)}%',
                   color: AppColors.primary,
                 ),
@@ -616,7 +656,12 @@ class AnalysisScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t(context, zh: '分层偏差分析', en: 'Bias by Score Band'),
+            _t(
+              context,
+              zh: '分层偏差分析',
+              en: 'Bias by Score Band',
+              ja: '得点帯別の偏差分析',
+            ),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -626,19 +671,19 @@ class AnalysisScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _bandRow(
             context,
-            label: _t(context, zh: '高分层 (9+)', en: 'High (9+)'),
+            label: _t(context, zh: '高分层 (9+)', en: 'High (9+)', ja: '高得点帯 (9+)'),
             summary: highSummary,
           ),
           const SizedBox(height: 8),
           _bandRow(
             context,
-            label: _t(context, zh: '中分层 (7-8)', en: 'Mid (7-8)'),
+            label: _t(context, zh: '中分层 (7-8)', en: 'Mid (7-8)', ja: '中得点帯 (7-8)'),
             summary: midSummary,
           ),
           const SizedBox(height: 8),
           _bandRow(
             context,
-            label: _t(context, zh: '低分层 (<=6)', en: 'Low (<=6)'),
+            label: _t(context, zh: '低分层 (<=6)', en: 'Low (<=6)', ja: '低得点帯 (<=6)'),
             summary: lowSummary,
           ),
           if (oppositeBiasWarning) ...[
@@ -654,6 +699,7 @@ class AnalysisScreen extends ConsumerWidget {
                   context,
                   zh: '高分层与低分层偏差方向相反，优先排查释放一致性与动作稳定性。',
                   en: 'High and low bands bias in opposite directions. Check release consistency first.',
+                  ja: '高得点帯と低得点帯で偏差方向が逆です。まずリリースの一貫性と動作安定性を確認してください。',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -689,7 +735,7 @@ class AnalysisScreen extends ConsumerWidget {
         Expanded(
           child: Text(
             summary.total == 0
-                ? _t(context, zh: '样本不足', en: 'Not enough samples')
+                ? _t(context, zh: '样本不足', en: 'Not enough samples', ja: 'サンプル不足')
                 : '${summary.directionText} ${summary.percentage.toStringAsFixed(1)}% (${summary.count}/${summary.total})',
             style: const TextStyle(
               fontSize: 12,
@@ -707,11 +753,11 @@ class AnalysisScreen extends ConsumerWidget {
     Map<String, int> quadrantMap,
   ) {
     if (quadrantMap.isEmpty) {
-      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
     }
     final total = quadrantMap.values.fold<int>(0, (sum, c) => sum + c);
     if (total == 0) {
-      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A'));
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
     }
 
     final dominant = quadrantMap.entries.reduce(
@@ -788,8 +834,20 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-  String _t(BuildContext context, {required String zh, required String en}) {
-    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  String _t(
+    BuildContext context, {
+    required String zh,
+    required String en,
+    required String ja,
+  }) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return zh;
+      case 'ja':
+        return ja;
+      default:
+        return en;
+    }
   }
 
   /// Build AI Coach analysis section

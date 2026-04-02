@@ -372,11 +372,14 @@ class DashboardScreen extends ConsumerWidget {
     final monthFormat = DateFormat.MMM(localeTag);
 
     final isChinese = localeTag.startsWith('zh');
-    final String monthPart =
-        isChinese ? '${date.month}月' : monthFormat.format(date);
+    final isJapanese = localeTag.startsWith('ja');
+    final String monthPart = isChinese
+        ? '${date.month}月'
+        : monthFormat.format(date);
     final String dayPart = date.day.toString();
-    final String dateLabel =
-        isChinese ? '$monthPart$dayPart日' : '$monthPart $dayPart';
+    final String dateLabel = (isChinese || isJapanese)
+        ? '$monthPart$dayPart日'
+        : '$monthPart $dayPart';
     final normalizedPercentage = (percentage.isNaN || percentage.isInfinite)
         ? 0.0
         : percentage.clamp(0.0, 100.0);
@@ -463,7 +466,11 @@ class DashboardScreen extends ConsumerWidget {
                                     size: 11, color: AppColors.accentRust),
                                 const SizedBox(width: 3),
                                 Text(
-                                  isChinese ? '最佳记录' : 'Best',
+                                  isChinese
+                                      ? '最佳记录'
+                                      : (isJapanese
+                                          ? 'ベスト'
+                                          : l10n.competitionBest),
                                   style: AppTextStyles.micro.copyWith(
                                     color: AppColors.accentRust,
                                     fontWeight: FontWeight.w800,

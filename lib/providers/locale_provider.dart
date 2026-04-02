@@ -31,6 +31,7 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
   static const String _systemDefaultKey = 'use_system_locale';
   static const Locale zhLocale = Locale('zh', 'CN');
   static const Locale enLocale = Locale('en', 'US');
+  static const Locale jaLocale = Locale('ja', 'JP');
   final Locale Function() _systemLocaleGetter;
   static Locale _platformLocale() => PlatformDispatcher.instance.locale;
 
@@ -105,7 +106,7 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
     state = state.copyWith(locale: resolvedLocale);
   }
 
-  /// Normalize locale to supported locales (zh/en only).
+  /// Normalize locale to supported locales (zh/en/ja).
   static Locale resolveSupportedLocale(Locale systemLocale) {
     final languageCode = systemLocale.languageCode.toLowerCase();
 
@@ -114,6 +115,9 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
     }
     if (languageCode == 'en') {
       return enLocale;
+    }
+    if (languageCode == 'ja') {
+      return jaLocale;
     }
 
     // Default fallback for unsupported system locales.

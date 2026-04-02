@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_localizations_zh.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_ja.dart';
 
 /// Base class for app localizations
 abstract class AppLocalizations {
@@ -113,9 +114,17 @@ abstract class AppLocalizations {
   String get monthlyGoalInvalidValue;
   String get selectLanguage;
   String get chinese;
+  String get chineseDisplayName;
   String get english;
+  String get englishDisplayName;
+  String get japanese;
+  String get japaneseDisplayName;
   String get systemDefault;
   String get about;
+  String get feedbackAndPrivacy;
+  String get aboutAppNameLabel;
+  String get aboutFeedbackLabel;
+  String get aboutPrivacyPolicyLabel;
   String get version;
   String get privacyPolicy;
   String get termsOfService;
@@ -133,6 +142,8 @@ abstract class AppLocalizations {
   String get logsLocalOnlyHint;
   String get noLogsAvailable;
   String get logsCleared;
+  String get emailCopied;
+  String get privacyPolicyCopied;
 
   // Messages
   String get loading;
@@ -356,6 +367,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = [
     Locale('zh', 'CN'),
     Locale('en', 'US'),
+    Locale('ja', 'JP'),
   ];
 }
 
@@ -365,7 +377,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) {
-    return ['zh', 'en'].contains(locale.languageCode);
+    return ['zh', 'en', 'ja'].contains(locale.languageCode);
   }
 
   @override
@@ -375,6 +387,8 @@ class _AppLocalizationsDelegate
         return AppLocalizationsZh();
       case 'en':
         return AppLocalizationsEn();
+      case 'ja':
+        return AppLocalizationsJa();
       default:
         return AppLocalizationsZh();
     }

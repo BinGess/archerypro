@@ -280,7 +280,7 @@ class SettingsScreen extends ConsumerWidget {
             context: context,
             ref: ref,
             title: l10n.chinese,
-            subtitle: '简体中文',
+            subtitle: l10n.chineseDisplayName,
             isSelected: !localeState.isSystemDefault &&
                 localeState.locale.languageCode == 'zh',
             onTap: () async {
@@ -294,13 +294,27 @@ class SettingsScreen extends ConsumerWidget {
             context: context,
             ref: ref,
             title: l10n.english,
-            subtitle: 'English',
+            subtitle: l10n.englishDisplayName,
             isSelected: !localeState.isSystemDefault &&
                 localeState.locale.languageCode == 'en',
             onTap: () async {
               await ref
                   .read(localeProvider.notifier)
                   .setLocale(const Locale('en'));
+            },
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _buildLanguageOption(
+            context: context,
+            ref: ref,
+            title: l10n.japanese,
+            subtitle: l10n.japaneseDisplayName,
+            isSelected: !localeState.isSystemDefault &&
+                localeState.locale.languageCode == 'ja',
+            onTap: () async {
+              await ref
+                  .read(localeProvider.notifier)
+                  .setLocale(const Locale('ja'));
             },
             isLast: true,
           ),
@@ -505,9 +519,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      '反馈&隐私协议',
-                      style: TextStyle(
+                    Text(
+                      l10n.feedbackAndPrivacy,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSlate500,
                       ),
@@ -527,16 +541,19 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   String _getSystemLanguageName(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final resolvedLocale = LocaleNotifier.resolveSupportedLocale(
       View.of(context).platformDispatcher.locale,
     );
     switch (resolvedLocale.languageCode) {
       case 'zh':
-        return '简体中文';
+        return l10n.chineseDisplayName;
       case 'en':
-        return 'English';
+        return l10n.englishDisplayName;
+      case 'ja':
+        return l10n.japaneseDisplayName;
       default:
-        return 'English';
+        return l10n.englishDisplayName;
     }
   }
 }

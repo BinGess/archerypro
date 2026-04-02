@@ -344,13 +344,25 @@ class _CompetitionSetupSheetState extends State<CompetitionSetupSheet> {
   }
 
   String _secondsText(BuildContext context, int seconds) {
-    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    return isChinese ? '$seconds秒' : '${seconds}s';
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return '$seconds秒';
+      case 'ja':
+        return '$seconds秒';
+      default:
+        return '${seconds}s';
+    }
   }
 
   String _estimateMinutesText(BuildContext context, int minutes) {
-    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    return isChinese ? '~$minutes分钟' : '~${minutes}min';
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return '~$minutes分钟';
+      case 'ja':
+        return '約$minutes分';
+      default:
+        return '~${minutes}min';
+    }
   }
 
   int _resolveEffectiveTime() {
