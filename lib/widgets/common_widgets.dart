@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
 
 class ArcheryCard extends StatelessWidget {
   final Widget child;
@@ -10,23 +12,27 @@ class ArcheryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: padding ?? const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        child: Ink(
+          padding: padding ?? AppSpacing.card,
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            border: Border.all(color: AppColors.borderLight),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadowSoft,
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: child,
         ),
-        child: child,
       ),
     );
   }
@@ -54,11 +60,9 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: AppTextStyles.micro.copyWith(
           color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -81,20 +85,26 @@ class CustomCurvePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [color.withOpacity(0.15), color.withOpacity(0.0)],
+        colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.0)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final path = Path();
     path.moveTo(0, size.height * 0.8);
     path.cubicTo(
-      size.width * 0.25, size.height * 0.8,
-      size.width * 0.25, size.height * 0.2,
-      size.width * 0.5, size.height * 0.5,
+      size.width * 0.25,
+      size.height * 0.8,
+      size.width * 0.25,
+      size.height * 0.2,
+      size.width * 0.5,
+      size.height * 0.5,
     );
     path.cubicTo(
-      size.width * 0.75, size.height * 0.8,
-      size.width * 0.75, size.height * 0.1,
-      size.width, size.height * 0.3,
+      size.width * 0.75,
+      size.height * 0.8,
+      size.width * 0.75,
+      size.height * 0.1,
+      size.width,
+      size.height * 0.3,
     );
 
     canvas.drawPath(path, paint);
@@ -103,13 +113,22 @@ class CustomCurvePainter extends CustomPainter {
     fillPath.lineTo(size.width, size.height);
     fillPath.lineTo(0, size.height);
     fillPath.close();
-    
-    final fillPaintStyle = Paint()..style = PaintingStyle.fill..shader = fillPaint.shader;
+
+    final fillPaintStyle = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = fillPaint.shader;
     canvas.drawPath(fillPath, fillPaintStyle);
 
     // Draw dot
-    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.45), 3, Paint()..color = Colors.white);
-    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.45), 3, Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = 2);
+    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.45), 3,
+        Paint()..color = Colors.white);
+    canvas.drawCircle(
+        Offset(size.width * 0.75, size.height * 0.45),
+        3,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2);
   }
 
   @override

@@ -1,86 +1,317 @@
-import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../widgets/common_widgets.dart';
+import 'dart:math';
 
-class ScoringScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../theme/app_colors.dart';
+import '../providers/scoring_provider.dart';
+import '../providers/session_provider.dart';
+import '../models/equipment.dart';
+import '../models/training_session.dart';
+import '../models/end.dart';
+import '../models/arrow.dart';
+import '../models/competition_settings.dart';
+import '../widgets/target_face_painter.dart';
+import '../widgets/competition/competition_results_view.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/competition_provider.dart';
+import '../utils/constants.dart';
+
+class ScoringScreen extends ConsumerStatefulWidget {
   const ScoringScreen({super.key});
 
   @override
-  State<ScoringScreen> createState() => _ScoringScreenState();
+  ConsumerState<ScoringScreen> createState() => _ScoringScreenState();
 }
 
-class _ScoringScreenState extends State<ScoringScreen> {
-  bool isTargetView = false;
+class _ScoringScreenState extends ConsumerState<ScoringScreen> {
+  static const double _targetCanvasMinSize = 260.0;
+  static const double _targetCanvasMaxSize = 360.0;
+  static const double _targetPanelExtraHeight = 120.0;
+  static const double _arrowMarkerSize = 14.0;
+  static const double _ringLineTolerance = 0.0;
+  static const double _xRingLineTolerance = 0.0;
+
+  // List of temporary ripple effects
+  final List<RippleModel> _ripples = [];
+  final ScrollController _sessionListController = ScrollController();
+  final Map<String, GlobalKey> _scoreFieldKeys = <String, GlobalKey>{};
+  int _lastFocusedEndIndex = -1;
+  int _lastFocusedArrowIndex = -1;
+  bool _lastIsTargetView = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start a new session if none exists
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final scoringState = ref.read(scoringProvider);
+      if (!scoringState.hasActiveSession) {
+        _startNewSession();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionListController.dispose();
+    super.dispose();
+  }
+
+  GlobalKey _getScoreFieldKey(int endIndex, int arrowIndex) {
+    final id = '$endIndex-$arrowIndex';
+    return _scoreFieldKeys.putIfAbsent(id, GlobalKey.new);
+  }
+
+  Future<void> _scrollListNearFocusedEnd(int focusedEndIndex) async {
+    if (!_sessionListController.hasClients) return;
+
+    final currentState = ref.read(scoringProvider);
+    final endsLength = currentState.currentSession?.ends.length ?? 0;
+    final totalRows = max<int>(currentState.maxEnds, endsLength) + 1;
+    if (totalRows <= 1) return;
+
+    final fraction = (focusedEndIndex / (totalRows - 1)).clamp(0.0, 1.0);
+    final position = _sessionListController.position;
+    final targetOffset = (position.maxScrollExtent * fraction)
+        .clamp(0.0, position.maxScrollExtent);
+
+    await _sessionListController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _ensureFocusedBoxVisible(dynamic scoringState) {
+    if (scoringState.isTargetView || !mounted) return;
+
+    final targetKey = _getScoreFieldKey(
+      scoringState.focusedEndIndex,
+      scoringState.focusedArrowIndex,
+    );
+    final focusedEndIndex = scoringState.focusedEndIndex as int;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final initialContext = targetKey.currentContext;
+      if (initialContext != null) {
+        Scrollable.ensureVisible(
+          initialContext,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: 0.2,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        );
+        return;
+      }
+
+      _scrollListNearFocusedEnd(focusedEndIndex).then((_) {
+        if (!mounted) return;
+        if (_sessionListController.hasClients) {
+          final currentState = ref.read(scoringProvider);
+          final isNearTail = focusedEndIndex >= currentState.maxEnds - 2;
+          if (isNearTail) {
+            final maxOffset = _sessionListController.position.maxScrollExtent;
+            _sessionListController.animateTo(
+              maxOffset,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        }
+      });
+    });
+  }
+
+  void _addRipple(Offset position) {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    setState(() {
+      _ripples.add(RippleModel(id: id, position: position));
+    });
+
+    // Auto remove after animation
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() {
+          _ripples.removeWhere((r) => r.id == id);
+        });
+      }
+    });
+  }
+
+  double _resolveTargetCanvasSize(BuildContext context) {
+    final availableWidth = MediaQuery.sizeOf(context).width - 32.0;
+    return availableWidth.clamp(_targetCanvasMinSize, _targetCanvasMaxSize);
+  }
+
+  Offset _clampToTargetCanvas(Offset position, double canvasSize) {
+    return Offset(
+      position.dx.clamp(0.0, canvasSize),
+      position.dy.clamp(0.0, canvasSize),
+    );
+  }
+
+  void _startNewSession() {
+    final l10n = AppLocalizations.of(context);
+    ref.read(scoringProvider.notifier).startNewSession(
+          equipment: Equipment(
+            bowType: BowType.compound,
+            bowName: l10n.myBowName(l10n.bowCompound),
+          ),
+          distance: 18.0,
+          targetFaceSize: 40,
+          environment: EnvironmentType.indoor,
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scoringState = ref.watch(scoringProvider);
+    final l10n = AppLocalizations.of(context);
+
+    if (!scoringState.hasActiveSession) {
+      return _buildEmptyState();
+    }
+
+    final focusChanged = _lastFocusedEndIndex != scoringState.focusedEndIndex ||
+        _lastFocusedArrowIndex != scoringState.focusedArrowIndex ||
+        _lastIsTargetView != scoringState.isTargetView;
+    if (focusChanged) {
+      _ensureFocusedBoxVisible(scoringState);
+      _lastFocusedEndIndex = scoringState.focusedEndIndex;
+      _lastFocusedArrowIndex = scoringState.focusedArrowIndex;
+      _lastIsTargetView = scoringState.isTargetView;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Real-time Scoring', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        title: Text(l10n.scoring),
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new), onPressed: () {}),
-        actions: [IconButton(icon: const Icon(Icons.analytics_outlined), onPressed: () {})],
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => _confirmExit(context),
+        ),
       ),
       body: Column(
         children: [
-          // Header Stats
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(child: _buildHeaderStat('CURRENT END', '4', '/10', Colors.white, AppColors.textSlate900)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildHeaderStat('TOTAL SCORE', '284', '', AppColors.primary, Colors.white)),
-              ],
-            ),
-          ),
-          
-          // Toggle
+          // Header Stats & Toggle
           Container(
-            height: 44,
-            width: 260,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: AppColors.backgroundLight,
             child: Row(
               children: [
-                _buildToggleBtn('Target View', Icons.track_changes, isTargetView, () => setState(() => isTargetView = true)),
-                _buildToggleBtn('Grid View', Icons.grid_view, !isTargetView, () => setState(() => isTargetView = false)),
+                Expanded(
+                  child: _buildHeaderStat(
+                    l10n.currentEnd,
+                    '${scoringState.currentEndNumber}',
+                    '/${scoringState.maxEnds}',
+                    Colors.white,
+                    AppColors.textSlate900,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildHeaderStat(
+                    l10n.totalScore,
+                    '${scoringState.totalScore}',
+                    '',
+                    AppColors.primary,
+                    Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
-          
+
+          // Scrollable List Area
           Expanded(
-            child: isTargetView ? _buildTargetView() : _buildGridView(),
+            child: _buildSessionList(scoringState),
           ),
-          
-          if (!isTargetView) _buildKeypad(),
-          if (isTargetView) _buildTargetFooter(),
+
+          // Fixed Bottom Panel
+          if (!scoringState.isTargetView)
+            _buildKeypad()
+          else
+            _buildTargetPanel(scoringState),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderStat(String label, String value, String sub, Color bg, Color text) {
+  Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_circle_outline,
+                size: 64, color: AppColors.primary),
+            const SizedBox(height: 24),
+            Text(l10n.noActiveTraining,
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSlate900)),
+            const SizedBox(height: 8),
+            Text(l10n.clickStartScoring,
+                style: const TextStyle(color: AppColors.textSlate500)),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _startNewSession,
+              icon: const Icon(Icons.play_arrow),
+              label: Text(l10n.startTraining),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderStat(
+      String label, String value, String sub, Color bg, Color text) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: text.withOpacity(0.6))),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: text.withValues(alpha: 0.6))),
           const SizedBox(height: 4),
           RichText(
             text: TextSpan(
               children: [
-                TextSpan(text: value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: text)),
-                TextSpan(text: " $sub", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text.withOpacity(0.5))),
+                TextSpan(
+                    text: value,
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: text)),
+                TextSpan(
+                    text: " $sub",
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: text.withValues(alpha: 0.5))),
               ],
             ),
           ),
@@ -89,278 +320,939 @@ class _ScoringScreenState extends State<ScoringScreen> {
     );
   }
 
-  Widget _buildToggleBtn(String label, IconData icon, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : [],
-          ),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isActive ? AppColors.primary : AppColors.textSlate500),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isActive ? AppColors.primary : AppColors.textSlate500)),
-            ],
-          ),
-        ),
-      ),
+  Widget _buildSessionList(dynamic scoringState) {
+    final ends = scoringState.currentSession?.ends ?? [];
+    final maxEnds = scoringState.maxEnds;
+
+    // We want to render a list of cards, one for each end.
+    // We should render up to maxEnds (or more if they added extra).
+    // The number of items = max(maxEnds, ends.length) + (has extra button ? 1 : 0)
+    // Actually, we just iterate up to maxEnds, filling with placeholder if end doesn't exist.
+    // If ends.length > maxEnds, we show all of them.
+    final displayCount = max<int>(maxEnds, ends.length);
+
+    return ListView.builder(
+      controller: _sessionListController,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: displayCount + 1, // +1 for "One More End" button
+      itemBuilder: (context, index) {
+        if (index == displayCount) {
+          // Footer Button - Always show "One More End"
+          return Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: _oneMoreEndButton(),
+          );
+        }
+
+        final endNumber = index + 1;
+        // Find existing end data if available
+        final End? endData = index < ends.length ? ends[index] : null;
+
+        // Determine status
+        final isCurrent = index == scoringState.focusedEndIndex;
+        final isPast = index < scoringState.focusedEndIndex;
+        final isFuture =
+            index > scoringState.focusedEndIndex && endData == null;
+
+        return _buildEndCard(
+          endNumber: endNumber,
+          endData: endData,
+          isCurrent: isCurrent,
+          isPast: isPast,
+          isFuture: isFuture,
+          scoringState: scoringState,
+          endIndex: index,
+        );
+      },
     );
   }
 
-  Widget _buildGridView() {
-    return ListView(
+  Widget _buildEndCard({
+    required int endNumber,
+    required End? endData,
+    required bool isCurrent,
+    required bool isPast,
+    required bool isFuture,
+    required dynamic scoringState,
+    required int endIndex,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    // Calculate total score for this end
+    final endScore = endData?.totalScore ?? 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      children: [
-        // Current End
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.green.withOpacity(0.3), width: 2),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-          ),
-          child: Column(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isCurrent
+            ? Border.all(
+                color: AppColors.primary.withValues(alpha: 0.5), width: 1.5)
+            : Border.all(color: Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: isFuture ? 0.02 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('END 4 RECORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
-                  Text('27 pts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _scoreBox(10, AppColors.targetGold, Colors.black),
-                  _scoreBox(9, AppColors.targetGold, Colors.black),
-                  _scoreBox(8, AppColors.targetRed, Colors.white),
-                  _emptyScoreBox(),
-                  _emptyScoreBox(),
-                  _emptyScoreBox(),
-                ],
-              ),
+              Text(l10n.endLabel(endNumber.toString()),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isFuture
+                          ? AppColors.textSlate300
+                          : AppColors.textSlate900)),
+              if (!isFuture)
+                Text(l10n.scoreLabel(endScore.toString()),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary)),
             ],
           ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(child: Text('HISTORY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400, letterSpacing: 1.5))),
-        ),
-        _buildHistoryRow('END 3', '54', [10, 9, 9, 9, 9, 8]),
-        const SizedBox(height: 12),
-        _buildHistoryRow('END 2', '52', [9, 9, 9, 9, 8, 8]),
-      ],
-    );
-  }
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(scoringState.arrowsPerEnd, (arrowIndex) {
+              // Get arrow data if available
+              Arrow? arrow;
+              if (endData != null && arrowIndex < endData.arrows.length) {
+                arrow = endData.arrows[arrowIndex];
+              }
 
-  Widget _buildTargetView() {
-    return Center(
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          // Mini score strip
-           Container(
-             margin: const EdgeInsets.symmetric(horizontal: 20),
-             padding: const EdgeInsets.all(12),
-             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight)),
-             child: Row(
-               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-               children: [
-                 _scoreBoxSmall(10, AppColors.targetGold),
-                 _scoreBoxSmall(9, AppColors.targetGold),
-                 _scoreBoxSmall(8, AppColors.targetRed),
-                 _scoreBoxSmallEmpty(),
-                 _scoreBoxSmallEmpty(),
-                 _scoreBoxSmallEmpty(),
-               ],
-             ),
-           ),
-           const SizedBox(height: 20),
-           // Target Face
-           SizedBox(
-             width: 320, height: 320,
-             child: CustomPaint(
-               painter: TargetFacePainter(),
-               child: Stack(
-                 children: [
-                    _arrowMarker(150, 140),
-                    _arrowMarker(170, 160),
-                    _arrowMarker(160, 150),
-                 ],
-               ),
-             ),
-           ),
+              final isFocused = (endIndex == scoringState.focusedEndIndex) &&
+                  (arrowIndex == scoringState.focusedArrowIndex);
+              final boxKey = _getScoreFieldKey(endIndex, arrowIndex);
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (endIndex <=
+                        (scoringState.currentSession?.ends.length ?? 0)) {
+                      ref
+                          .read(scoringProvider.notifier)
+                          .setFocus(endIndex, arrowIndex);
+                    }
+                  },
+                  child: Container(
+                    key: boxKey,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isFocused
+                          ? AppColors.primary.withValues(alpha: 0.05)
+                          : AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isFocused
+                          ? Border.all(color: AppColors.primary, width: 2)
+                          : Border.all(color: Colors.transparent),
+                    ),
+                    child: Text(
+                      arrow != null
+                          ? arrow.displayScore
+                          : (isFuture ? '' : '${arrowIndex + 1}.'),
+                      style: TextStyle(
+                        fontSize: arrow != null ? 18 : 12,
+                        fontWeight:
+                            arrow != null ? FontWeight.w900 : FontWeight.normal,
+                        color: arrow != null
+                            ? AppColors.textSlate900
+                            : AppColors.textSlate300,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
         ],
       ),
     );
   }
-  
-  Widget _arrowMarker(double top, double left) {
+
+  Widget _buildTargetPanel(dynamic scoringState) {
+    final l10n = AppLocalizations.of(context);
+    final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
+    final bowType = scoringState.currentSession?.equipment.bowType;
+    final targetCanvasSize = _resolveTargetCanvasSize(context);
+    final targetRadius = targetCanvasSize / 2;
+    final targetPanelHeight = targetCanvasSize + _targetPanelExtraHeight;
+
+    // WA rule: triple face = 40cm target + non-compound bow (recurve/barebow/longbow)
+    // Compound ALWAYS uses full single face, regardless of target size
+    final isTripleFace = targetFaceSize == 40 && bowType != BowType.compound;
+
+    // Compound bow always uses inner-10 scoring (X ring only scores 10)
+    final isCompoundIndoor = bowType == BowType.compound;
+
+    // Keep marker rendering on the exact same coordinate system as score
+    // calculation to avoid "tap location vs recorded value" drift.
+    // Full face uses display radius, triple face maps 2x.
+    final double baseMarkerRadius = targetRadius;
+    final double markerDisplayRadius =
+        isTripleFace ? baseMarkerRadius * 2.0 : baseMarkerRadius;
+
+    return Container(
+      height: targetPanelHeight,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          // Target Face
+          Expanded(
+            child: Center(
+              child: Listener(
+                onPointerUp: (event) {
+                  final tapPosition = _clampToTargetCanvas(
+                      event.localPosition, targetCanvasSize);
+                  _handleTargetTap(
+                    tapPosition,
+                    targetRadius: targetRadius,
+                  );
+                },
+                child: SizedBox(
+                  width: targetCanvasSize,
+                  height: targetCanvasSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Target face
+                      CustomPaint(
+                        size: Size(targetCanvasSize, targetCanvasSize),
+                        painter: TargetFacePainter(
+                          isTripleFace: isTripleFace,
+                          isCompoundIndoor: isCompoundIndoor,
+                        ),
+                      ),
+
+                      // Arrow markers for the currently focused end
+                      if (scoringState.focusedEndIndex <
+                          (scoringState.currentSession?.ends.length ?? 0))
+                        ...scoringState.currentSession!
+                            .ends[scoringState.focusedEndIndex].arrows
+                            .where((a) => a.position != null)
+                            .map((arrow) {
+                          final pos = arrow.position!;
+                          // pos is stored in full-target normalized coords
+                          // map to display: center(150) + pos * markerDisplayRadius
+                          final double left = targetRadius +
+                              pos.dx * markerDisplayRadius -
+                              (_arrowMarkerSize / 2);
+                          final double top = targetRadius +
+                              pos.dy * markerDisplayRadius -
+                              (_arrowMarkerSize / 2);
+                          return _arrowMarker(top, left, arrow.displayScore);
+                        }).toList(),
+
+                      // Ripple effects
+                      ..._ripples.map((ripple) => RippleWidget(
+                            key: ValueKey(ripple.id),
+                            position: ripple.position,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Footer Buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        ref.read(scoringProvider.notifier).removeLastArrow(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: AppColors.borderLight),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(l10n.removeScore,
+                        style: const TextStyle(color: AppColors.textSlate500)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _saveSession,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: Text(l10n.completeSession,
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _arrowMarker(double top, double left, String scoreText) {
     return Positioned(
-      top: top, left: left,
+      top: top,
+      left: left,
       child: Container(
-        width: 12, height: 12,
+        width: _arrowMarkerSize,
+        height: _arrowMarkerSize,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
         ),
+        child: Center(
+          child: Text(
+            scoreText,
+            style: const TextStyle(
+                fontSize: 7,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary),
+          ),
+        ),
       ),
     );
   }
 
+  // Override oneMoreEndButton to be a full width button
+  Widget _oneMoreEndButton() {
+    final l10n = AppLocalizations.of(context);
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          ref.read(scoringProvider.notifier).addOneMoreEnd();
+        },
+        icon: const Icon(Icons.add, color: AppColors.primary),
+        label: Text(l10n.oneMoreEnd,
+            style: const TextStyle(
+                color: AppColors.primary, fontWeight: FontWeight.bold)),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: const BorderSide(color: AppColors.primary),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+
+  // Update keypad to be fixed bottom panel
   Widget _buildKeypad() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
-      color: Colors.white,
-      child: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 4,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.3,
-        physics: const NeverScrollableScrollPhysics(),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _keypadBtn('X', Colors.orange, isText: true),
-          _keypadBtn('10', AppColors.textSlate900),
-          _keypadBtn('9', AppColors.textSlate900),
-          _iconKeypadBtn(Icons.backspace, 'Remove'),
-          _keypadBtn('8', AppColors.textSlate900),
-          _keypadBtn('7', AppColors.textSlate900),
-          _keypadBtn('6', AppColors.textSlate900),
-          _keypadBtn('5', AppColors.textSlate900),
-          _keypadBtn('4', AppColors.textSlate900),
-          _keypadBtn('3', AppColors.textSlate900),
-          _saveBtn(),
-          _keypadBtn('2', AppColors.textSlate900),
-          _keypadBtn('1', AppColors.textSlate900),
-          _keypadBtn('M', Colors.red, isText: true),
+          // Row 1: X, 10, 9, Delete
+          Row(
+            children: [
+              Expanded(
+                  child: _keypadBtn('X', Colors.black,
+                      isText: true, onTap: () => _addScore(11))),
+              const SizedBox(width: 6),
+              Expanded(
+                  child: _keypadBtn('10', AppColors.textSlate900,
+                      onTap: () => _addScore(10))),
+              const SizedBox(width: 6),
+              Expanded(
+                  child: _keypadBtn('9', AppColors.textSlate900,
+                      onTap: () => _addScore(9))),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _iconKeypadBtn(
+                  Icons.backspace_outlined,
+                  l10n.removeShort,
+                  onTap: () =>
+                      ref.read(scoringProvider.notifier).removeLastArrow(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Row 2-4: 8-1, M, and Save button on the right
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Left side: Number grid
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      // Row 2: 8, 7, 6
+                      Row(
+                        children: [
+                          Expanded(
+                              child: _keypadBtn('8', AppColors.textSlate900,
+                                  onTap: () => _addScore(8))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('7', AppColors.textSlate900,
+                                  onTap: () => _addScore(7))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('6', AppColors.textSlate900,
+                                  onTap: () => _addScore(6))),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Row 3: 5, 4, 3
+                      Row(
+                        children: [
+                          Expanded(
+                              child: _keypadBtn('5', AppColors.textSlate900,
+                                  onTap: () => _addScore(5))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('4', AppColors.textSlate900,
+                                  onTap: () => _addScore(4))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('3', AppColors.textSlate900,
+                                  onTap: () => _addScore(3))),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Row 4: 2, 1, M
+                      Row(
+                        children: [
+                          Expanded(
+                              child: _keypadBtn('2', AppColors.textSlate900,
+                                  onTap: () => _addScore(2))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('1', AppColors.textSlate900,
+                                  onTap: () => _addScore(1))),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: _keypadBtn('M', Colors.red,
+                                  isText: true, onTap: () => _addScore(0))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // Right side: Save button (spans 3 rows)
+                Expanded(
+                  child: _buildSaveButton(),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-  
-  Widget _buildTargetFooter() {
-     return Container(
-       padding: const EdgeInsets.all(20),
-       color: Colors.white,
-       child: Row(
-         children: [
-           Expanded(
-             child: ElevatedButton.icon(
-               onPressed: (){},
-               icon: const Icon(Icons.close, color: AppColors.textSlate500),
-               label: const Text('REMOVE', style: TextStyle(color: AppColors.textSlate500, fontWeight: FontWeight.bold)),
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: Colors.grey.shade100,
-                 padding: const EdgeInsets.symmetric(vertical: 16),
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                 elevation: 0,
-               ),
-             ),
-           ),
-           const SizedBox(width: 16),
-           Expanded(
-             child: ElevatedButton.icon(
-               onPressed: (){},
-               icon: const Icon(Icons.save, color: Colors.white),
-               label: const Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: AppColors.primary,
-                 padding: const EdgeInsets.symmetric(vertical: 16),
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                 elevation: 4,
-                 shadowColor: AppColors.primary.withOpacity(0.4),
-               ),
-             ),
-           ),
-         ],
-       ),
-     );
+
+  Future<void> _addScore(int score) async {
+    final scoringState = ref.read(scoringProvider);
+    if (!scoringState.hasActiveSession) return;
+
+    // Prevent auto-creating new ends via keypad if we reached maxEnds
+    // Only allow input if we are editing an existing valid end or if focused index is within bounds
+    // focusedEndIndex is 0-based. maxEnds is count.
+    // If focusedEndIndex == maxEnds, it means we are trying to add to a new end beyond the limit.
+    if (scoringState.focusedEndIndex >= scoringState.maxEnds) {
+      // Allow if we are editing a past end? No, focusedEndIndex tracks cursor.
+      // If cursor is past the end, block input.
+      return;
+    }
+
+    // Add arrow and check if session is complete
+    final isComplete = await ref.read(scoringProvider.notifier).addArrow(score);
+
+    if (isComplete && mounted) {
+      final l10n = AppLocalizations.of(context);
+      // Refresh session list
+      await ref.read(sessionProvider.notifier).refresh();
+
+      // Show success message and navigate back
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.sessionCompleted),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate back to home immediately
+      if (mounted) {
+        final isEditing = ref.read(scoringProvider).isEditing;
+        if (isEditing) {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          }
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      }
+
+      // Reset state after navigation
+      ref.read(scoringProvider.notifier).resetSession();
+    }
   }
 
-  Widget _keypadBtn(String text, Color color, {bool isText = false}) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(0, 2))]),
-      alignment: Alignment.center,
-      child: Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+  /// Calculate score from normalized full-target radius [r] (0.0–1.0).
+  ///
+  /// Uses ring boundaries with optional line tolerance.
+  ///
+  /// [r]              Distance from center in full-target coordinates.
+  ///                  r=1.0 = outer edge of ring 1.
+  /// [isTripleFace]   When true, r > 0.50 (outside ring 6) = Miss.
+  int _calcScore(double r, bool isTripleFace) {
+    // Miss check
+    final double maxR = isTripleFace ? 0.50 : 1.00;
+    if (r > maxR + _ringLineTolerance) return 0; // Miss
+
+    // Use a tighter tolerance for X/10 split to reduce ambiguity near center.
+    if (r <= kTargetXRingBoundary + _xRingLineTolerance) {
+      return 11; // stored as 11, displayed as 'X'
+    }
+
+    // 10-ring zone
+    if (r <= kTargetTenRingBoundary + _ringLineTolerance) {
+      return 10;
+    }
+
+    // Remaining rings use the same boundaries for all face types
+    if (r <= 0.20 + _ringLineTolerance) return 9;
+    if (r <= 0.30 + _ringLineTolerance) return 8;
+    if (r <= 0.40 + _ringLineTolerance) return 7;
+    if (r <= 0.50 + _ringLineTolerance) return 6;
+    if (r <= 0.60 + _ringLineTolerance) return 5;
+    if (r <= 0.70 + _ringLineTolerance) return 4;
+    if (r <= 0.80 + _ringLineTolerance) return 3;
+    if (r <= 0.90 + _ringLineTolerance) return 2;
+    if (r <= 1.00 + _ringLineTolerance) return 1;
+    return 0; // Miss
+  }
+
+  /// Handle tap / release on target face to record an arrow score.
+  void _handleTargetTap(
+    Offset localPosition, {
+    required double targetRadius,
+  }) async {
+    final scoringState = ref.read(scoringProvider);
+    if (!scoringState.hasActiveSession) return;
+    if (scoringState.focusedEndIndex >= scoringState.maxEnds) return;
+
+    // Add ripple effect at tap position
+    _addRipple(localPosition);
+
+    // Session parameters
+    final targetFaceSize = scoringState.currentSession?.targetFaceSize ?? 122;
+    final bowType = scoringState.currentSession?.equipment.bowType;
+
+    // WA rule: triple face = 40 cm + non-compound
+    final bool isTripleFace =
+        targetFaceSize == 40 && bowType != BowType.compound;
+
+    final double targetCenter = targetRadius;
+
+    // Pixel offset from center
+    final double dx = localPosition.dx - targetCenter;
+    final double dy = localPosition.dy - targetCenter;
+
+    // Display-normalised distance (0.0 = center, 1.0 = display edge)
+    final double rDisplay = sqrt(dx * dx + dy * dy) / targetRadius;
+
+    // Convert to full-target coordinates.
+    // Triple face display represents the inner 50% of the full target,
+    // so rDisplay = 1.0 on the triple face equals r = 0.5 on the full target.
+    final double rFull = isTripleFace ? rDisplay * 0.5 : rDisplay;
+
+    // Score using full-target coordinates
+    final int score = _calcScore(rFull, isTripleFace);
+
+    // Store position in FULL-TARGET normalized coordinates (-1 to 1).
+    // Triple face: dx / 150 gives display-norm; multiply by 0.5 → full-target norm.
+    // Full face: dx / 150 directly gives full-target norm.
+    final Offset normalizedPosition = isTripleFace
+        ? Offset(dx / targetRadius * 0.5, dy / targetRadius * 0.5)
+        : Offset(dx / targetRadius, dy / targetRadius);
+
+    // Record the arrow
+    await ref
+        .read(scoringProvider.notifier)
+        .addArrow(score, position: normalizedPosition);
+  }
+
+  List<CompetitionEndResult> _buildEndResultsForSummary(
+      TrainingSession session) {
+    final sortedEnds = [...session.ends]
+      ..sort((a, b) => a.endNumber.compareTo(b.endNumber));
+    return sortedEnds
+        .map(
+          (end) => CompetitionEndResult(
+            endNumber: end.endNumber,
+            arrowScores: end.arrows.map((arrow) => arrow.score).toList(),
+            shootingTime: _estimateEndShootingTime(end),
+          ),
+        )
+        .toList();
+  }
+
+  Duration _estimateEndShootingTime(End end) {
+    // Preferred: arrow timestamps reflect real shot cadence.
+    if (end.arrows.length >= 2) {
+      final sortedArrows = [...end.arrows]
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      final duration = sortedArrows.last.timestamp
+          .difference(sortedArrows.first.timestamp);
+      if (duration.inMilliseconds > 0) {
+        return duration;
+      }
+    }
+
+    // Fallback: end lifecycle timestamps.
+    if (end.completedAt != null) {
+      final duration = end.completedAt!.difference(end.createdAt);
+      if (duration.inMilliseconds > 0) {
+        return duration;
+      }
+    }
+
+    return Duration.zero;
+  }
+
+  CompetitionSettings _buildSummarySettings(
+    dynamic scoringState,
+    int endCount,
+  ) {
+    return CompetitionSettings(
+      arrowsPerEnd: scoringState.arrowsPerEnd,
+      totalEnds: endCount,
+      useTargetScoring: scoringState.isTargetView,
+      soundEnabled: false,
     );
   }
 
-  Widget _iconKeypadBtn(IconData icon, String label) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [Icon(icon, color: AppColors.textSlate500), Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.textSlate500))],
+  Future<void> _saveSession() async {
+    final l10n = AppLocalizations.of(context);
+    final savingState = ref.read(scoringProvider);
+    final isEditing = savingState.isEditing;
+    await ref.read(scoringProvider.notifier).saveSession();
+    await ref.read(sessionProvider.notifier).refresh();
+    final updatedState = ref.read(scoringProvider);
+    final savedSession = updatedState.currentSession;
+
+    if (mounted) {
+      if (savedSession == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(updatedState.error ?? l10n.somethingWentWrong),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (isEditing) {
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      } else {
+        final endResults = _buildEndResultsForSummary(savedSession);
+        final summarySettings = _buildSummarySettings(
+          updatedState,
+          endResults.isEmpty ? 1 : endResults.length,
+        );
+
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              backgroundColor: AppColors.backgroundLight,
+              body: CompetitionResultsView(
+                endResults: endResults,
+                settings: summarySettings,
+                heroTitle: l10n.sessionCompleted,
+                onDone: () {
+                  ref.read(scoringProvider.notifier).resetSession();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+            ),
+          ),
+        );
+      }
+
+      if (isEditing) {
+        ref.read(scoringProvider.notifier).resetSession();
+      }
+    }
+  }
+
+  void _confirmExit(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isEditing = ref.read(scoringProvider).isEditing;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.scoringExitTitle),
+        content: Text(l10n.scoringExitMessage),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              ref.read(scoringProvider.notifier).cancelSession();
+              if (isEditing) {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              } else {
+                Navigator.of(context)
+                    .popUntil((route) => route.isFirst); // Return to home
+              }
+            },
+            child:
+                Text(l10n.discard, style: const TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await _saveSession();
+            },
+            child: Text(l10n.save),
+          ),
+        ],
       ),
     );
   }
-  
-  Widget _saveBtn() {
+
+  Widget _keypadBtn(String text, Color color,
+      {bool isText = false, VoidCallback? onTap}) {
     return Container(
-      decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]),
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [Icon(Icons.check_circle, color: Colors.white, size: 28), Text('SAVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white))],
+      height: 54, // Fixed height, slightly taller
+      margin: const EdgeInsets.all(
+          0), // Margin handled by parent layout for tighter control
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 2,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(text,
+                style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.w900, color: color)),
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _iconKeypadBtn(IconData icon, String label, {VoidCallback? onTap}) {
+    return Container(
+      height: 54,
+      margin: const EdgeInsets.all(0),
+      decoration: BoxDecoration(
+          color: AppColors.surfaceSubtle,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderLight)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: AppColors.textSlate500, size: 24),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSlate500))
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    final l10n = AppLocalizations.of(context);
+    return GestureDetector(
+      onTap: _saveSession,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 28),
+            const SizedBox(height: 4),
+            Text(l10n.save,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getScoreColor(int score) {
+    if (score >= 9) return AppColors.targetGold;
+    if (score >= 7) return AppColors.targetRed;
+    if (score >= 5) return AppColors.targetBlue;
+    if (score >= 3) return AppColors.targetBlack;
+    if (score >= 1) return AppColors.targetWhite;
+    return Colors.grey;
+  }
+
+  Color _getScoreTextColor(int score) {
+    if (score >= 9 || score >= 7 || score >= 3) return Colors.black;
+    return Colors.white;
   }
 
   Widget _scoreBox(int score, Color bg, Color text) {
-    return Container(
-      width: 48, height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]),
-      child: Text('$score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: text)),
+    return AnimatedScoreBox(
+      score: score,
+      bg: bg,
+      text: text,
+      isSmall: false,
     );
   }
-  
+
   Widget _scoreBoxSmall(int score, Color bg) {
-    return Container(
-      width: 32, height: 32,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text('$score', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    return AnimatedScoreBox(
+      score: score,
+      bg: bg,
+      text: Colors
+          .black, // Small text is usually black for readability unless bg is dark
+      isSmall: true,
     );
   }
-  Widget _scoreBoxSmallEmpty() => Container(width: 32, height: 32, decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid), borderRadius: BorderRadius.circular(6)));
+
+  Widget _scoreBoxSmallEmpty() => Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+          border: Border.all(
+              color: AppColors.borderLight, style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(6)));
 
   Widget _emptyScoreBox() {
     return Container(
-      width: 48, height: 48,
-      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200, width: 2)),
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+          color: AppColors.surfaceSubtle,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.borderLight, width: 2)),
     );
   }
 
   Widget _buildHistoryRow(String end, String total, List<int> scores) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight)),
+      decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderLight)),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text(end, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate500)), Text(total, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textSlate400))],
+            children: [
+              Text(end,
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSlate500)),
+              Text(total,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textSlate400))
+            ],
           ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: scores.map((s) => Container(
-              width: 40, height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(4)),
-              child: Text('$s', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSlate500)),
-            )).toList(),
+            children: scores
+                .map((s) => Container(
+                      width: 40,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.borderLight),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('$s',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSlate500)),
+                    ))
+                .toList(),
           )
         ],
       ),
@@ -368,30 +1260,148 @@ class _ScoringScreenState extends State<ScoringScreen> {
   }
 }
 
-class TargetFacePainter extends CustomPainter {
+class RippleModel {
+  final String id;
+  final Offset position;
+  RippleModel({required this.id, required this.position});
+}
+
+class RippleWidget extends StatefulWidget {
+  final Offset position;
+  final VoidCallback? onComplete;
+
+  const RippleWidget({super.key, required this.position, this.onComplete});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    
-    // Rings
-    _drawRing(canvas, center, radius, AppColors.targetWhite);
-    _drawRing(canvas, center, radius * 0.8, AppColors.targetBlack);
-    _drawRing(canvas, center, radius * 0.6, AppColors.targetBlue);
-    _drawRing(canvas, center, radius * 0.4, AppColors.targetRed);
-    _drawRing(canvas, center, radius * 0.2, AppColors.targetGold);
-    
-    // X Ring
-    canvas.drawCircle(center, radius * 0.02, Paint()..color = Colors.black.withOpacity(0.2));
-  }
-  
-  void _drawRing(Canvas canvas, Offset center, double radius, Color color) {
-    final paint = Paint()..color = color;
-    canvas.drawCircle(center, radius, paint);
-    // Divider line
-    canvas.drawCircle(center, radius, Paint()..style = PaintingStyle.stroke..color = Colors.black12..strokeWidth = 1);
+  State<RippleWidget> createState() => _RippleWidgetState();
+}
+
+class _RippleWidgetState extends State<RippleWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.8, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _controller.forward().then((_) => widget.onComplete?.call());
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: widget.position.dy - 40,
+      left: widget.position.dx - 40,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _opacityAnimation.value,
+            child: Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: 2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class AnimatedScoreBox extends StatefulWidget {
+  final int score;
+  final Color bg;
+  final Color text;
+  final bool isSmall;
+
+  const AnimatedScoreBox({
+    super.key,
+    required this.score,
+    required this.bg,
+    required this.text,
+    this.isSmall = false,
+  });
+
+  @override
+  State<AnimatedScoreBox> createState() => _AnimatedScoreBoxState();
+}
+
+class _AnimatedScoreBoxState extends State<AnimatedScoreBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: widget.isSmall ? 32 : 48,
+        height: widget.isSmall ? 32 : 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: widget.bg,
+          borderRadius: BorderRadius.circular(widget.isSmall ? 6 : 8),
+          boxShadow: widget.isSmall
+              ? null
+              : [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)
+                ],
+        ),
+        child: Text(
+          '${widget.score}',
+          style: TextStyle(
+            fontSize: widget.isSmall ? 14 : 18,
+            fontWeight: widget.isSmall ? FontWeight.bold : FontWeight.w900,
+            color: widget.text,
+          ),
+        ),
+      ),
+    );
+  }
 }

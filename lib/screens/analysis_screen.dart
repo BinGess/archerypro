@@ -1,72 +1,225 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common_widgets.dart';
+import '../providers/analytics_provider.dart';
+import '../providers/ai_coach_provider.dart';
+import '../models/statistics.dart';
+import '../utils/constants.dart';
+import '../l10n/app_localizations.dart';
 
-class AnalysisScreen extends StatelessWidget {
+import '../widgets/growth_mixed_chart.dart';
+import '../widgets/quadrant_radar_chart.dart';
+import '../widgets/stability_radar_chart.dart';
+import '../widgets/ai_coach/ai_loading_widget.dart';
+import '../widgets/ai_coach/ai_result_card.dart';
+import '../widgets/ai_coach/ai_source_badge.dart';
+
+class AnalysisScreen extends ConsumerWidget {
+  static const bool _showAICoachSection = false;
+
   const AnalysisScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final analyticsState = ref.watch(analyticsProvider);
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+    final stats = analyticsState.statistics;
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('PERFORMANCE ANALYSIS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-        centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: () {}),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(Icons.share, size: 18, color: AppColors.primary),
-          )
-        ],
+        title: Text(l10n.analysis),
+        leading: IconButton(
+          icon: const Icon(Icons.refresh, size: 22),
+          onPressed: () {
+            ref.read(analyticsProvider.notifier).refreshAnalytics();
+          },
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTab('7D', false),
-              _buildTab('1M', true),
-              _buildTab('3M', false),
-              _buildTab('ALL', false),
+              _buildTab(context, ref, kPeriod7Days, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriod1Month, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodCurrentYear, selectedPeriod, l10n),
+              _buildTab(context, ref, kPeriodAll, selectedPeriod, l10n),
             ],
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: analyticsState.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Core Metrics Cards
+                _buildCompetitionReadinessCard(context, stats, l10n),
+                const SizedBox(height: 16),
+                _buildPressureAndResilienceCard(context, stats, l10n),
+                const SizedBox(height: 16),
+                _buildCoreMetricsSection(stats, l10n),
+                const SizedBox(height: 20),
+
+                // Growth Trend Mixed Chart
+                _buildGrowthTrendCard(stats, l10n),
+                const SizedBox(height: 20),
+
+                _buildBiasByBandCard(context, stats, l10n),
+                const SizedBox(height: 20),
+
+                // Stability Radar Chart
+                _buildStabilityRadarCard(stats, ref, selectedPeriod, l10n),
+                const SizedBox(height: 20),
+
+                // Quadrant Radar Chart
+                _buildQuadrantRadarCard(stats, l10n),
+                if (_showAICoachSection) ...[
+                  const SizedBox(height: 20),
+                  // AI Coach Analysis Section
+                  _buildAICoachSection(ref, selectedPeriod, l10n),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTab(BuildContext context, WidgetRef ref, String period,
+      String selectedPeriod, AppLocalizations l10n) {
+    final isSelected = period == selectedPeriod;
+    return GestureDetector(
+      onTap: () async {
+        await ref.read(analyticsProvider.notifier).changePeriod(period);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(
+              bottom: BorderSide(
+                  width: 2,
+                  color: isSelected ? AppColors.primary : Colors.transparent)),
+        ),
+        child: Text(
+          _getPeriodLabel(period, l10n),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? AppColors.primary : AppColors.textSlate400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getPeriodLabel(String period, AppLocalizations l10n) {
+    switch (period) {
+      case kPeriod7Days:
+        return l10n.period7Days;
+      case kPeriod1Month:
+        return l10n.period1Month;
+      case kPeriodCurrentYear:
+        return l10n.periodCurrentYear;
+      case kPeriodAll:
+        return l10n.periodAll;
+      default:
+        return period;
+    }
+  }
+
+  /// Build core metrics cards (总箭数, 平均环数, 10环率)
+  Widget _buildCoreMetricsSection(Statistics stats, AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.show_chart,
+            label: l10n.totalArrows, // "总箭数" -> "Arrows" or similar
+            // Wait, l10n.totalArrows is "totalArrows" key?
+            // In AppLocalizationsEn: String get arrows => 'Arrows';
+            // In AppLocalizationsZh: String get arrows => '支箭';
+            // There isn't "totalArrows" key explicitly for label "Total Arrows".
+            // But there is `totalScore`.
+            // Let's check `app_localizations.dart` again.
+            // Ah, I see `String get arrows;`.
+            // I should probably add `totalArrows` key or use `arrows` + `total` prefix?
+            // Actually, in previous step I didn't add `totalArrows` key.
+            // I will use `l10n.arrows` for now, or just hardcode if missing.
+            // Wait, I see `totalScore`.
+            // Let's use `l10n.arrows` combined with `Total` if needed, but `arrows` usually means "Arrows" count.
+            // For now, I'll use `l10n.arrows`.
+            value: stats.totalArrows.toString(),
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.adjust,
+            label: l10n.averageScore,
+            value: stats.avgArrowScore.toStringAsFixed(1),
+            color: AppColors.accent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            icon: Icons.stars,
+            label: l10n.tenCount, // "10环数"
+            value: '${stats.tenRingRate.toStringAsFixed(1)}%',
+            color: AppColors.targetGold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
         children: [
-          _buildScoreTrendCard(),
-          const SizedBox(height: 20),
-          _buildHeatmapCard(),
-          const SizedBox(height: 20),
-          _buildInsightSection(),
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSlate400,
+              letterSpacing: 0.5,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTab(String text, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(width: 2, color: isSelected ? AppColors.primary : Colors.transparent)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: isSelected ? AppColors.primary : AppColors.textSlate400,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScoreTrendCard() {
+  /// Build growth trend chart card
+  Widget _buildGrowthTrendCard(Statistics stats, AppLocalizations l10n) {
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,194 +227,882 @@ class AnalysisScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('AVG. END SCORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Text('8.4', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1)),
-                      const SizedBox(width: 8),
-                      Text('5.2%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
-                      Icon(Icons.trending_up, size: 16, color: Colors.green.shade600),
-                    ],
-                  ),
+                  Text(l10n.growthTrendChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
+                  const SizedBox(height: 2),
+                  Text(l10n.growthTrendSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate400)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: Icon(Icons.insights, color: AppColors.primary),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.trending_up,
+                    color: AppColors.primary, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: CustomPaint(painter: CustomCurvePainter(color: AppColors.primary)),
-          ),
-          const SizedBox(height: 12),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('OCT 01', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 15', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-              Text('OCT 30', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-            ],
-          )
+          const SizedBox(height: 16),
+          if (stats.scoreTrendData.isNotEmpty)
+            RepaintBoundary(
+              child: GrowthMixedChart(
+                scoreTrendData: stats.scoreTrendData,
+                volumeData: stats.dailyArrowVolumeData,
+                height: 280,
+              ),
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                l10n.noDataForPeriod,
+                style: const TextStyle(
+                    color: AppColors.textSlate400, fontSize: 13),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildHeatmapCard() {
+  /// Build stability radar chart card with comparison
+  Widget _buildStabilityRadarCard(Statistics stats, WidgetRef ref,
+      String selectedPeriod, AppLocalizations l10n) {
+    final radarMetrics = stats.radarMetrics;
+    if (radarMetrics == null) {
+      return ArcheryCard(
+        child: Column(
+          children: [
+            Text(l10n.stabilityRadarChart,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Text(
+                l10n.needMoreData,
+                style: const TextStyle(
+                    color: AppColors.textSlate400, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Get previous period data for comparison
+    // For now, we'll just show current period radar
+    // A more sophisticated implementation would calculate previous period metrics
+
     return ArcheryCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('IMPACT ACCURACY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              StatusBadge(text: 'TREND: LOW LEFT', color: AppColors.accentRust, backgroundColor: AppColors.accentRust.withOpacity(0.1)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Target Faces
-              _buildRing(180, Colors.grey.shade100),
-              _buildRing(150, Colors.white), // Simplified for aesthetics
-              _buildRing(120, Colors.white),
-              _buildRing(90, Colors.white),
-              _buildRing(60, Colors.white),
-              _buildRing(30, AppColors.accentGold.withOpacity(0.2)),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accentGold, shape: BoxShape.circle)),
-
-              // Heat blobs
-              Positioned(
-                bottom: 40, left: 60,
-                child: Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.stabilityRadarChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
+                  const SizedBox(height: 2),
+                  Text(l10n.stabilityRadarSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate500)),
+                ],
               ),
-              Positioned(
-                bottom: 50, left: 80,
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                  ),
-                ).blur(),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.radar,
+                    color: AppColors.accentGold, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend(AppColors.primary, 'GROUPING'),
-              const SizedBox(width: 24),
-              _buildLegend(AppColors.accentGold, 'BULLSEYE'),
-            ],
-          )
+          const SizedBox(height: 16),
+          RepaintBoundary(
+            child: StabilityRadarChart(
+              currentMetrics: radarMetrics,
+              previousMetrics: null, // TODO: Calculate previous period metrics
+              size: 260,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRing(double size, Color color) {
-    return Container(
-      width: size, height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+  /// Build quadrant radar chart card
+  Widget _buildQuadrantRadarCard(Statistics stats, AppLocalizations l10n) {
+    final quadrantDist = stats.quadrantDistribution;
+    final total = quadrantDist.values.fold(0, (sum, count) => sum + count);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.quadrantRadarChart,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSlate900)),
+                  const SizedBox(height: 2),
+                  Text(l10n.quadrantRadarSubtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSlate400)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accentRust.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.gps_fixed,
+                    color: AppColors.accentRust, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (total > 0)
+            RepaintBoundary(
+              child: QuadrantRadarChartDetailed(
+                  quadrantDistribution: quadrantDist),
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle_outline,
+                      size: 48, color: AppColors.primary),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.allArrowsGood,
+                    style: const TextStyle(
+                        color: AppColors.textSlate500, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildLegend(Color color, String text) {
+  Widget _buildCompetitionReadinessCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    final profileName = stats.competitionProfile
+            ?.displayName(Localizations.localeOf(context).languageCode) ??
+        _t(
+          context,
+          zh: '通用资格赛投影',
+          en: 'Generic qualification',
+          ja: '標準予選換算',
+        );
+    final projectionLabel = stats.competitionProfile?.projectionArrows == 60
+        ? _t(context, zh: '投影60箭', en: 'Projected 60', ja: '60射換算')
+        : _t(context, zh: '投影72箭', en: 'Projected 72', ja: '72射換算');
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.emoji_events_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _t(
+                        context,
+                        zh: '赛事准备度',
+                        en: 'Competition Readiness',
+                        ja: '競技準備度',
+                      ),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSlate900,
+                      ),
+                    ),
+                    Text(
+                      profileName,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSlate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${stats.qualificationTier} Tier',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textSlate900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: projectionLabel,
+                  value: stats.projectedQualificationScore.toStringAsFixed(1),
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(
+                    context,
+                    zh: '高价值命中(9+)',
+                    en: 'High value (9+)',
+                    ja: '高得点率 (9+)',
+                  ),
+                  value: '${stats.highValueRate.toStringAsFixed(1)}%',
+                  color: AppColors.accentGold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: 'X环率', en: 'X rate', ja: 'X率'),
+                  value: '${stats.xRate.toStringAsFixed(1)}%',
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(context, zh: '脱靶率', en: 'Miss rate', ja: 'ミス率'),
+                  value: '${stats.missRate.toStringAsFixed(1)}%',
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPressureAndResilienceCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(
+              context,
+              zh: '波动与抗压',
+              en: 'Volatility & Resilience',
+              ja: '変動とプレッシャー耐性',
+            ),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(
+                    context,
+                    zh: '组间波动(σ)',
+                    en: 'End volatility',
+                    ja: 'エンド間変動 (σ)',
+                  ),
+                  value: stats.endVolatility.toStringAsFixed(2),
+                  color: AppColors.accentRust,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(
+                    context,
+                    zh: '崩盘组率',
+                    en: 'Collapse rate',
+                    ja: '崩れエンド率',
+                  ),
+                  value: '${(stats.collapseRate * 100).toStringAsFixed(1)}%',
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _compactMetric(
+                  label: _t(
+                    context,
+                    zh: '恢复指数',
+                    en: 'Recovery index',
+                    ja: '回復指数',
+                  ),
+                  value: stats.recoveryIndex.toStringAsFixed(2),
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _compactMetric(
+                  label: _t(
+                    context,
+                    zh: '后程保持',
+                    en: 'Endurance hold',
+                    ja: '後半維持率',
+                  ),
+                  value: '${stats.enduranceHoldRate.toStringAsFixed(1)}%',
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBiasByBandCard(
+    BuildContext context,
+    Statistics stats,
+    AppLocalizations l10n,
+  ) {
+    final bands = stats.biasByScoreBand;
+    if (bands.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final highSummary = _summarizeBand(context, bands['high'] ?? const {});
+    final midSummary = _summarizeBand(context, bands['mid'] ?? const {});
+    final lowSummary = _summarizeBand(context, bands['low'] ?? const {});
+
+    final oppositeBiasWarning = highSummary.directionKey.isNotEmpty &&
+        lowSummary.directionKey.isNotEmpty &&
+        _isOppositeDirection(highSummary.directionKey, lowSummary.directionKey);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t(
+              context,
+              zh: '分层偏差分析',
+              en: 'Bias by Score Band',
+              ja: '得点帯別の偏差分析',
+            ),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSlate900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _bandRow(
+            context,
+            label: _t(context, zh: '高分层 (9+)', en: 'High (9+)', ja: '高得点帯 (9+)'),
+            summary: highSummary,
+          ),
+          const SizedBox(height: 8),
+          _bandRow(
+            context,
+            label: _t(context, zh: '中分层 (7-8)', en: 'Mid (7-8)', ja: '中得点帯 (7-8)'),
+            summary: midSummary,
+          ),
+          const SizedBox(height: 8),
+          _bandRow(
+            context,
+            label: _t(context, zh: '低分层 (<=6)', en: 'Low (<=6)', ja: '低得点帯 (<=6)'),
+            summary: lowSummary,
+          ),
+          if (oppositeBiasWarning) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.warningSubtle,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _t(
+                  context,
+                  zh: '高分层与低分层偏差方向相反，优先排查释放一致性与动作稳定性。',
+                  en: 'High and low bands bias in opposite directions. Check release consistency first.',
+                  ja: '高得点帯と低得点帯で偏差方向が逆です。まずリリースの一貫性と動作安定性を確認してください。',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSlate700,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _bandRow(
+    BuildContext context, {
+    required String label,
+    required _BandSummary summary,
+  }) {
     return Row(
       children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSlate400)),
-      ],
-    );
-  }
-
-  Widget _buildInsightSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: AppColors.accentGold, size: 20),
-            const SizedBox(width: 8),
-            const Text('AI COACH INSIGHTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSlate900)),
-          ],
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate700,
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.track_changes,
-          color: AppColors.primary,
-          title: 'Stability Focus',
-          desc: 'Back tension decreased slightly in last 3 ends. Maintain expansion through clicker.',
-        ),
-        const SizedBox(height: 12),
-        _buildInsightItem(
-          icon: Icons.fitness_center,
-          color: AppColors.accentRust,
-          title: 'Suggestion: 30m Drills',
-          desc: 'To correct the low-left tendency, perform 30 arrows on blank bale focusing on bow arm.',
-          hasAction: true,
+        Expanded(
+          child: Text(
+            summary.total == 0
+                ? _t(context, zh: '样本不足', en: 'Not enough samples', ja: 'サンプル不足')
+                : '${summary.directionText} ${summary.percentage.toStringAsFixed(1)}% (${summary.count}/${summary.total})',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate900,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInsightItem({required IconData icon, required Color color, required String title, required String desc, bool hasAction = false}) {
+  _BandSummary _summarizeBand(
+    BuildContext context,
+    Map<String, int> quadrantMap,
+  ) {
+    if (quadrantMap.isEmpty) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
+    }
+    final total = quadrantMap.values.fold<int>(0, (sum, c) => sum + c);
+    if (total == 0) {
+      return _BandSummary.empty(_t(context, zh: '无', en: 'N/A', ja: 'なし'));
+    }
+
+    final dominant = quadrantMap.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    );
+    final percentage = dominant.value / total * 100;
+    return _BandSummary(
+      directionKey: dominant.key,
+      directionText: _quadrantName(dominant.key, AppLocalizations.of(context)),
+      count: dominant.value,
+      total: total,
+      percentage: percentage,
+    );
+  }
+
+  bool _isOppositeDirection(String a, String b) {
+    const oppositePairs = {
+      'top-left:bottom-right',
+      'bottom-right:top-left',
+      'top-right:bottom-left',
+      'bottom-left:top-right',
+    };
+    return oppositePairs.contains('$a:$b');
+  }
+
+  String _quadrantName(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'top-left':
+        return l10n.directionTopLeft;
+      case 'top-right':
+        return l10n.directionTopRight;
+      case 'bottom-left':
+        return l10n.directionBottomLeft;
+      case 'bottom-right':
+        return l10n.directionBottomRight;
+      default:
+        return key;
+    }
+  }
+
+  Widget _compactMetric({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSlate500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _t(
+    BuildContext context, {
+    required String zh,
+    required String en,
+    required String ja,
+  }) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'zh':
+        return zh;
+      case 'ja':
+        return ja;
+      default:
+        return en;
+    }
+  }
+
+  /// Build AI Coach analysis section
+  Widget _buildAICoachSection(
+      WidgetRef ref, String selectedPeriod, AppLocalizations l10n) {
+    final aiCoachState = ref.watch(aiCoachProvider);
+
+    // 获取当前周期的分析结果
+    final periodResult = aiCoachState.getPeriodResult(selectedPeriod);
+    final isAnalyzing = aiCoachState.isAnalyzingPeriod(selectedPeriod);
+
+    return ArcheryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.psychology,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          l10n.aiCoachPeriodAnalysis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (periodResult != null) ...[
+                          const SizedBox(width: 8),
+                          AISourceBadge(
+                            source: periodResult.source,
+                            compact: true,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.aiCoachBasedOnData,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Analyze button
+              if (!isAnalyzing && periodResult == null)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: Text(l10n.aiCoachAnalyzeButton),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+
+              // Close button
+              if (periodResult != null)
+                IconButton(
+                  onPressed: () {
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .clearPeriodResult(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.close,
+                      size: 20, color: AppColors.textSecondary),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Content area
+          if (isAnalyzing)
+            Center(child: AILoadingWidget(message: aiCoachState.loadingMessage))
+          else if (aiCoachState.error != null &&
+              aiCoachState.currentAnalysisType == 'period')
+            _buildErrorState(ref, selectedPeriod, aiCoachState.error!, l10n)
+          else if (periodResult != null)
+            Column(
+              children: [
+                AIResultCard(
+                  result: periodResult,
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(aiCoachProvider.notifier)
+                        .analyzePeriod(selectedPeriod);
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: Text(l10n.aiCoachReanalyzeButton),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            )
+          else
+            _buildEmptyState(ref, selectedPeriod, l10n),
+        ],
+      ),
+    );
+  }
+
+  /// Error state widget
+  Widget _buildErrorState(
+    WidgetRef ref,
+    String period,
+    String error,
+    AppLocalizations l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: hasAction ? Colors.white : color.withOpacity(0.05),
+        color: Colors.red.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: hasAction ? AppColors.borderLight : color.withOpacity(0.2)),
+        border: Border.all(color: Colors.red.shade200),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textSlate500)),
-                if (hasAction) ...[
-                  const SizedBox(height: 8),
-                  Text('START DRILL →', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
-                ]
-              ],
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            l10n.aiCoachAnalysisFailed,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.red.shade700,
             ),
-          )
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _localizedAiError(error, l10n),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              ref.read(aiCoachProvider.notifier).clearError();
+            },
+            icon: const Icon(Icons.close, size: 16),
+            label: Text(l10n.aiCoachClose),
+          ),
         ],
       ),
     );
   }
+
+  /// Empty state widget
+  Widget _buildEmptyState(
+    WidgetRef ref,
+    String selectedPeriod,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Icon(
+            Icons.auto_awesome_outlined,
+            size: 48,
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.aiCoachClickToAnalyze,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.aiCoachPreferOnlineFallbackToLocal,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _localizedAiError(String error, AppLocalizations l10n) {
+    if (error == AICoachNotifier.errorNoData) {
+      return l10n.keepTrainingForInsights;
+    }
+    return error;
+  }
 }
 
-extension BlurExt on Widget {
-  Widget blur() => this; // Placeholder for ImageFilter.blur if needed, or just standard opacity overlay
+class _BandSummary {
+  final String directionKey;
+  final String directionText;
+  final int count;
+  final int total;
+  final double percentage;
+
+  const _BandSummary({
+    required this.directionKey,
+    required this.directionText,
+    required this.count,
+    required this.total,
+    required this.percentage,
+  });
+
+  factory _BandSummary.empty(String directionText) {
+    return _BandSummary(
+      directionKey: '',
+      directionText: directionText,
+      count: 0,
+      total: 0,
+      percentage: 0,
+    );
+  }
 }

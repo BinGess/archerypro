@@ -1,0 +1,7 @@
+# 复制此文件为 key.properties 并填写真实值（key.properties 已加入 .gitignore，勿提交）
+#
+# storeFile 相对于 android/ 目录，例如 keystore 放在 android/upload-keystore.jks 则写：
+storeFile=upload-keystore.jks
+storePassword=你的密钥库密码
+keyPassword=你的密钥密码
+keyAlias=upload

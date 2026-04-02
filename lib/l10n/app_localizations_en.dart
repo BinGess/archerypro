@@ -1,0 +1,822 @@
+import 'package:intl/intl.dart';
+import 'app_localizations.dart';
+
+/// English localizations
+class AppLocalizationsEn extends AppLocalizations {
+  // Common
+  @override
+  String get appName => 'Archery Record Pro';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get language => 'Language';
+
+  // Bottom Navigation
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navAdd => 'Add';
+
+  @override
+  String get navStatistics => 'Stats';
+
+  // Dashboard
+  @override
+  String get dashboard => 'Home';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get noTrainingRecords => 'No training records';
+
+  @override
+  String get clickAddToStart => 'Tap "Add" to start your first training';
+
+  @override
+  String get highScore => 'High Score';
+
+  @override
+  String get arrows => 'Arrows';
+
+  @override
+  String get totalScore => 'Total Score';
+
+  @override
+  String get averageScore => 'Average';
+
+  @override
+  String get xCount => 'X Count';
+
+  @override
+  String get tenCount => '10s Count';
+
+  // Scoring
+  @override
+  String get scoring => 'Scoring';
+
+  @override
+  String get endNumber => 'End';
+
+  @override
+  String get arrowNumber => 'Arrow';
+
+  @override
+  String get miss => 'Miss';
+
+  @override
+  String get removeScore => 'Remove';
+
+  @override
+  String get currentEnd => 'Current End';
+
+  @override
+  String get completeSession => 'Complete';
+
+  @override
+  String get sessionSaved => 'Session saved!';
+
+  @override
+  String get endCompleted => 'End completed';
+
+  @override
+  String get sessionCompleted => 'Training completed!';
+
+  @override
+  String get noActiveTraining => 'No active training';
+
+  @override
+  String get clickStartScoring => 'Tap below to start scoring';
+
+  @override
+  String get oneMoreEnd => 'Add One More End';
+
+  @override
+  String get removeShort => 'Remove';
+
+  @override
+  String get scoringExitTitle => 'Exit Scoring?';
+
+  @override
+  String get scoringExitMessage =>
+      'Current records will be lost. Save before exit?';
+
+  @override
+  String endLabel(String number) => 'End $number';
+
+  @override
+  String endCompletedLabel(String number) => 'End $number completed';
+
+  @override
+  String scoreLabel(String score) => 'Score: $score';
+
+  @override
+  String totalScoreLabel(String total) => 'Total: $total';
+
+  // Session Setup
+  @override
+  String get newTraining => 'New Training';
+
+  @override
+  String get distance => 'Distance';
+
+  @override
+  String get meters => 'm';
+
+  @override
+  String get targetFaceSize => 'Target Size';
+
+  @override
+  String get bowType => 'Bow Type';
+
+  @override
+  String get arrowsPerEnd => 'Arrows per End';
+
+  @override
+  String get numberOfEnds => 'Number of Ends';
+
+  @override
+  String get startTraining => 'Start Training';
+
+  // Bow Types
+  @override
+  String get recurveBow => 'Recurve Bow';
+
+  @override
+  String get compoundBow => 'Compound Bow';
+
+  @override
+  String get traditionalBow => 'Traditional Bow';
+
+  @override
+  String get barebow => 'Barebow';
+
+  // Analysis
+  @override
+  String get analysis => 'Analysis';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String get trends => 'Trends';
+
+  @override
+  String get heatmap => 'Heatmap';
+
+  @override
+  String get scoreDistribution => 'Score Distribution';
+
+  @override
+  String get performanceAnalysis => 'Performance Analysis';
+
+  @override
+  String get consistency => 'Consistency';
+
+  @override
+  String get accuracy => 'Accuracy';
+
+  @override
+  String get precision => 'Precision';
+
+  @override
+  String get tenRingRate => '10-Ring Rate';
+
+  @override
+  String get groupingDensity => 'Grouping';
+
+  @override
+  String get endurance => 'Endurance';
+
+  @override
+  String get centerPrecision => 'Center Precision';
+
+  // Details
+  @override
+  String get sessionDetails => 'Session Details';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get equipment => 'Equipment';
+
+  @override
+  String get scorePercentage => 'Score %';
+
+  @override
+  String get endBreakdown => 'End Breakdown';
+
+  @override
+  String get noSessionDetailsHint =>
+      'Details will appear here after you complete a session';
+
+  @override
+  String get endsScoreTitle => 'End Scores';
+
+  @override
+  String totalEndsLabel(String count) => '$count ends';
+
+  // Settings
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get languageSettings => 'Language Settings';
+
+  @override
+  String get monthlyGoalSettings => 'Monthly Goal';
+
+  @override
+  String get monthlyGoalSettingsSubtitle =>
+      'Set your monthly arrow target and track completion';
+
+  @override
+  String get monthlyGoalCurrentProgress => 'This month';
+
+  @override
+  String get monthlyGoalCompletion => 'Completion';
+
+  @override
+  String get monthlyGoalSetTitle => 'Set Monthly Goal';
+
+  @override
+  String get monthlyGoalInputHint => 'Enter monthly target arrows';
+
+  @override
+  String get monthlyGoalInputLabel => 'Target Arrows';
+
+  @override
+  String get monthlyGoalSaveSuccess => 'Monthly goal updated';
+
+  @override
+  String get monthlyGoalInvalidValue =>
+      'Please enter a valid number greater than 0';
+
+  @override
+  String get selectLanguage => 'Select Language';
+
+  @override
+  String get chinese => 'Chinese';
+
+  @override
+  String get chineseDisplayName => 'Simplified Chinese';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get englishDisplayName => 'English';
+
+  @override
+  String get japanese => 'Japanese';
+
+  @override
+  String get japaneseDisplayName => 'Japanese';
+
+  @override
+  String get systemDefault => 'System Default';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get feedbackAndPrivacy => 'Feedback & Privacy';
+
+  @override
+  String get aboutAppNameLabel => 'App Name';
+
+  @override
+  String get aboutFeedbackLabel => 'Feedback';
+
+  @override
+  String get aboutPrivacyPolicyLabel => 'Privacy Policy';
+
+  @override
+  String get version => 'Version';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get debugSection => 'Debug';
+
+  @override
+  String get viewLogs => 'View Logs';
+
+  @override
+  String get viewLogsSubtitle => 'View app logs and crash reports';
+
+  @override
+  String get logsTitle => 'App Logs';
+
+  @override
+  String logsFailedToLoad(String error) => 'Failed to load logs: $error';
+
+  @override
+  String get logsCopied => 'Logs copied to clipboard';
+
+  @override
+  String get clearLogsTitle => 'Clear Logs';
+
+  @override
+  String get clearLogsMessage =>
+      'Are you sure you want to delete all logs? This action cannot be undone.';
+
+  @override
+  String get refreshLogsTooltip => 'Refresh';
+
+  @override
+  String get copyLogsTooltip => 'Copy to clipboard';
+
+  @override
+  String get clearLogsTooltip => 'Clear logs';
+
+  @override
+  String get logsLocalOnlyHint =>
+      'Logs are stored locally and never sent to servers';
+
+  @override
+  String get noLogsAvailable => 'No logs available';
+
+  @override
+  String get logsCleared => 'Logs cleared';
+
+  @override
+  String get emailCopied => 'Email address copied';
+
+  @override
+  String get privacyPolicyCopied => 'Privacy policy link copied';
+
+  // Messages
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get noData => 'No data';
+
+  @override
+  String get noValidData => 'No valid data';
+
+  @override
+  String get ringNumber => 'Ring';
+
+  @override
+  String get noBiasData => 'No bias data';
+
+  @override
+  String get missDistribution => 'Miss distribution';
+
+  @override
+  String get currentPeriod => 'Current period';
+
+  @override
+  String get previousPeriod => 'Previous period';
+
+  @override
+  String get overallScore => 'Overall score';
+
+  @override
+  String strengthLabel(String strongest) => 'Strength: $strongest';
+
+  @override
+  String weaknessLabel(String weakest) => 'Weakness: $weakest';
+
+  @override
+  String quadrantDominanceMessage(String direction, String percent) =>
+      '$direction bias: $percent%';
+
+  @override
+  String get error => 'Error';
+
+  @override
+  String get success => 'Success';
+
+  @override
+  String get initializationFailed => 'Initialization failed';
+
+  @override
+  String get resetDataAndRetry => 'Reset data and retry';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get restartApp => 'Restart App';
+
+  @override
+  String get failedToStartApp => 'Failed to start app';
+
+  // Date Formats
+  @override
+  String formatDate(DateTime date) {
+    return DateFormat('MMM d, yyyy').format(date);
+  }
+
+  @override
+  String formatTime(DateTime time) {
+    return DateFormat('HH:mm').format(time);
+  }
+
+  // Time Periods
+  @override
+  String get period7Days => '7 Days';
+  @override
+  String get period1Month => '30 Days';
+  @override
+  String get periodCurrentYear => 'Year';
+  @override
+  String get periodAll => 'All';
+
+  // Analysis Charts
+  @override
+  String get growthTrendChart => 'Growth Trends';
+  @override
+  String get growthTrendSubtitle => 'Score Trend + Volume';
+  @override
+  String get noDataForPeriod => 'No data for selected period';
+  @override
+  String get stabilityRadarChart => 'Stability Radar';
+  @override
+  String get needMoreData => 'Need more data';
+  @override
+  String get stabilityRadarSubtitle => '6-Dimension Assessment';
+  @override
+  String get quadrantRadarChart => 'Bias Diagnosis';
+  @override
+  String get quadrantRadarSubtitle => 'Direction of <9 Ring Arrows';
+  @override
+  String get allArrowsGood => 'Great! All arrows are 9+';
+
+  // Analysis Insights & AI
+  @override
+  String get aiPeriodAnalysis => 'AI Analysis';
+  @override
+  String get aiCoachAdvice => 'AI Coach Advice';
+  @override
+  String get keepTrainingForInsights => 'Keep training to get AI insights';
+  @override
+  String get actionableTip => 'Actionable Tip';
+
+  // Insight Messages
+  @override
+  String get insightPlateauTitle => 'Plateau Detected';
+  @override
+  String get insightPlateauMessage =>
+      'Performance has plateaued. Try new drills or technique adjustments.';
+  @override
+  String get insightVolumeWarningTitle => 'Volume Decline';
+  @override
+  String insightVolumeWarningMessage(String decline) =>
+      'Training volume dropped by $decline% compared to last period.';
+  @override
+  String get insightAdvancementTitle => 'Ready to Advance';
+  @override
+  String insightAdvancementMessage(String rate) =>
+      '10-ring rate is $rate% with great stability. Try increasing distance.';
+  @override
+  String get insightChronicBiasTitle => 'Chronic Bias';
+  @override
+  String insightChronicBiasMessage(String percent, String direction) =>
+      '$percent% of misses are bias to $direction. Check form or tuning.';
+  @override
+  String get insightExcellenceTitle => 'Excellent Stability';
+  @override
+  String insightExcellenceMessage(String consistency) =>
+      'Consistency reached $consistency%. Outstanding form!';
+  @override
+  String insightGroupingTitle(String tendency) => 'Grouping: $tendency';
+  @override
+  String insightGroupingMessage(String tendency) =>
+      'Your group tends to be $tendency. Focus on alignment.';
+
+  // Directions
+  @override
+  String get directionTopLeft => 'Top-Left';
+  @override
+  String get directionTopRight => 'Top-Right';
+  @override
+  String get directionBottomLeft => 'Bottom-Left';
+  @override
+  String get directionBottomRight => 'Bottom-Right';
+  @override
+  String get directionTop => 'High';
+  @override
+  String get directionBottom => 'Low';
+  @override
+  String get directionLeft => 'Left';
+  @override
+  String get directionRight => 'Right';
+
+  // Chart Titles
+  @override
+  String get visualization => 'Visualization';
+  @override
+  String get heatmapTitle => 'Heatmap';
+  @override
+  String get heatmapSubtitle => 'Arrow distribution + Center';
+  @override
+  String get endTrendTitle => 'End Trends';
+  @override
+  String get endTrendSubtitle => 'Average score per end';
+  @override
+  String get scoreDistTitle => 'Score Distribution';
+  @override
+  String get scoreDistSubtitle => 'Arrow counts by ring';
+
+  // Dialogs
+  @override
+  String get deleteRecordTitle => 'Delete Record';
+  @override
+  String get deleteRecordMessage =>
+      'Are you sure you want to delete this record? This cannot be undone.';
+  @override
+  String get recordDeleted => 'Record deleted';
+  @override
+  String get featureInDev => 'Feature in development';
+
+  // Dashboard
+  @override
+  String get sessions => 'Sessions';
+  @override
+  String monthlyArrowsMessage(String count) => '$count arrows this month';
+  @override
+  String get average => 'Avg';
+  @override
+  String get trend => 'Trend';
+  @override
+  String monthlyGoalMessage(String count) => 'Monthly Goal: $count arrows';
+  @override
+  String get noRecords => 'No training records';
+  @override
+  String get homeEmptyPrompt => 'No shots yet. Time to hit the range.';
+  @override
+  String get clickToAdd => 'Tap "+" to start your first session';
+  @override
+  String showingRecentMessage(String count) => 'Showing $count sessions';
+
+  @override
+  String get totalArrows => 'Total Arrows';
+
+  // Bow Types
+  @override
+  String get bowCompound => 'Compound';
+  @override
+  String get bowRecurve => 'Recurve';
+  @override
+  String get bowBarebow => 'Barebow';
+  @override
+  String get bowLongbow => 'Longbow';
+
+  // Units
+  @override
+  String get unitArrows => 'arrows';
+
+  // AI Coach
+  @override
+  String get aiCoachAnalysis => 'AI Coach Analysis';
+  @override
+  String get aiCoachDeepAnalysis => 'AI Coach Deep Analysis';
+  @override
+  String get aiCoachPeriodAnalysis => 'AI Period Analysis';
+  @override
+  String get aiCoachBasedOnData => 'Professional advice based on training data';
+  @override
+  String get aiCoachBasedOnCurrentSession =>
+      'Professional advice based on this session';
+  @override
+  String get aiCoachGetProfessionalAdvice =>
+      'Get detailed professional advice and training plans';
+  @override
+  String get aiCoachAnalyzeButton => 'Analyze';
+  @override
+  String get aiCoachDeepAnalyzeButton => 'Deep Analysis';
+  @override
+  String get aiCoachReanalyzeButton => 'Reanalyze';
+  @override
+  String get aiCoachAnalyzing => 'AI Coach analyzing...';
+  @override
+  String get aiCoachAnalyzingPeriod => 'Analyzing period performance...';
+  @override
+  String get aiCoachAnalysisComplete => 'Analysis Complete';
+  @override
+  String get aiCoachAnalysisFailed => 'Analysis Failed';
+  @override
+  String get aiCoachNetworkError =>
+      'Network connection failed, please check and retry';
+  @override
+  String get aiCoachClickToAnalyze =>
+      'Click "Analyze" to get AI coach professional advice';
+  @override
+  String get aiCoachClickForDeepAnalysis =>
+      'Click "Deep Analysis" to get comprehensive advice and training plans';
+  @override
+  String get aiCoachPreferOnlineFallbackToLocal =>
+      'Online analysis is preferred, and automatically falls back to local analysis';
+  @override
+  String get aiCoachPreferOnlineFallbackToOffline =>
+      'Online analysis is preferred, and automatically falls back to offline mode';
+  @override
+  String get aiCoachDismiss => 'Dismiss';
+  @override
+  String get aiCoachClose => 'Close';
+  @override
+  String get aiCoachDiagnosis => 'Core Diagnosis';
+  @override
+  String get aiCoachStrengths => 'Strengths';
+  @override
+  String get aiCoachWeaknesses => 'Areas for Improvement';
+  @override
+  String get aiCoachSuggestions => 'Suggestions';
+  @override
+  String get aiCoachTrainingPlan => 'Training Plan';
+  @override
+  String get aiCoachEncouragement => 'Encouragement';
+  @override
+  String get aiCoachSourceOnline => 'AI Online Analysis';
+  @override
+  String get aiCoachSourceLocal => 'Local Analysis';
+  @override
+  String get aiCoachSourceOffline => 'Offline Mode';
+  @override
+  String get aiCoachCategoryTechnique => 'Technique';
+  @override
+  String get aiCoachCategoryPhysical => 'Physical';
+  @override
+  String get aiCoachCategoryMental => 'Mental';
+  @override
+  String get aiCoachCategoryEquipment => 'Equipment';
+  @override
+  String get aiCoachCategoryGeneral => 'General';
+  @override
+  String get aiCoachActionSteps => 'Action Steps';
+  @override
+  String get aiCoachPhaseFocus => 'Training Focus';
+  @override
+  String get aiCoachDrills => 'Training Drills';
+  @override
+  String get aiCoachDays => 'days';
+  @override
+  String get aiCoachArrowsUnit => 'arrows';
+  @override
+  String get aiCoachPhase => 'Phase';
+  @override
+  String get aiCoachSuggestionsCount => 'items';
+
+  // Session setup
+  @override
+  String get environment => 'Environment';
+  @override
+  String get indoor => 'Indoor';
+  @override
+  String get outdoor => 'Outdoor';
+  @override
+  String get sessionSetupEquipment => 'Equipment';
+  @override
+  String get sessionSetupVenue => 'Venue';
+  @override
+  String get sessionSetupRules => 'Rules';
+  @override
+  String get sessionSetupDisplayMode => 'Display & Mode';
+  @override
+  String get scoringView => 'Scoring View';
+  @override
+  String get listView => 'List';
+  @override
+  String get targetView => 'Target';
+  @override
+  String get competitionMode => 'Competition Mode';
+  @override
+  String get competitionWaStandard => 'WA standard timing & signals';
+  @override
+  String get competitionTimePerArrow => 'TIME PER ARROW';
+  @override
+  String get competitionCustom => 'Custom';
+  @override
+  String get competitionSecondsPerArrow => 'seconds per arrow';
+  @override
+  String get competitionWhistleSounds => 'Whistle Sounds';
+  @override
+  String get competitionWaWhistleDesc => 'Standard WA whistle signals';
+  @override
+  String get competitionInputMode => 'Input Mode';
+  @override
+  String get competitionKeyboardEntry => 'Keyboard';
+  @override
+  String get competitionTargetEntry => 'Target';
+  @override
+  String get competitionTapTargetHint => 'Tap target to score';
+  @override
+  String get competitionPrep => 'Prep';
+  @override
+  String get competitionShoot => 'SHOOT';
+  @override
+  String get competitionWarn => 'Warn';
+  @override
+  String get competitionWarningLeft => '30s left';
+  @override
+  String get competitionTotal => 'Total';
+  @override
+  String get competitionStartBtn => 'START COMPETITION';
+  @override
+  String get competitionReady => 'READY';
+  @override
+  String get competitionGetReady => 'GET READY';
+  @override
+  String get competitionDoNotRaiseBow => 'DO NOT RAISE BOW';
+  @override
+  String get competitionHurryUp => 'HURRY UP';
+  @override
+  String get competitionSkip => 'SKIP';
+  @override
+  String get competitionStop => 'STOP';
+  @override
+  String get competitionShooting => 'SHOOTING';
+  @override
+  String get competitionPaused => 'PAUSED';
+  @override
+  String get competitionSafetyHalt => 'Safety Halt';
+  @override
+  String competitionRemainingTime(int seconds) => '${seconds}s remaining';
+  @override
+  String get competitionResume => 'RESUME';
+  @override
+  String get competitionResetEnd => 'RESET END';
+  @override
+  String get competitionResetEndTitle => 'Reset End?';
+  @override
+  String get competitionResetEndMessage =>
+      'This will discard the current timer and return to the ready state.';
+  @override
+  String get competitionComplete => 'COMPETITION COMPLETE';
+  @override
+  String get competitionAvgPerEnd => 'Avg/End';
+  @override
+  String get competitionBest => 'Best';
+  @override
+  String get competitionWorst => 'Worst';
+  @override
+  String get competitionEnds => 'Ends';
+  @override
+  String get competitionDone => 'DONE';
+  @override
+  String get competitionIncompleteEnd => 'Incomplete End';
+  @override
+  String competitionIncompleteMessage(int current, int total) =>
+      'You have $current of $total arrows scored. Submit anyway?';
+  @override
+  String get competitionSubmit => 'Submit';
+  @override
+  String get competitionLeaveTitle => 'Leave Competition?';
+  @override
+  String get competitionLeaveMessage =>
+      'Timer is still running. Your progress will be lost.';
+  @override
+  String get competitionStay => 'Stay';
+  @override
+  String get competitionLeave => 'Leave';
+  @override
+  String get estimatedTotalArrows => 'Estimated total arrows';
+  @override
+  String get centimeters => 'cm';
+  @override
+  String sessionSetupSelectLabel(String label) => 'Select $label';
+  @override
+  String myBowName(String bowName) => 'My $bowName';
+}
